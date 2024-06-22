@@ -2,11 +2,11 @@ import numpy as np
 
 from utils.consts import (
     ISTATE, TENSOR,
-    F2A, F3A, F4A, F5A, F6A, F8A,
+    R2A, F3A, F4A, F5A, F6A, F8A,
 )
 
 SYSTEMS: dict[str, dict[str, str | list[list[list[float]]]]] = {
-    F2A: {
+    R2A: {
         ISTATE: '10',
         TENSOR: np.random.rand(2, 2, 2).tolist()
     },

@@ -5,8 +5,6 @@ import numpy as np
 class SystemRequest(BaseModel):
     title: str
     istate: str
-    effect: str
-    causes: str
 
 
 class SystemResponse(SystemRequest):

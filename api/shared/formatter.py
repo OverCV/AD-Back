@@ -9,6 +9,7 @@ import pandas as pd
 from api.models.enums.extensions import FileExt
 from api.models.matrix import Matrix
 from constants.format import S2C, S2P, S2S
+from utils.consts import COLS_IDX
 from utils.funcs import cout
 
 
@@ -77,10 +78,7 @@ class Format:
     def __sc2sp(self) -> None:
         # [s..s, c] -> [s..s, (1-c, c)] #
         mat = self.__array
-        # cout(type(mat))
-        # raise HTTPException(status_code=500)
-        # cout(type(self.__tensor))
-        for col in range(mat.shape[1]):
+        for col in range(mat.shape[COLS_IDX]):
             # Seleccionamos la columna
             column = mat[:, col]
             # Creamos una matriz con la misma cantidad de filas que la columnas y dos columnas.

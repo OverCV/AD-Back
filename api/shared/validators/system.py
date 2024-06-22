@@ -15,4 +15,8 @@ def exist_system_title(system_title: str, db: Session) -> bool:
     db_system: SystemTable = db.query(SystemTable).filter(
         SystemTable.title == system_title
     ).first()
-    return not(db_system is None)
+    return not (db_system is None)
+
+
+def has_valid_istate(istate: str, tensor_len) -> bool:
+    return len(istate) == tensor_len

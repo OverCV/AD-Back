@@ -10,8 +10,6 @@ class SystemTable(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(31))
     istate = Column(CLOB)
-    effect = Column(CLOB)
-    causes = Column(CLOB)
     tensor = Column(CLOB)
     # jstate: Column[str] = Column(String(255))
     # format: Column[str] = Column(String(31))

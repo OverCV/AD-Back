@@ -38,6 +38,8 @@ router: APIRouter = APIRouter()
 )
 async def strategy_zero(
     system_id: str,
+    effect: str = Form(default=DEFAULT_EFFECT),
+    causes: str = Form(default=DEFAULT_CAUSES),
     store_network: bool = False,
     db=Depends(get_sqlite)
 ):

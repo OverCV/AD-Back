@@ -39,18 +39,15 @@ router: APIRouter = APIRouter()
 async def create_system(
     title: str = Form(default=DEFAULT_TITLE),
     istate: str = Form(default=DEFAULT_ISTATE),
-    effect: str = Form(default=DEFAULT_EFFECT),
-    causes: str = Form(default=DEFAULT_CAUSES),
     format: str = Form(default=DEFAULT_FORMAT),
     tensor: UploadFile = File(...),
     db: Session = Depends(get_sqlite),
 ):
     system_req: SystemRequest = SystemRequest(
-        title=title, istate=istate, effect=effect, causes=causes,
+        title=title, istate=istate
     )
     form: Format = Format(tensor, format)
     await form.set_array()
-    # subtensor = formater.get_subtensor()
     new_system: SystemResponse = post_system(system_req, form, db)
     return JSONResponse(
         content={DATA: jsonable_encoder(new_system)}

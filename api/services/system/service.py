@@ -13,7 +13,7 @@ from api.shared.formatter import Format
 from api.shared.validators import system as sv
 from api.schemas.system import SystemRequest, SystemResponse
 from data.tables import SystemTable
-from utils.funcs import printnl
+from utils.funcs import cout, printnl
 
 
 def post_system(
@@ -26,7 +26,15 @@ def post_system(
         )
     formater.set_matrices()
     subtensor = np.array(formater.get_matrices(), dtype=float)
+    cout(len(subtensor))
+    if not sv.has_valid_istate(system.istate, len(subtensor)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid initial state: State {
+                system.istate} needs to be size {len(subtensor)}.'
+        )
     subtensor_str = formater.serialize_tensor(subtensor)
+
     db_system = SystemTable(
         **system.model_dump(),
         tensor=subtensor_str
