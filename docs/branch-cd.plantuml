@@ -1,0 +1,39 @@
+@startuml
+' !define DARKGREEN
+' !include https://raw.githubusercontent.com/Drakemor/RedDress-PlantUML/master/style.puml
+
+
+
+class Nodum {
+    float ub
+    float lb
+    float estimate
+    nx.Graph | nx.DiDraph net
+    dict[tuple[str, str, float], set[str]] ignore
+}
+
+class System {
+    + str id
+    - initial string
+    - Matrix[0..*] tensor
+    - Set«int» cause_channels
+    - Set«int» effect_channels
+    + System(initial: string, tensor: List«List«float»»)
+    + set() ∧ get()
+    + origin_series(): np.ndarray
+
+}
+
+class Matrix {
+    - np.array«float» array
+
+    + np.ndarray Matrix(np.array«float» ndarray)
+    + np.ndarray margin_col(string states)
+    + np.ndarray margin_row(string states)
+    + string select_chars_at_indices(str chain, int[] indices)
+    + int[] find_indices(string states)
+    + np.ndarray select_serie(int[] states)
+    + np.ndarray transposed()
+}
+
+

@@ -1,0 +1,98 @@
+@startuml Algoritmo genético
+' !define DARKGREEN
+' !include https://raw.githubusercontent.com/Drakemor/RedDress-PlantUML/master/style.puml
+
+
+
+@startuml AlgoritmoGenetico
+actor Usuario
+
+participant Entorno
+participant Poblacion
+participant Individuo
+
+group Paso: Inicialización
+    Usuario -> Entorno ++: Definir parámetros iniciales
+    Entorno -> Poblacion --: Generar población inicial
+    loop Para cada individuo en la población
+        Poblacion -> Individuo ++: Crear individuo
+        Individuo -> Poblacion --: Añadir a la población
+    end
+end
+
+group Paso: Evaluación
+    loop Para cada individuo en la población
+        Poblacion -> Individuo : Evaluar aptitud
+        Individuo -> Poblacion : Devolver aptitud
+    end
+end
+
+group Paso: Selección
+    Poblacion -> Poblacion : Seleccionar individuos para reproducción
+end
+
+group Paso: Cruce
+    loop Para cada par de padres seleccionados
+        Poblacion -> Individuo : Cruzar padres
+        Individuo -> Poblacion : Añadir descendencia a la población
+    end
+end
+
+group Paso: Mutación
+    loop Para cada individuo en la población
+        Poblacion -> Individuo : Aplicar mutación
+        Individuo -> Poblacion : Devolver individuo mutado
+    end
+end
+
+group Paso: Prueba
+    loop Para cada individuo en la población
+        Poblacion -> Individuo : Evaluar aptitud
+        Individuo -> Poblacion : Devolver aptitud
+    end
+end
+
+group Paso: Reemplazo
+    Poblacion -> Poblacion : Reemplazar población actual con nueva generación
+end
+
+Usuario -> Entorno : Obtener mejor solución
+Entorno -> Usuario : Devolver mejor solución
+
+@enduml
+
+
+' actor CareStudent
+
+' participant Environ
+' participant Population
+' participant Entity
+
+
+' group Step: Iniciation
+'     CareStudent -> Environ ++ : @post/genetic-three\n{initial, tensor, subsystem}
+' end
+
+' group Step: Generation
+
+' end
+
+' group Step: Computation
+
+' end
+
+' group Step: Crossing
+
+' end
+
+' group Step: Mutation
+
+' end
+
+' group Step: Testing
+
+' end
+
+' group Step: Replacement
+
+' end

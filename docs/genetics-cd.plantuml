@@ -1,0 +1,75 @@
+@startuml
+' !define DARKGREEN
+' !include https://raw.githubusercontent.com/Drakemor/RedDress-PlantUML/master/style.puml
+
+
+class Environment {
+    - Population[] pupulation
+    - np.array«float» target_dist
+
+    - Dict«str, float | int» control_params
+    - Dict«str, str | list[int]» sys_config
+    - np.array«float» subtensor
+    - Logger logger
+
+    + void Environment(Dict«str, float | int» control_params, Dict«str, str | list[int]» sysconfig, np.array«float» subtensor, Logger logs)
+    + Individual evolve()
+    + void replace_population(Individual[] individuals)
+    + bool test_population()
+    + bool unsuccess_streak()
+    + Individual[] mutate_cms(np.ndarray[] crossed_cms)
+    + np.array«bool»[] crossover(Individual[] individuals)
+    + np.array«bool»[] cross(Individual prim_parent, Individual dual_parent)
+    + Individual[] tournament_selection(int k)
+    + float compute_fitness(np.ndarray distribution)
+    + void init_target()
+}
+
+Environment --> "1" Population : Evolves
+Environment --> "1" Logger : Reports
+
+class Population {
+    - Individual[1..*] individuals
+    - Dict«str, str[]» channels
+    - Matrix[0..*] subtensor
+
+    + set() ∧ get()
+    + void generate_individuals(int population_size, Dict«str, int[]» channels)
+    + np.array«float» update_distribution(np.array«float» chromosome, str initial_state)
+}
+
+Population --> "0..*" Individual : Contains
+Population --> "1..*" Matrix : Uses
+
+class Individual {
+    - np.array«bool» cms
+    - np.array«float» dist
+    - float fitness
+
+    + void Individual(np.array«bool» cms, np.array«float» dist)
+    + set() ∧ get()
+}
+
+class Logger {
+    - Individual[] bests_inds
+    - Population[] populations
+
+    + Individual get_best_individual()
+}
+
+class Matrix {
+    - np.array«float» array
+
+    + np.ndarray Matrix(np.array«float» ndarray)
+    + np.ndarray margin_col(string states)
+    + np.ndarray margin_row(string states)
+    + string select_chars_at_indices(str chain, int[] indices)
+    + int[] find_indices(string states)
+    + np.ndarray select_serie(int[] states)
+    + np.ndarray transposed()
+}
+
+' note right of Matrix : Class to operate over the ndarray of data.
+' - System subsystem
+
+' + float get_fitness()
