@@ -68,8 +68,12 @@ PRIM_LBL: str = 'prim'
 
 EXAMPLE: str = 'example'
 
-"""  """
+""" Analyze """
 
+BEST_NETWORK: str = 'netx'
+MIN_INFO_LOSS: str = 'loss'
+BEST_PARTITION: str = 'part'
+BEST_DISTRIBUTION: str = 'dist'
 
 """ Netowork """
 

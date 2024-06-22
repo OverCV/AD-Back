@@ -29,7 +29,7 @@ from utils.funcs import cout, printnl
 router: APIRouter = APIRouter()
 
 
-@router.post(
+@router.get(
     '/sia-zero/',
     response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
     response_model=bool,
@@ -38,28 +38,22 @@ router: APIRouter = APIRouter()
 )
 async def strategy_zero(
     system_id: str,
-    effect: str = Form(default=DEFAULT_EFFECT),
-    causes: str = Form(default=DEFAULT_CAUSES),
+    effect: str = DEFAULT_EFFECT,
+    causes: str = DEFAULT_CAUSES,
     store_network: bool = False,
     db=Depends(get_sqlite)
 ):
     print('Hello math! - SIA Zero')
     system = get_system(system_id, db)
 
-    # tensor = np.array(eval(system.tensor))
-
     tensor_str = system.tensor
     form: Format = Format()
     subtensor = form.deserialize_tensor(tensor_str)
     cout(type(subtensor))
-    # cout(tensor.sum(axis=1))
-    cout(subtensor)
+    cout(len(subtensor))
+    
     [
         cout(mat.sum(axis=1))
         for mat in subtensor
     ]
-    # [
-    #     cout(type(mat))
-    #     for mat in tensor
-    # ]
     return system is None
