@@ -10,32 +10,37 @@ from utils.consts import (
 class Sia(ABC):
     ''' Class Sia is used as parent class to use it's props in the used strategies. '''
 
-    def __init__(self) -> None:
-        self.__system: System = None  # Passed
-        self.__serie: np.ndarray = None  # Calculated
-        # part: (T T . F F)
-        # lbls: {A, B} ; part: ({A, B}, {})
-        # { prim: ((A, B), (A)), dual: ((VOID), (B)) } #
-        self.__network: nx.Graph | nx.DiGraph = None
-        self.__information_loss: float = None
-        self.__partition: dict = None
-        self.__distribution: dict[str, tuple] = None
+    def __init__(self, system) -> None:
+        self._system: System = system  # Passed
+        self._serie: np.ndarray = None  # Calculated
+
+        self._network: nx.Graph | nx.DiGraph = None
+        self._information_loss: float = None
+        self._partition: dict = None
+        self._distribution: dict[str, tuple] = None
 
     @abstractmethod
-    def __analisis(self) -> dict[str, nx.Graph | float | dict]:
+    def analisis(self) -> dict[str, nx.Graph | nx.DiGraph | float | dict]:
         pass
 
     def set_repertoire(self) -> None:
-        self.__network = self.__analisis()[BEST_NETWORK]
-        self.__network = self.__analisis()[MIN_INFO_LOSS]
-        self.__partition = self.__analisis()[BEST_PARTITION]
-        self.__distribution = self.__analisis()[BEST_DISTRIBUTION]
+        self._network = self.analisis().get(BEST_NETWORK, None)
+        self._information_loss = self.analisis().get(MIN_INFO_LOSS, None)
+        self._partition = self.analisis().get(BEST_PARTITION, None)
+        self._distribution = self.analisis().get(BEST_DISTRIBUTION, None)
 
-    @property
-    def get_reperoire(self) -> dict:
-        return {
-            BEST_NETWORK: self.__network,
-            MIN_INFO_LOSS: self.__information_loss,
-            BEST_PARTITION: self.__partition,
-            BEST_DISTRIBUTION: self.__distribution
-        }
+    # part: (T T . F F)
+    # lbls: {A, B} ; part: ({A, B}, {})
+    # { prim: ((A, B), (A)), dual: ((VOID), (B)) } #
+
+    # @property
+    # def system(self) -> System:
+    #     return self.__system
+
+    # @property
+    # def serie(self) -> np.ndarray:
+    #     return self.__serie
+
+    # @abstractmethod
+    # def get_reperoire(self) -> dict:
+    #     pass

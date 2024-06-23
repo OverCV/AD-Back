@@ -1,32 +1,61 @@
+import numpy as np
+from fastapi import HTTPException
+from api.models.system import System
+from api.schemas.system import SystemResponse
+
+from api.shared.validators import analyze as av
+from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
 
 
 class Compute:
     ''' Class Compute is used to compute all different System Irreducibility analysis. '''
 
-    def __init__(self) -> None:
-        # system: System = None
-        pass
-        # self._sia_zero: Zero = None
-        # self._sia_one: One = One(original_system)
-        # self._sia_two: Two = Two(original_system)
-        # self._sia_three: Three = Three(original_system)
+    def __init__(
+        self,
+        system: SystemResponse,
+        effect: str,
+        causes: str,
+        subtensor: list[np.ndarray]
+    ) -> None:
+        self.__system: System = System(
+            db_sys=system.model_dump(),
+            effect=effect,
+            causes=causes,
+            tensor=subtensor,
+        )
+        self.__effect: str = effect
+        self.__causes: str = causes
+
+
+    def use_genetic_algorithm(self) -> bool:
+
+        if not av.has_valid_effect_causes(
+            len(self.__effect),
+            len(self.__causes),
+            len(self.__system.get_tensor())
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail='Invalid effect and causes.'
+            )
+
+        sia_genetic: Genetic = Genetic(self.__system)
+        sia_genetic.set_repertoire()
+        return sia_genetic.get_reperoire()
 
     def use_pyphi(self) -> bool:
         pass
 
     def use_brute_force(self) -> bool:
-        sia_zero = BruteForce()
-        sia_zero.set_repertoire()
-        return sia_zero.get_reperoire()
+        sia_force = BruteForce()
+        sia_force.set_repertoire()
+        return sia_force.get_reperoire()
 
     def use_branch_and_bound(self) -> bool:
         pass
 
     def use_dynamic_programming(self) -> bool:
-        pass
-
-    def use_genetic_algorithm(self) -> bool:
         pass
 
     def use_game_theory(self) -> bool:
@@ -133,6 +162,8 @@ class Compute:
 
     def use_belief_propagation(self) -> bool:
         pass
+
+    """  """
 
     def use_gibbs_sampling(self) -> bool:
         pass

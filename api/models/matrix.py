@@ -2,8 +2,8 @@ import math
 import numpy as np
 import pandas as pd
 
-from utils.consts import STR_ONE, STR_ZERO
-from utils.funcs import big_endian, lil_endian
+from utils.consts import COLS_IDX, ROWS_IDX, STR_ONE, STR_ZERO
+from utils.funcs import big_endian, cout, lil_endian
 
 
 class Matrix:
@@ -11,6 +11,14 @@ class Matrix:
 
     def __init__(self, ndarray: np.ndarray) -> None:
         self.__array: np.ndarray = ndarray
+        self.__causes: set[int] = set(range(int(
+            math.log2(self.__array.shape[ROWS_IDX])
+        )))
+        self.__effect: set[int] = set(range(
+            self.__array.shape[COLS_IDX]
+        ))
+        cout('shape', self.__array.shape, self.__effect, self.__causes)
+        # cout(self.__array)
 
     def margin_col(self, states: str) -> None:
         self.transposed()
@@ -18,7 +26,7 @@ class Matrix:
         self.transposed()
         return self.__array
 
-    def margin_row(self, states: str, from_row: bool = True, be: bool = False) -> np.ndarray:
+    def margin_row(self, states: str, from_row: bool = True, be: bool = False, dual=False) -> np.ndarray:
         """
         Margins the matrix with the given states.
         """

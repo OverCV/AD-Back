@@ -66,6 +66,21 @@ def get_system(id: int, db: Session) -> SystemResponse:
         )
     return SystemResponse(**db_rol.__dict__)
 
+def get_db_system(id: int, db: Session) -> SystemTable:
+    if not sv.exist_system_id(id, db):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'System with id {id} not found.'
+        )
+    db_rol: SystemTable = db.query(SystemTable).filter(
+        SystemTable.id == id
+    ).first()
+    if db_rol is None:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail=f'System with id {id} has no structure.'
+        )
+    return db_rol
 
 def delete_system(id: int, db: Session) -> bool:
     db_rol: SystemTable = db.query(SystemTable).filter(

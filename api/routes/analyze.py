@@ -13,6 +13,7 @@ import pandas as pd
 from pydantic import Field
 from sqlalchemy.orm import Session
 from api.schemas.system import SystemRequest
+from api.services.analyze.compute import Compute
 from data.base import get_sqlite
 
 from api.services.system.service import *
@@ -23,37 +24,32 @@ from api.services.system.service import *
 from constants.format import (
     DEFAULT_FORMAT, DEFFAULT_SHEET, S2C, S2P, S2S
 )
-from utils.consts import DEFAULT_CAUSES, DEFAULT_ISTATE, DEFAULT_EFFECT, FLOAT_ZERO, ISTATE
+from utils.consts import DEFAULT_CAUSES, DEFAULT_ISTATE, DEFAULT_EFFECT, FLOAT_ZERO, ISTATE, TENSOR
 from utils.funcs import cout, printnl
 
 router: APIRouter = APIRouter()
 
 
 @router.get(
-    '/sia-zero/',
+    '/sia-genetic/',
     response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
     response_model=bool,
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
-async def strategy_zero(
+async def genetic_strategy(
     system_id: str,
     effect: str = DEFAULT_EFFECT,
     causes: str = DEFAULT_CAUSES,
+    # ! Should be a GLOBAL configuration
     store_network: bool = False,
     db=Depends(get_sqlite)
 ):
     print('Hello math! - SIA Zero')
-    system = get_system(system_id, db)
-
-    tensor_str = system.tensor
+    db_system = get_system(system_id, db)
     form: Format = Format()
-    subtensor = form.deserialize_tensor(tensor_str)
-    cout(type(subtensor))
-    cout(len(subtensor))
-    
-    [
-        cout(mat.sum(axis=1))
-        for mat in subtensor
-    ]
-    return system is None
+    subtensor = form.deserialize_tensor(db_system.tensor)
+
+    computing: Compute = Compute(db_system, effect, causes, subtensor)
+    response = computing.use_genetic_algorithm()
+    return JSONResponse(content=jsonable_encoder(response), status_code=status.HTTP_200_OK)
