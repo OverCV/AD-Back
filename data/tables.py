@@ -9,8 +9,10 @@ class SystemTable(Base):
     __tablename__ = 'system'
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(31))
-    istate = Column(CLOB)
     tensor = Column(CLOB)
+    size = Column(Integer)
+    format = Column(String(31))
+    # istate = Column(CLOB)
     # jstate: Column[str] = Column(String(255))
     # format: Column[str] = Column(String(31))
 
@@ -22,4 +24,4 @@ class ConfigTable(Base):
     using_le = Column(Boolean)
     using_local_nosql = Column(Boolean)
     storing_nets = Column(Boolean)
-    time = Column(DateTime)
+    config_time = Column(DateTime)

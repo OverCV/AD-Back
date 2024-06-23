@@ -1,7 +1,7 @@
 import networkx as nx
 from api.services.analyze.sia import Sia
 from utils.consts import (
-    BEST_DISTRIBUTION, BEST_NETWORK, BEST_PARTITION, MIN_INFO_LOSS
+    BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
 )
 from utils.funcs import cout
 
@@ -12,19 +12,25 @@ class Genetic(Sia):
     def __init__(self, system) -> None:
         super().__init__(system)
 
-    def analisis(self) -> dict:
-        # cout(self._system)
+    def analyze(self) -> dict:
+        cout('Do some logic to obtain the parameters')
+        def network(x): x *= 2; y = 2; return x-y
+
+        def loss(): return 0.3
+        def distribution(): return {0: (0.3, 0.3), 1: (0.3, 0.3)}
+
         return {
-            # BEST_NETWORK: self.__network,
-            MIN_INFO_LOSS: 0.3,
-            BEST_PARTITION: 0.3,
+            # ! Store the network, get the id and return it to invoque in front ! #
+            NET_ID: network(1),
+            SMALL_PHI: 0.3,
+            MIP: 0.3,
             BEST_DISTRIBUTION: 0.3,
         }
 
     def get_reperoire(self) -> dict[str, nx.Graph | nx.DiGraph | float | dict]:
         return {
-            BEST_NETWORK: self._network,
-            MIN_INFO_LOSS: self._information_loss,
-            BEST_PARTITION: self._partition,
+            NET_ID: self._network,
+            SMALL_PHI: self._integrated_info,
+            MIP: self._min_info_part,
             BEST_DISTRIBUTION: self._distribution,
         }

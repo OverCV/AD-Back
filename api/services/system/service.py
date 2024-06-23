@@ -2,6 +2,8 @@ import io
 from logging import info, warn
 import random
 from typing import Annotated, Callable
+
+from numpy.typing import NDArray
 import numpy as np
 
 from fastapi import HTTPException, UploadFile, status
@@ -13,31 +15,30 @@ from api.shared.formatter import Format
 from api.shared.validators import system as sv
 from api.schemas.system import SystemRequest, SystemResponse
 from data.tables import SystemTable
-from utils.funcs import cout, printnl
+from utils.funcs import cout
 
 
 def post_system(
-    system: SystemRequest, formater: Format, db: Session
+    system: SystemRequest, formatter: Format, db: Session
 ) -> SystemResponse:
     if sv.exist_system_title(system.title, db):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f'System was not created.《{system.title}》already exists'
         )
-    formater.set_matrices()
-    subtensor = np.array(formater.get_matrices(), dtype=float)
-    cout(len(subtensor))
-    if not sv.has_valid_istate(system.istate, len(subtensor)):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Invalid initial state: State {
-                system.istate} needs to be size {len(subtensor)}.'
-        )
-    subtensor_str = formater.serialize_tensor(subtensor)
+    formatter.set_matrices()
+    subtensor: NDArray[np.float64] = np.array(
+        formatter.get_matrices(), dtype=float
+    )
+    subtensor_size: int = len(subtensor)
+    cout(subtensor_size)
+
+    subtensor_str = formatter.serialize_tensor(subtensor)
 
     db_system = SystemTable(
         **system.model_dump(),
-        tensor=subtensor_str
+        tensor=subtensor_str,
+        size=subtensor_size,
     )
     db.add(db_system)
     db.commit()
@@ -56,15 +57,33 @@ def get_system(id: int, db: Session) -> SystemResponse:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'System with id {id} not found.'
         )
-    db_rol: SystemTable = db.query(SystemTable).filter(
+    db_system: SystemTable = db.query(SystemTable).filter(
         SystemTable.id == id
     ).first()
-    if db_rol is None:
+    if db_system is None:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail=f'System with id {id} has no structure.'
         )
-    return SystemResponse(**db_rol.__dict__)
+    return SystemResponse(**db_system.__dict__)
+
+
+def get_system_by_title(title: str, db: Session) -> SystemResponse:
+    if not sv.exist_system_title(title, db):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'System with title {title} not found.'
+        )
+    db_system: SystemTable = db.query(SystemTable).filter(
+        SystemTable.title == title
+    ).first()
+    if db_system is None:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail=f'System with title {title} has no structure.'
+        )
+    return SystemResponse(**db_system.__dict__)
+
 
 def get_db_system(id: int, db: Session) -> SystemTable:
     if not sv.exist_system_id(id, db):
@@ -72,22 +91,23 @@ def get_db_system(id: int, db: Session) -> SystemTable:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'System with id {id} not found.'
         )
-    db_rol: SystemTable = db.query(SystemTable).filter(
+    db_system: SystemTable = db.query(SystemTable).filter(
         SystemTable.id == id
     ).first()
-    if db_rol is None:
+    if db_system is None:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail=f'System with id {id} has no structure.'
         )
-    return db_rol
+    return db_system
+
 
 def delete_system(id: int, db: Session) -> bool:
-    db_rol: SystemTable = db.query(SystemTable).filter(
+    db_system: SystemTable = db.query(SystemTable).filter(
         SystemTable.id == id
     ).first()
-    if db_rol is None:
+    if db_system is None:
         return False
-    db.delete(db_rol)
+    db.delete(db_system)
     db.commit()
     return True

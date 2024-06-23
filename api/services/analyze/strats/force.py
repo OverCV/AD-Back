@@ -7,5 +7,5 @@ class BruteForce(Sia):
     def __init__(self, system) -> None:
         pass
 
-    def analisis(self) -> dict:
+    def analyze(self) -> dict:
         pass

@@ -3,6 +3,8 @@ from fastapi import HTTPException
 from api.models.system import System
 from api.schemas.system import SystemResponse
 
+from numpy.typing import NDArray
+
 from api.shared.validators import analyze as av
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
@@ -16,7 +18,7 @@ class Compute:
         system: SystemResponse,
         effect: str,
         causes: str,
-        subtensor: list[np.ndarray]
+        subtensor: list[NDArray[np.float64]]
     ) -> None:
         self.__system: System = System(
             db_sys=system.model_dump(),
@@ -27,9 +29,13 @@ class Compute:
         self.__effect: str = effect
         self.__causes: str = causes
 
-
     def use_genetic_algorithm(self) -> bool:
-
+        # if not sv.has_valid_istate(system.istate, len(subtensor)):
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail=f'Invalid initial state: State {
+        #             system.istate} needs to be size {len(subtensor)}.'
+        #     )
         if not av.has_valid_effect_causes(
             len(self.__effect),
             len(self.__causes),
@@ -39,9 +45,8 @@ class Compute:
                 status_code=400,
                 detail='Invalid effect and causes.'
             )
-
         sia_genetic: Genetic = Genetic(self.__system)
-        sia_genetic.set_repertoire()
+        sia_genetic.calculate_repertoire()
         return sia_genetic.get_reperoire()
 
     def use_pyphi(self) -> bool:
@@ -49,7 +54,7 @@ class Compute:
 
     def use_brute_force(self) -> bool:
         sia_force = BruteForce()
-        sia_force.set_repertoire()
+        sia_force.calculate_repertoire()
         return sia_force.get_reperoire()
 
     def use_branch_and_bound(self) -> bool:

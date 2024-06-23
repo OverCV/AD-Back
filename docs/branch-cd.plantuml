@@ -20,20 +20,20 @@ class System {
     - Set«int» effect_channels
     + System(initial: string, tensor: List«List«float»»)
     + set() ∧ get()
-    + origin_series(): np.ndarray
+    + origin_series(): NDArray
 
 }
 
 class Matrix {
     - np.array«float» array
 
-    + np.ndarray Matrix(np.array«float» ndarray)
-    + np.ndarray margin_col(string states)
-    + np.ndarray margin_row(string states)
+    + NDArray Matrix(np.array«float» NDArray)
+    + NDArray margin_col(string states)
+    + NDArray margin_row(string states)
     + string select_chars_at_indices(str chain, int[] indices)
     + int[] find_indices(string states)
-    + np.ndarray select_serie(int[] states)
-    + np.ndarray transposed()
+    + NDArray select_serie(int[] states)
+    + NDArray transposed()
 }
 
 

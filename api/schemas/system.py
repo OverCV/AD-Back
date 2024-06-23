@@ -4,12 +4,14 @@ import numpy as np
 
 class SystemRequest(BaseModel):
     title: str
-    istate: str
+    format: str
+    # istate: str
 
 
 class SystemResponse(SystemRequest):
     id: int
     tensor: str
+    size: int
 
     # @field_validator('tensor', mode='before')
     # def convert_tensor_to_string(cls, v):

@@ -1,6 +1,7 @@
 import base64
 import io
 from typing import Callable
+from numpy.typing import NDArray
 import numpy as np
 from fastapi import HTTPException, UploadFile, status
 import openpyxl as op
@@ -16,13 +17,16 @@ from utils.funcs import cout
 class Format:
     ''' Class Formatter is used to format the XSLX file from the user input. '''
 
-    def __init__(self, bytes: UploadFile = None, format: str = None) -> None:
+    def __init__(
+            self, bytes: UploadFile = None, sheet: str = None, format: str = None
+    ) -> None:
         self.__array_file: UploadFile = bytes
+        self.__sheet: str = sheet
         self.__format: str = format
-        self.__array: np.ndarray | None = None
-        self.__matrices: list[np.ndarray] = list()
+        self.__array: NDArray[np.float64] | None = None
+        self.__matrices: list[NDArray[np.float64]] = list()
 
-    def get_matrices(self) -> list[np.ndarray]:
+    def get_matrices(self) -> list[NDArray[np.float64]]:
         return self.__matrices
 
     async def set_array(self) -> None:
@@ -32,12 +36,12 @@ class Format:
                 detail='No file was provided.'
             )
         bytes_chunk = await self.__array_file.read()
-        arr: np.ndarray = None
+        arr: NDArray[np.float64] = None
         if self.__array_file.filename.endswith(FileExt.EXCEL.value):
             xlsx = io.BytesIO(bytes_chunk)
             wb = op.load_workbook(xlsx)
-            ws = wb.active
-
+            ws = wb[self.__sheet]
+            # ws = wb.active
             lst = list()
             for cells in ws.iter_rows():
                 vector = [cell.value for cell in cells if cell.value is not None]
@@ -90,7 +94,7 @@ class Format:
             # Agregamos la nueva matriz a la lista de tensores
             self.__matrices.append(new_mat)
 
-    def serialize_tensor(self, tensor: np.ndarray) -> str:
+    def serialize_tensor(self, tensor: NDArray[np.float64]) -> str:
         """Serializa y codifica en base64 un tensor NumPy."""
         buffer = io.BytesIO()
         np.savez_compressed(buffer, tensor=tensor)
@@ -98,7 +102,7 @@ class Format:
         encoded = base64.b64encode(buffer.read()).decode('utf-8')
         return encoded
 
-    def deserialize_tensor(self, encoded_tensor: str) -> np.ndarray:
+    def deserialize_tensor(self, encoded_tensor: str) -> NDArray[np.float64]:
         """Deserializa un tensor codificado en base64 a un arreglo NumPy."""
         decoded = base64.b64decode(encoded_tensor)
         buffer = io.BytesIO(decoded)
@@ -109,7 +113,7 @@ class Format:
     # def serialize_tensor(self):
     #     """ Serializa y codifica en base64 un tensor NumPy. """
     #     subtensor = np.array(self.__matrices)
-    #     if not isinstance(subtensor, np.ndarray):
+    #     if not isinstance(subtensor, NDArray[np.float64]):
     #         raise HTTPException(
     #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     #             detail='Tensor is not defined.'

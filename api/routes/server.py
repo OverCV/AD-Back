@@ -15,13 +15,8 @@ from api.schemas.system import SystemRequest
 from data.base import get_sqlite
 
 
-from constants.format import (
-    DEFAULT_FORMAT, DEFFAULT_SHEET, S2C, S2P, S2S
-)
-from utils.consts import DEFAULT_CAUSES, DATA, DEFAULT_ISTATE, DEFAULT_EFFECT, FLOAT_ZERO, ISTATE
-from utils.funcs import printnl
-
 from server import conf
+from utils.consts import DATA
 
 router: APIRouter = APIRouter()
 
@@ -38,6 +33,7 @@ async def configure_server(
     store_networks: bool = Form(default=conf.store_nets),
     locale_nosql: bool = Form(default=conf.locale_nosql),
 ):
+    # ! Read from table config to set the actual config ! #
     conf.use_le() if little_endian else conf.use_be()
     conf.do_store_nets() if store_networks else conf.dont_store_nets()
     conf.use_locale_nosql() if locale_nosql else conf.use_remote_nosql()

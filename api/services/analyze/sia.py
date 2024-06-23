@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 from api.models.system import System
 from utils.consts import (
-    BEST_DISTRIBUTION, BEST_NETWORK, BEST_PARTITION, MIN_INFO_LOSS
+    BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
 )
 
 
@@ -12,22 +12,24 @@ class Sia(ABC):
 
     def __init__(self, system) -> None:
         self._system: System = system  # Passed
-        self._serie: np.ndarray = None  # Calculated
+        self._dist_sys: NDArray = None  # Calculated
 
         self._network: nx.Graph | nx.DiGraph = None
-        self._information_loss: float = None
-        self._partition: dict = None
+        self._integrated_info: float = None
+        self._min_info_part: dict = None
         self._distribution: dict[str, tuple] = None
 
     @abstractmethod
-    def analisis(self) -> dict[str, nx.Graph | nx.DiGraph | float | dict]:
+    def analyze(self) -> dict[str, nx.Graph | nx.DiGraph | float | dict]:
         pass
 
-    def set_repertoire(self) -> None:
-        self._network = self.analisis().get(BEST_NETWORK, None)
-        self._information_loss = self.analisis().get(MIN_INFO_LOSS, None)
-        self._partition = self.analisis().get(BEST_PARTITION, None)
-        self._distribution = self.analisis().get(BEST_DISTRIBUTION, None)
+    def calculate_repertoire(self) -> None:
+        analysis: dict[str, nx.Graph | nx.DiGraph | float | dict] \
+            = self.analyze()
+        self._network = analysis.get(NET_ID, None)
+        self._integrated_info = analysis.get(SMALL_PHI, None)
+        self._min_info_part = analysis.get(MIP, None)
+        self._distribution = analysis.get(BEST_DISTRIBUTION, None)
 
     # part: (T T . F F)
     # lbls: {A, B} ; part: ({A, B}, {})
@@ -38,7 +40,7 @@ class Sia(ABC):
     #     return self.__system
 
     # @property
-    # def serie(self) -> np.ndarray:
+    # def serie(self) -> NDArray:
     #     return self.__serie
 
     # @abstractmethod

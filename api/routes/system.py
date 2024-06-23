@@ -10,22 +10,20 @@ from matplotlib.pylab import f
 import numpy as np
 import pandas as pd
 from sqlalchemy.orm import Session
+from api.models.props.system import SysProps
 from api.schemas.system import SystemRequest
+from constants.system import R4A, SYSTEMS
 from data.base import get_sqlite
 
 
 from api.services.system.service import *
-
 from api.shared.formatter import Format
 
 
 from constants.format import (
     DEFAULT_FORMAT, DEFFAULT_SHEET, S2C, S2P, S2S
 )
-from utils.funcs import printnl
-from utils.consts import (
-    DEFAULT_CAUSES, DATA, DEFAULT_ISTATE, DEFAULT_EFFECT, DEFAULT_TITLE, FLOAT_ZERO, ISTATE
-)
+from utils.consts import DATA
 
 router: APIRouter = APIRouter()
 
@@ -37,16 +35,17 @@ router: APIRouter = APIRouter()
     response_model=SystemResponse,
 )
 async def create_system(
-    title: str = Form(default=DEFAULT_TITLE),
-    istate: str = Form(default=DEFAULT_ISTATE),
-    format: str = Form(default=DEFAULT_FORMAT),
+    title: str = Form(default=SYSTEMS[R4A][SysProps.TITLE]),
+    # istate: str = Form(default=SYSTEMS[R4A][SysProps.ISTATE]),
+    format: str = Form(default=SYSTEMS[R4A][SysProps.FORMAT]),
     tensor: UploadFile = File(...),
+    sheet: str = Form(default=DEFFAULT_SHEET),
     db: Session = Depends(get_sqlite),
 ):
     system_req: SystemRequest = SystemRequest(
-        title=title, istate=istate
+        title=title, format=format
     )
-    form: Format = Format(tensor, format)
+    form: Format = Format(tensor, sheet, format)
     await form.set_array()
     new_system: SystemResponse = post_system(system_req, form, db)
     return JSONResponse(
@@ -180,7 +179,7 @@ async def delete_system_by_id(id: int, db: Session = Depends(get_sqlite)):
 #     #     format_options[format]()
 #     #     # Call to format service
 #     #     # Call to strategy
-#     #     # arr: list[np.ndarray] = []
+#     #     # arr: list[NDArray] = []
 #     #     arr: list[float] = list()
 #     #     for cells in ws.iter_rows():
 #     #         arr.append([

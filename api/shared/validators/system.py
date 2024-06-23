@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
 from data.tables import SystemTable
-from utils.funcs import printnl
 
 
 def exist_system_id(system_id: int, db: Session) -> bool:

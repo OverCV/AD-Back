@@ -1,5 +1,6 @@
 from ast import List
-from numpy import ndarray
+# from numpy import 
+# from numpy.typing import NDArray
 from typing_extensions import Doc
 from fastapi import Body, HTTPException, Query, Response, status, APIRouter, Depends
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -16,7 +17,6 @@ from data.base import get_mongo
 from utils.consts import DATA
 
 from server import conf
-from utils.funcs import printnl
 
 
 router: APIRouter = APIRouter()

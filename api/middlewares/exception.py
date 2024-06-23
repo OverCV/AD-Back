@@ -6,7 +6,6 @@ from fastapi import HTTPException
 import traceback
 import sys
 
-from utils.funcs import printnl
 
 
 class ExceptionMiddleware(BaseHTTPMiddleware):

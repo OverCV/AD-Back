@@ -1,6 +1,8 @@
 import math
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
+
 
 from utils.consts import COLS_IDX, ROWS_IDX, STR_ONE, STR_ZERO
 from utils.funcs import big_endian, cout, lil_endian
@@ -9,8 +11,8 @@ from utils.funcs import big_endian, cout, lil_endian
 class Matrix:
     ''' Class Matrix is used to apply marginalization actions over it's array. '''
 
-    def __init__(self, ndarray: np.ndarray) -> None:
-        self.__array: np.ndarray = ndarray
+    def __init__(self, array: NDArray) -> None:
+        self.__array: array = array
         self.__causes: set[int] = set(range(int(
             math.log2(self.__array.shape[ROWS_IDX])
         )))
@@ -26,7 +28,7 @@ class Matrix:
         self.transposed()
         return self.__array
 
-    def margin_row(self, states: str, from_row: bool = True, be: bool = False, dual=False) -> np.ndarray:
+    def margin_row(self, states: str, from_row: bool = True, be: bool = False, dual=False) -> NDArray:
         """
         Margins the matrix with the given states.
         """
@@ -35,7 +37,7 @@ class Matrix:
         margined_rows = 2**states.count(STR_ZERO)
 
         if all(k == STR_ZERO for k in states):
-            vector_sum: np.ndarray = np.sum(dframe, axis=0)
+            vector_sum: NDArray = np.sum(dframe, axis=0)
             collapsed: pd.DataFrame = pd.DataFrame(
                 vector_sum.values.reshape(1, -1),
                 columns=dframe.columns,
@@ -49,7 +51,7 @@ class Matrix:
             new_states: list[str] = lil_endian(states.count(STR_ONE))
             if be:
                 new_states: list[str] = big_endian(states.count(STR_ONE))
-            new_data: np.ndarray = np.zeros((len(new_states), dframe.shape[1]))
+            new_data: NDArray = np.zeros((len(new_states), dframe.shape[1]))
             matrix_zeros: pd.DataFrame = pd.DataFrame(
                 new_data, columns=dframe.columns, index=new_states)
             for row in dframe.index:
@@ -74,7 +76,7 @@ class Matrix:
     def find_indices(self, states: str) -> list[int]:
         return [i for i in range(len(states)) if states[i] == STR_ONE]
 
-    def select_series(self, states: list[str]) -> np.ndarray:
+    def select_series(self, states: list[str]) -> NDArray:
         ''' Select the serie at the given state. '''
 
         concat_digits: str = ''.join(states)
@@ -95,7 +97,7 @@ class Matrix:
 
     def transposed(self):
         ''' Transpose the matrix with it's keys. '''
-        self.__array: np.ndarray = self.__array.transpose()
+        self.__array: NDArray = self.__array.transpose()
 
     def __str__(self):
         return f'[Matrix]: \n{self.__array}\n'

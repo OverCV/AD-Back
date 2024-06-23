@@ -4,12 +4,13 @@ import itertools
 import random
 import math
 
+from numpy.typing import NDArray
 import numpy as np
 
 ''' If needed, this class could partitionate into several modules associated with the business logic. '''
 
 
-def emd(u: np.ndarray, v: np.ndarray, be: bool = False) -> float:
+def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> float:
     ''' Returns the Earth Mover's Distance between two distributions.'''
     u = np.asarray(u, dtype=float).flatten()
     v = np.asarray(v, dtype=float).flatten()
@@ -41,7 +42,7 @@ def emd(u: np.ndarray, v: np.ndarray, be: bool = False) -> float:
     return earth_moved
 
 
-def be_product(arrays: list[np.ndarray]) -> np.ndarray:
+def be_product(arrays: list[NDArray]) -> NDArray:
     ''' Returns the tensor product of a list of arrays.'''
     return reduce(
         lambda x, y: np.kron(x, y),
@@ -49,7 +50,7 @@ def be_product(arrays: list[np.ndarray]) -> np.ndarray:
     )
 
 
-def le_product(arrays: list[np.ndarray]) -> np.ndarray:
+def le_product(arrays: list[NDArray]) -> NDArray:
     ''' Returns the tensor product of a list of arrays.'''
     return reduce(
         lambda x, y: np.kron(y, x),
@@ -93,12 +94,12 @@ async def logger(func):
     return wrapper
 
 
-def printnl(*args):
-    print()
-    for arg in args:
-        print(arg)
-    # '\n'
-    print()
+# def printnl(*args):
+#     print()
+#     for arg in args:
+#         print(arg)
+#     # '\n'
+#     print()
 
 
 def cout(*args):
