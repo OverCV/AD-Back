@@ -9,6 +9,7 @@ import pandas as pd
 
 from api.models.enums.extensions import FileExt
 from api.models.matrix import Matrix
+from api.models.props.system import SysProps
 from constants.format import S2C, S2P, S2S
 from utils.consts import COLS_IDX
 from utils.funcs import cout
@@ -72,15 +73,31 @@ class Format:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='No format was provided.'
             )
-        format_options: dict[str, Callable] = {
+        format_input: dict[str, Callable] = {
             S2S: lambda: print(f'Format {S2S} not implemented yet.'),
             S2C: self.__sc2sp,
             S2P: lambda: print(f'Format {S2P} not implemented yet.'),
         }
-        format_options[self.__format]()
+        format_input[self.__format]()
 
     def __sc2sp(self) -> None:
         # [s..s, c] -> [s..s, (1-c, c)] #
+        mat = self.__array
+        for col in range(mat.shape[COLS_IDX]):
+            # Seleccionamos la columna
+            column = mat[:, col]
+            # Creamos una matriz con la misma cantidad de filas que la columnas y dos columnas.
+            new_mat = np.zeros((mat.shape[0], 2))
+            # Llenamos la primera columna con el complemento de la columna original
+            new_mat[:, 0] = 1 - column
+            # Llenamos la segunda columna con la columna original
+            new_mat[:, 1] = column
+            # Agregamos la nueva matriz a la lista de tensores
+            self.__matrices.append(new_mat)
+
+    def __ss2sp(self) -> None:
+        # [s..s, s..s] -> [s..s, (1-c, c)] #
+        # ! Here we need to marginalize ! #
         mat = self.__array
         for col in range(mat.shape[COLS_IDX]):
             # Seleccionamos la columna
@@ -107,7 +124,7 @@ class Format:
         decoded = base64.b64decode(encoded_tensor)
         buffer = io.BytesIO(decoded)
         with np.load(buffer) as data:
-            tensor = data['tensor']
+            tensor = data[SysProps.TENSOR]
         return tensor
 
     # def serialize_tensor(self):

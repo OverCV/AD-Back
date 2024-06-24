@@ -6,29 +6,29 @@ class Individual:
     ''' Class Individual is used to represent a solution. '''
 
     def __init__(
-        self, cms: NDArray, dist: NDArray
+        self, cms: NDArray[np.bool_], dist: NDArray[np.float64]
     ) -> None:
-        self._cms: NDArray[np.bool_] = cms
-        self._dist: NDArray = dist
-        self._fitness: float = None
+        self.__chromosome: NDArray[np.bool_] = cms
+        self.__distribution: NDArray[np.float64] = dist
+        self.__fitness: float = None
 
-    def set_cms(self, cms: NDArray) -> None:
-        self._cms = cms
+    def set_cms(self, chromosome: NDArray[np.bool_]) -> None:
+        self.__chromosome = chromosome
 
     def get_cms(self) -> NDArray[np.bool_]:
-        return self._cms
+        return self.__chromosome
 
-    def set_dist(self, dist: NDArray) -> None:
-        self._dist = dist
+    def set_dist(self, distribution: NDArray[np.float64]) -> None:
+        self.__distribution = distribution
 
-    def get_dist(self) -> NDArray:
-        return self._dist
+    def get_dist(self) -> NDArray[np.float64]:
+        return self.__distribution
 
-    def set_fitness(self, fit: float) -> None:
-        self._fitness = fit
+    def set_fit(self, fitness: float) -> None:
+        self.__fitness = fitness
 
-    def get_fitness(self) -> float:
-        return self._fitness
+    def get_fit(self) -> float:
+        return self.__fitness
 
     def __str__(self) -> str:
-        return f'Individual: {self._cms} - {self._fitness}\n{self._dist}\n'
+        return f'Individual: {self.__chromosome} - {self.__fitness}\n{self.__distribution}\n'

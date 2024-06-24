@@ -16,18 +16,18 @@ class Compute:
     def __init__(
         self,
         system: SystemResponse,
+        istate: str,
         effect: str,
         causes: str,
         subtensor: list[NDArray[np.float64]]
     ) -> None:
         self.__system: System = System(
             db_sys=system.model_dump(),
+            istate=istate,
             effect=effect,
             causes=causes,
             tensor=subtensor,
         )
-        self.__effect: str = effect
-        self.__causes: str = causes
 
     def use_genetic_algorithm(self) -> bool:
         # if not sv.has_valid_istate(system.istate, len(subtensor)):
@@ -36,9 +36,10 @@ class Compute:
         #         detail=f'Invalid initial state: State {
         #             system.istate} needs to be size {len(subtensor)}.'
         #     )
-        if not av.has_valid_effect_causes(
-            len(self.__effect),
-            len(self.__causes),
+        if not av.has_valid_inputs(
+            len(self.__system.get_istate()),
+            len(self.__system.get_effect()),
+            len(self.__system.get_causes()),
             len(self.__system.get_tensor())
         ):
             raise HTTPException(

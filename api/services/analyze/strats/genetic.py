@@ -16,6 +16,8 @@ class Genetic(Sia):
         cout('Do some logic to obtain the parameters')
         def network(x): x *= 2; y = 2; return x-y
 
+        cout(f'{self._system}')
+
         def loss(): return 0.3
         def distribution(): return {0: (0.3, 0.3), 1: (0.3, 0.3)}
 

@@ -106,4 +106,4 @@ def cout(*args):
     print()
     for arg in args:
         print(arg, end=' ')
-    print()
+    print('\n')

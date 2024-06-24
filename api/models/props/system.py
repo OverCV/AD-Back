@@ -4,3 +4,4 @@ class SysProps:
     EFFECT: str = 'effect'
     CAUSES: str = 'causes'
     FORMAT: str = 'format'
+    TENSOR: str = 'tensor'
