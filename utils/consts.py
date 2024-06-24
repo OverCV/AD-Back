@@ -21,7 +21,7 @@ EXAMPLE: str = 'example'
 
 """ Analyze """
 
-NET_ID: str = 'netx_id'
+NET_ID: str = 'net_view_id'
 SMALL_PHI: str = 'φ'
 MIP: str = 'mip'
 BEST_DISTRIBUTION: str = 'dist'

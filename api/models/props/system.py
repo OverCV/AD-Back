@@ -5,3 +5,4 @@ class SysProps:
     CAUSES: str = 'causes'
     FORMAT: str = 'format'
     TENSOR: str = 'tensor'
+    SIZE: str = 'size'

@@ -10,6 +10,7 @@ pandas
 networkx
 matplotlib
 openpyxl
+pyphi
 
 python-dotenv
 pytest

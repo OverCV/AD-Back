@@ -1,34 +1,28 @@
-import numpy as np
-from data.models.core.genetic.individual import Individual
-from data.models.core.matrix import Matrix
-from copy import deepcopy
-
-
-from constants.cts import (
-    CURRENT, EMPTY_STR, FUTURE, INITIAL, STR_ONE, STR_ZERO,
-    be_tensor, le_tensor,
-)
+from api.models.genetic.individual import Individual
+from api.models.matrix import Matrix
+from api.models.system import System
 
 
 class Population:
     ''' Class Population is used to cause effects over the individuals. '''
 
     def __init__(self) -> None:
-        self._individuals: list[Individual] = []
-        self._channels: dict[str, list[str]] = None
-        self._subtensor: list[Matrix] = list()
+        self.__individuals: list[Individual] = []
+        # self.__channels: dict[str, list[str]] = None
+        # self._subtensor: list[Matrix] = list()
+        self.__system: System = None
 
     def get_size(self) -> int:
-        return len(self._individuals)
+        return len(self.__individuals)
 
     def get_individuals(self) -> list[Individual]:
-        return deepcopy(self._individuals)
+        return deepcopy(self.__individuals)
 
     def set_individuals(self, individuals: list[Individual]) -> None:
-        self._individuals = individuals
+        self.__individuals = individuals
 
     def set_channels(self, channels: dict[str, list]) -> None:
-        self._channels = channels
+        self.__channels = channels
 
     def set_subtensor(self, sub_tensor: list[Matrix]) -> None:
         self._subtensor = sub_tensor
@@ -45,8 +39,8 @@ class Population:
         '''
 
         chromosomes: np.ndarray = self.generate_k_cms(
-            len(self._channels[FUTURE]),
-            len(self._channels[CURRENT]),
+            len(self.__channels[FUTURE]),
+            len(self.__channels[CURRENT]),
             pop_size
         )
         # chromosomes = [
@@ -69,7 +63,7 @@ class Population:
         # for ind in individuals:
         #     if np.sum(ind.get_dist()) != 1.0:
         #         count += 1
-        self._individuals = individuals
+        self.__individuals = individuals
 
     # (AC|ABC)(B|0) ->[010.000]
     #   Individual: [False  True False False False False] - 1.0
@@ -93,8 +87,8 @@ class Population:
         dual_f = list()
         dual_c = list()
 
-        future = self._channels[FUTURE]
-        current = self._channels[CURRENT]
+        future = self.__channels[FUTURE]
+        current = self.__channels[CURRENT]
 
         # Miramos en el futuro:
         for idx, channel in enumerate(future):

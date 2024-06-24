@@ -103,7 +103,8 @@ async def logger(func):
 
 
 def cout(*args):
-    print()
+    sep = f'\n{'—'*33}\n'
+    print(sep)
     for arg in args:
-        print(arg, end=' ')
-    print('\n')
+        print(arg)
+    print(sep)

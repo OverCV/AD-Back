@@ -13,10 +13,10 @@ class Genetic(Sia):
         super().__init__(system)
 
     def analyze(self) -> dict:
-        cout('Do some logic to obtain the parameters')
+        # cout('Do some logic to obtain the parameters')
         def network(x): x *= 2; y = 2; return x-y
 
-        cout(f'{self._system}')
+        target_dist = self._system.get_distribution()
 
         def loss(): return 0.3
         def distribution(): return {0: (0.3, 0.3), 1: (0.3, 0.3)}

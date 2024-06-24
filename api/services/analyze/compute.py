@@ -46,7 +46,9 @@ class Compute:
                 status_code=400,
                 detail='Invalid effect and causes.'
             )
-        sia_genetic: Genetic = Genetic(self.__system)
+        # ! Made for S2P
+        subsystem = self.__system.subsystem(effect, causes)
+        sia_genetic: Genetic = Genetic(subsystem)
         sia_genetic.calculate_repertoire()
         return sia_genetic.get_reperoire()
 

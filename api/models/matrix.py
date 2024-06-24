@@ -19,7 +19,7 @@ class Matrix:
         self.__effect: set[int] = set(range(
             self.__array.shape[COLS_IDX]
         ))
-        cout('shape', self.__array.shape, self.__effect, self.__causes)
+        # cout('shape', self.__array.shape, self.__effect, self.__causes)
         # cout(self.__array)
 
     def margin_col(self, states: str) -> None:
