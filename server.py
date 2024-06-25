@@ -25,17 +25,4 @@ class Server:
         self.store_nets = False
 
 
-conf = Server()
-
-# class AppConfig:
-#     ''' Class Config is used to set the main logical operations required for the application to work propperly. '''
-
-#     def __init__(self) -> None:
-#         self.__init_notation()
-
-#     @property
-#     def le_notation(self) -> bool:
-#         return self.little_endian
-
-#     def __init_notation(self) -> None:
-#         self.little_endian = False
+conf: Server = Server()

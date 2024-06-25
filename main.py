@@ -1,6 +1,5 @@
 import os
-import server
-import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,13 +16,14 @@ from api.routes import (
 ''' Relational Database '''
 
 Base.metadata.create_all(bind=engine)
+# ! Read config table from database and set to app params ! #
 
 ''' Main application '''
 
 app: FastAPI = FastAPI(
     title='Algorithms Project | Over V.',
-    summary='The development of the partitioning problem for the Analisis and Design of Algorithms course.',
-    version='1.0.4',
+    summary='Software development for the minimal information partition in the Analisis and Design of Algorithms course.',
+    version='2.0.0',
 )
 
 

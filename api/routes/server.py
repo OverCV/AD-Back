@@ -51,3 +51,9 @@ async def configure_server(
             DATA: [using_le, storing_nets, using_locale_nosql]
         })
     )
+
+
+@router.get('/load-config')
+async def load_config():
+    await conf.load_config()
+    return {'message': 'Config loaded successfully!'}

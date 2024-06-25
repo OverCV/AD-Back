@@ -1,5 +1,5 @@
-from enum import Enum, member
+from enum import Enum
 
 
 class NextJSPort(Enum):
-    NEXT_LOCALE_URL: member = 'NEXT_LCL_URL'
+    NEXT_LOCALE_URL = 'NEXT_LCL_URL'

@@ -1,6 +1,6 @@
 import networkx as nx
 from functools import reduce
-import itertools
+import itertools as it
 import random
 import math
 
@@ -8,6 +8,9 @@ from numpy.typing import NDArray
 import numpy as np
 
 ''' If needed, this class could partitionate into several modules associated with the business logic. '''
+
+up_sep: str = '\n'+'︵'*17+'\n'
+dn_sep: str = '\n'+'︶'*17+'\n'
 
 
 def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> float:
@@ -62,6 +65,28 @@ def hamming_distance(a: int, b: int) -> int:
     return bin(a ^ b).count('1')
 
 
+def all_states(n, big_endian=False):
+    """Return all binary states for a system.
+
+    Args:
+        n (int): The number of elements in the system.
+        big_endian (bool): Whether to return the states in big-endian order
+            instead of little-endian order.
+
+    Yields:
+        tuple[int]: The next state of an ``n``-element system, in little-endian
+        order unless ``big_endian`` is ``True``.
+    """
+    if n == 0:
+        return
+
+    for state in it.product((0, 1), repeat=n):
+        if big_endian:
+            yield state
+        else:
+            yield state[::-1]  # Convert to little-endian ordering
+
+
 def lil_endian(n: int) -> list[str]:
     """Generate a list of strings representing the numbers in
     little-endian for indices in ``range(2**n)``.
@@ -103,8 +128,28 @@ async def logger(func):
 
 
 def cout(*args):
-    sep = f'\n{'—'*33}\n'
-    print(sep)
+    print(up_sep)
     for arg in args:
         print(arg)
-    print(sep)
+    print(dn_sep)
+
+def combs(a, r):
+    """NumPy implementation of ``itertools.combinations``.
+
+    Return successive ``r``-length combinations of elements in the array ``a``.
+
+    Args:
+        a (np.ndarray): The array from which to get combinations.
+        r (int): The length of the combinations.
+
+    Returns:
+        np.ndarray: An array of combinations.
+    """
+    # Special-case for 0-length combinations
+    if r == 0:
+        return np.asarray([])
+
+    a = np.asarray(a)
+    data_type = a.dtype if r == 0 else np.dtype([('', a.dtype)] * r)
+    b = np.fromiter(it.combinations(a, r), data_type)
+    return b.view(a.dtype).reshape(-1, r)

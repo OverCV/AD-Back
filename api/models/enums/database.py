@@ -1,12 +1,12 @@
-from enum import Enum, member
+from enum import Enum
 
 
 class SQLPort(Enum):
-    SQLITE_URL: member = 'SQLITE_URL'
+    SQLITE_URL = 'SQLITE_URL'
 
 
 class NoSQLPort(Enum):
-    REMOTE_MONGO_URI: member = 'REMOTE_MONGO_URI'
-    LOCAL_MONGO_URI: member = 'LOCAL_MONGO_URI'
-    MONGO_CLIENT: member = 'MONGO_CLIENT'
-    MONGO_COLLECTION: member = 'MONGO_COLLECTION'
+    REMOTE_MONGO_URI = 'REMOTE_MONGO_URI'
+    LOCAL_MONGO_URI = 'LOCAL_MONGO_URI'
+    MONGO_CLIENT = 'MONGO_CLIENT'
+    MONGO_COLLECTION = 'MONGO_COLLECTION'

@@ -1,8 +1,8 @@
-from enum import Enum, member
+from enum import Enum
 
 
 class FileExt(Enum):
-    EXCEL: member = '.xlsx'
-    CSV: member = '.csv'
-    TXT: member = '.txt'
-    JSON: member = '.json'
+    EXCEL = '.xlsx'
+    CSV = '.csv'
+    TXT = '.txt'
+    JSON = '.json'

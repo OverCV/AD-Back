@@ -1,3 +1,4 @@
+from re import S
 import numpy as np
 from fastapi import HTTPException
 from api.models.system import System
@@ -21,36 +22,40 @@ class Compute:
         causes: str,
         subtensor: list[NDArray[np.float64]]
     ) -> None:
-        self.__system: System = System(
+        self.__effect: str = effect
+        self.__causes: str = causes
+        self.__supsystem: System = System(
             db_sys=system.model_dump(),
             istate=istate,
-            effect=effect,
-            causes=causes,
             tensor=subtensor,
         )
 
     def use_genetic_algorithm(self) -> bool:
+        if not av.has_valid_inputs(
+            len(self.__supsystem.get_istate()),
+            len(self.__effect),
+            len(self.__causes),
+            len(self.__supsystem.get_tensor())
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail='Invalid effect, causes or istate.'
+            )
+        # ! Made for S2P
+        # Seteamos los estados futuros y presentes
+        self.__supsystem.set_effect(self.__effect)
+        self.__supsystem.set_causes(self.__causes)
+        system = self.__supsystem.subsystem()
+
+        sia_genetic: Genetic = Genetic(system)
+        sia_genetic.calculate_repertoire()
+        return sia_genetic.get_reperoire()
         # if not sv.has_valid_istate(system.istate, len(subtensor)):
         #     raise HTTPException(
         #         status_code=status.HTTP_400_BAD_REQUEST,
         #         detail=f'Invalid initial state: State {
         #             system.istate} needs to be size {len(subtensor)}.'
         #     )
-        if not av.has_valid_inputs(
-            len(self.__system.get_istate()),
-            len(self.__system.get_effect()),
-            len(self.__system.get_causes()),
-            len(self.__system.get_tensor())
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail='Invalid effect and causes.'
-            )
-        # ! Made for S2P
-        subsystem = self.__system.subsystem(effect, causes)
-        sia_genetic: Genetic = Genetic(subsystem)
-        sia_genetic.calculate_repertoire()
-        return sia_genetic.get_reperoire()
 
     def use_pyphi(self) -> bool:
         pass

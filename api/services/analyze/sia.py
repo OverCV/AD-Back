@@ -5,6 +5,8 @@ from api.models.system import System
 from utils.consts import (
     BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
 )
+from numpy.typing import NDArray
+
 
 
 class Sia(ABC):
@@ -12,7 +14,7 @@ class Sia(ABC):
 
     def __init__(self, system) -> None:
         self._system: System = system  # Passed
-        self._dist_sys: NDArray = None  # Calculated
+        self._dist_sys: NDArray[np.float64] = None  # Calculated
 
         self._network: nx.Graph | nx.DiGraph = None
         self._integrated_info: float = None

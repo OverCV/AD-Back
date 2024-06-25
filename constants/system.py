@@ -45,6 +45,13 @@ SYSTEMS: dict[str, dict[str, str]] = {
         SysProps.CAUSES: '11',
         SysProps.FORMAT: S2C,
     },
+    R3A: {
+        SysProps.TITLE: R3A,
+        SysProps.ISTATE: '100',
+        SysProps.EFFECT: '111',
+        SysProps.CAUSES: '111',
+        SysProps.FORMAT: S2C,
+    },
     R4A: {
         SysProps.TITLE: R4A,
         SysProps.ISTATE: '1000',
