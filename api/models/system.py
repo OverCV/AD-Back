@@ -1,15 +1,21 @@
+import array
+from math import dist
+from typing import Callable
+from fastapi import HTTPException
 from numpy.typing import NDArray
 import numpy as np
 
 from api.models.matrix import Matrix
 from api.models.props.system import SysProps
-from utils.consts import ROWS_IDX, STR_ONE, STR_ZERO
+from utils.consts import INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE, STR_ZERO
 
 from collections import OrderedDict
 from matplotlib.cbook import _OrderedSet
 
 
-from utils.funcs import cout
+from utils.funcs import be_product, cout, le_product
+
+from server import conf
 
 
 class System:
@@ -22,101 +28,82 @@ class System:
         # ! Acá se debería poder marginalizar muy eficientemente!
         self.__title: str = db_sys.get(SysProps.TITLE, 'no title')
         self.__istate: str = istate
-        self.__effect: str = {True: list(), False: list()}
-        self.__causes: str = {True: list(), False: list()}
 
-        # self.__effect: str = {i for i, b in enumerate(effect) if b == STR_ONE}
-        # self.__causes: str = {i for i, b in enumerate(causes) if b == STR_ONE}
-        self.__tensor: dict[int, Matrix] = OrderedDict(
-            (idx, Matrix(arr)) for idx, arr in enumerate(tensor)
-        )
+        # Setted parameters
+        self.__effect: str = {True: list(range(len(tensor))), False: list()}
+        self.__causes: str = {True: list(range(len(tensor))), False: list()}
+
+        self.__tensor: dict[int, Matrix] = {
+            idx: Matrix(arr) for idx, arr in enumerate(tensor)
+        }
         self.__distribution: NDArray[np.float64] = None
 
         # self.__size = self.get_tensor_len()
         self.__nodes = set(range(db_sys.get(SysProps.SIZE, -1)))
         # validate.network(self)
 
-    def subsystem(self, dual: bool = False):
+    def subsystem(self, dual: bool = False) -> None:
         # Given the effect and causes, this function takes the primal selection for the tensor and returns the subsystem.
-        # R5 : effect 11001, causes: 01101, istate 10000, tensor size 5
-        # prim ({A,B,E}, {B,C,E}) ; dual ({C,D}, {A,D}) #
-
-        # R5 : effect: {T: [0, 1, 4], F: [2, 3]}, causes: {T: [1, 2, 4], F: [0, 3]}, istate: 10000, tensor size 5
-
-        # BIN: str = STR_ZERO if dual else STR_ONE
-
-        subtensor = []
-        # for idx, e in:
-        #     if idx not in self.__tensor.keys():
-        #         continue
-        #     if e == BIN:
-        #         ...
-
-        #     else:
-        #         continue
-        cout(f'effect: {self.__effect}\n causes: {self.__causes}')
-
-        # Escogemos los tensores a usar y los marginalizamos
-
+        subtensor = dict()
         for idx in self.__effect[not dual]:
             cout(f'idx: {idx}')
             mat: Matrix = self.__tensor[idx]
             mat.margin(self.__causes[not dual])
-
-            serie = mat.at_state(self.__istate)
-            cout(f'serie: {serie}')
-
-            subtensor.append(self.__tensor[idx])
-
-        # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje
-
+            subtensor[idx] = self.__tensor[idx]
         # Eliminamos los estados del lado elegido para
-
         self.__effect[dual] = list()
         self.__causes[dual] = list()
+        # Asignamos el tensor reducido
+        self.__tensor = subtensor
 
-        cout(f'effect: {self.__effect}\n causes: {self.__causes}')
+    def obtain_dist(self, data: bool = False) -> NDArray[np.float64] | None:
+        """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and causes correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
 
-        return System(
-            db_sys={SysProps.TITLE: 'subsystem'},
-            istate=[
-                {i: None for i in range(5) if i in self.__nodes}
-            ],
-            tensor=subtensor
-        )
+        effect = {T;[0,1,4], F:[]} causes = {T: [2,4], F: []}
+        effect 101 ; causes 01
 
-    def obtain_dist(self) -> None:
+        Args:
+            data (bool, optional): When set to true, returns the probability distribution, by default is set as a calculated attribute. Defaults to False.
+
+        Returns:
+            NDArray[np.float64]: The probability distribution array.
+            None: If the data is set to False, else returns the distribution of the system.
+        """
         ''' Returns the distribution of the system. '''
 
-        # Main logic is to set the effect and causes states to just apply the marginalization over the system
+        # if len(effect) != len(causes) and len(effect) != len(self.__tensor):
+        #     raise HTTPException(
+        #         status_code=400,
+        #         detail='Effect and causes must have the same length. Also the tensor
 
-        # R5 : effect 11001, causes: 01101, istate 10000, tensor size 5
-        # prim ({A,B,E}, {B,C,E}) ; dual ({C,D}, {A,D}) #
+        # Accedemos al primal y dual del sistema
 
-        # effect = {i for i, b in enumerate(self.__effect) if b == STR_ONE}
-        # causes = {i for i, b in enumerate(self.__causes) if b == STR_ONE}
-        cout(f'Implementing!')
+        prim_effect = self.__effect[True]
+        dual_effect = self.__effect[False]
 
-        # Si se pide la distribución original del sistema se debe tener en cuenta la notación utilizada en la configuración del sistema, además de los canales utilizados. Se está haciendo la presuposición de que se tiene un sistema con N matrices, cada una marginalizada a su canal propio, de la forma S2P.
-        # Debe aprovecharse el paralelismo, así como la capacidad de marginalizar eficientemente mediante la dualidad del sistema.
+        prim_tensor: list[NDArray[np.float64]]
+        dual_tensor: list[NDArray[np.float64]]
+        unit_matrix: NDArray[np.float64] = np.array(
+            [INT_ONE], dtype=np.float64
+        )
+        # cout(f'1. prim {prim_effect}, dual {dual_effect}')
+        # By definition, is not possible to have both tensors empty
+        prim_tensor = unit_matrix if len(prim_effect) == INT_ZERO else [
+            self.__tensor[idx].at_state(self.__istate)
+            for idx in prim_effect
+        ]
+        dual_tensor = unit_matrix if len(dual_effect) == INT_ZERO else [
+            self.__tensor[idx].at_state(self.__istate)
+            for idx in dual_effect
+        ]
+        # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
-        #  np.empty_like
+        product: Callable = be_product if conf.little_endian else le_product
+        prim_dist = product(prim_tensor)
+        dual_dist = product(dual_tensor)
 
-        # Tomamos cada uno de los elementos del tensor, paralelizado cada uno empezamos:
-
-        # La matriz tiene una posición, en el efecto determinamos si es primal (1) o dual (0), en función a esto marginalizamos
-
-        # Para marginalizar si es primal pasamos los índices donde equivalga a 1, para dual pasamos los índices donde equivalga a 0.
-
-        # La Matriz debe ser capaz de marginalizar el arreglo a una forma determinada a la primal y a la par la dual.
-
-        # La primal de la dual pueden diferir en tamaños, por lo que únicamente hasta que se seleccione su estado inicial es que todas se podrán unir.
-
-        # R5 : istate 10000, effect 11001 = {A,B,E}, causes: 01101 = {B,C,E}
-        # Marginalizar el efecto es tomar la primal
-        # Marginalizar las causas implica tomar la sección primal
-        # Posteriormente se selecciona el estado inicial para las matrices de la primal
-        # Seleccionadas las series se procede con el producto tensorial de las matrices primales
+        dist = product([prim_dist, dual_dist])
+        return dist if data else None
 
     def get_distribution(self) -> NDArray[np.float64]:
         pass
@@ -131,10 +118,12 @@ class System:
         return self.__causes
 
     def set_effect(self, effect: str) -> None:
+        self.__effect[True], self.__effect[False] = list(), list()
         for i, b in enumerate(effect):
             self.__effect[bool(int(b))].append(i)
 
     def set_causes(self, causes: str) -> None:
+        self.__causes[True], self.__causes[False] = list(), list()
         for i, b in enumerate(causes):
             self.__causes[bool(int(b))].append(i)
 

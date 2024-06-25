@@ -1,5 +1,6 @@
 import math
 from typing import Callable
+from fastapi import HTTPException
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
@@ -42,10 +43,6 @@ class Matrix:
             dual (bool, optional): The actual matrix has a set of causes, on whichever the incoming state is, is marginalized if dual is disabled, else the given states are the states to preserve. Defaults to False.
             le (bool, optional): _description_. Defaults to conf.little_endian. Indicates if the generated states are in little or big endian notation.
         """
-        # cout(
-        # f'margin states {states} axis {axis} dual {dual} le {le} data {data}'
-        # )
-        cout('margin', states, self.__array)
         self.__array = self.__array.transpose() \
             if axis == COLS_IDX else self.__array
         # margin_df: pd.DataFrame
@@ -55,7 +52,6 @@ class Matrix:
         margined_rows = 2**(
             len(self.__causes if axis == ROWS_IDX else self.__effect)-len(states)
         )
-
         # If we have a collapsed matrix, we just sum all the values.
         if len(states) == INT_ZERO:
             vector_sum: NDArray[np.float64] = np.sum(dataframe, axis=ROWS_IDX)
@@ -64,7 +60,6 @@ class Matrix:
                 columns=dataframe.columns,
                 index=[STR_ZERO]
             )
-            cout('collapsed', collapsed)
             margin_df = collapsed
         else:
             notation: Callable = lil_endian if le else big_endian
@@ -82,18 +77,14 @@ class Matrix:
             margin_df = zeros_df
 
         margin_df /= margined_rows if axis == ROWS_IDX else INT_ONE
-        cout(f'Division!', margined_rows, margin_df)
-        # cout('margin_df', margin_df)
-#
         if axis == COLS_IDX:
-            self.__effect = [ei for ei in self.__effect if ei not in states]
+            self.__effect = states
         else:
-            self.__causes = states  # !Correct?
+            self.__causes = states
         self.__array = margin_df.to_numpy().transpose() \
             if axis == COLS_IDX else margin_df.to_numpy()
-        cout('ended', self.__causes, self.__array)
+        cout('margined', self.__causes, self.__array)
         return self.__array if data else None
-#
 
     def at_state(
         self, istate: str, axis: int = ROWS_IDX, le: bool = conf.little_endian
@@ -105,7 +96,6 @@ class Matrix:
         concat_digits: str = ''.join([istate[i] for i in self.__causes]) if axis == ROWS_IDX else \
             ''.join([istate[i] for i in self.__effect])
         tpm = self.as_dataframe()
-        # cout('at_state', concat_digits, tpm)
         # If the dataframe has only one row(collapsed tpm), return it
         arr = tpm.values \
             if len(tpm.index) == 1 \

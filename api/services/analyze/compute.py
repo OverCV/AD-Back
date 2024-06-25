@@ -45,11 +45,16 @@ class Compute:
         # Seteamos los estados futuros y presentes
         self.__supsystem.set_effect(self.__effect)
         self.__supsystem.set_causes(self.__causes)
-        system = self.__supsystem.subsystem()
+
+        system = self.__supsystem
+        system.subsystem()
+        dist = system.obtain_dist()
 
         sia_genetic: Genetic = Genetic(system)
         sia_genetic.calculate_repertoire()
         return sia_genetic.get_reperoire()
+        # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje
+
         # if not sv.has_valid_istate(system.istate, len(subtensor)):
         #     raise HTTPException(
         #         status_code=status.HTTP_400_BAD_REQUEST,

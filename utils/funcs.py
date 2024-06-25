@@ -9,8 +9,10 @@ import numpy as np
 
 ''' If needed, this class could partitionate into several modules associated with the business logic. '''
 
-up_sep: str = '\n'+'︵'*17+'\n'
-dn_sep: str = '\n'+'︶'*17+'\n'
+up_sep_ln: str = '\n'+'︵'*17+'\n'
+dn_sep_ln: str = '\n'+'︶'*17+'\n'
+up_sep: str = '︵'*17
+dn_sep: str = '︶'*17
 
 
 def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> float:
@@ -128,10 +130,18 @@ async def logger(func):
 
 
 def cout(*args):
+    print(up_sep_ln)
+    for arg in args:
+        print(arg)
+    print(dn_sep_ln)
+
+
+def coute(*args):
     print(up_sep)
     for arg in args:
         print(arg)
     print(dn_sep)
+
 
 def combs(a, r):
     """NumPy implementation of ``itertools.combinations``.
