@@ -82,12 +82,12 @@ class Format:
 
     def __sc2sp(self) -> None:
         # [s..s, c] -> [s..s, (1-c, c)] #
-        mat = self.__array
-        for col in range(mat.shape[COLS_IDX]):
+        arr = self.__array
+        for col in range(arr.shape[COLS_IDX]):
             # Seleccionamos la columna
-            column = mat[:, col]
+            column = arr[:, col]
             # Creamos una matriz con la misma cantidad de filas que la columnas y dos columnas.
-            new_mat = np.zeros((mat.shape[0], 2))
+            new_mat = np.zeros((arr.shape[0], 2))
             # Llenamos la primera columna con el complemento de la columna original
             new_mat[:, 0] = 1 - column
             # Llenamos la segunda columna con la columna original

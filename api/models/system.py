@@ -61,7 +61,12 @@ class System:
         for idx in self.__effect[not dual]:
             cout(f'idx: {idx}')
             mat: Matrix = self.__tensor[idx]
-            mat.margin(self.__effect[dual])
+            mat.margin(self.__causes[not dual])
+
+            serie = mat.at_state(self.__istate)
+            cout(f'serie: {serie}')
+
+            subtensor.append(self.__tensor[idx])
 
         # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje
 
