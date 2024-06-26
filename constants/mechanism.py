@@ -1,5 +1,7 @@
-from api.models.props.system import SysProps
+from typing import TypedDict
+from api.models.props.mechanism import SysProps
 from constants.format import S2C
+from utils.consts import INT_ONE, INT_ZERO
 
 
 VOID: str = '∅'
@@ -18,6 +20,8 @@ TENSOR: str = 'tensor'
 # DEFAULT_EFFECT: str = '1111111111'
 # DEFAULT_CAUSES: str = '1111111111'
 
+FUTURE = INT_ZERO
+CURRENT = INT_ONE
 
 R2A: str = 'R2A'
 R3A: str = 'R3A'
@@ -37,7 +41,16 @@ R8B: str = 'R8B'
 
 R10A: str = 'R10A'
 
-SYSTEMS: dict[str, dict[str, str]] = {
+
+class MechaInt(TypedDict):
+    title: str
+    istate: str
+    effect: str
+    causes: str
+    format: str
+
+
+MECHANISMS: dict[str, MechaInt] = {
     R2A: {
         SysProps.TITLE: R2A,
         SysProps.ISTATE: '10',

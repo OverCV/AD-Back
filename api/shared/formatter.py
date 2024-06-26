@@ -8,11 +8,9 @@ import openpyxl as op
 import pandas as pd
 
 from api.models.enums.extensions import FileExt
-from api.models.matrix import Matrix
-from api.models.props.system import SysProps
+from api.models.props.mechanism import SysProps
 from constants.format import S2C, S2P, S2S
 from utils.consts import COLS_IDX
-from utils.funcs import cout
 
 
 class Format:

@@ -7,9 +7,12 @@ motor
 
 numpy
 pandas
+# polars
 networkx
 matplotlib
+# seaborn
 openpyxl
 
 python-dotenv
 pytest
+ruff

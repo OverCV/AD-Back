@@ -1,8 +1,7 @@
-from re import S
 import numpy as np
 from fastapi import HTTPException
 from api.models.mechanism import Mechanism
-from api.schemas.system import SystemResponse
+from api.schemas.mechanism import MechanismResponse
 
 from numpy.typing import NDArray
 
@@ -12,15 +11,15 @@ from api.services.analyze.strats.force import BruteForce
 
 
 class Compute:
-    ''' Class Compute is used to compute all different System Irreducibility analysis. '''
+    """Class Compute is used to compute all different System Irreducibility analysis."""
 
     def __init__(
         self,
-        system: SystemResponse,
+        system: MechanismResponse,
         istate: str,
         effect: str,
         causes: str,
-        subtensor: list[NDArray[np.float64]]
+        subtensor: list[NDArray[np.float64]],
     ) -> None:
         self.__effect: str = effect
         self.__causes: str = causes
@@ -30,22 +29,27 @@ class Compute:
             tensor=subtensor,
         )
 
+    def validate_input(self) -> bool:
+        if not av.has_valid_inputs(
+            len(self.__supsystem.get_istate()),
+            len(self.__effect),
+            len(self.__causes),
+            len(self.__supsystem.get_tensor()),
+        ):
+            raise HTTPException(
+                status_code=400, detail='Invalid effect, causes or istate.'
+            )
+
+    def use_pyphi(self) -> bool:
+        pass
+
     def use_brute_force(self) -> bool:
         sia_force = BruteForce()
         sia_force.calculate_repertoire()
         return sia_force.get_reperoire()
 
     def use_genetic_algorithm(self) -> bool:
-        if not av.has_valid_inputs(
-            len(self.__supsystem.get_istate()),
-            len(self.__effect),
-            len(self.__causes),
-            len(self.__supsystem.get_tensor())
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail='Invalid effect, causes or istate.'
-            )
+        self.validate_input()
         # ! Made for S2P
         # Seteamos los estados futuros y presentes
         self.__supsystem.set_effect(self.__effect)
@@ -67,14 +71,6 @@ class Compute:
         #         detail=f'Invalid initial state: State {
         #             system.istate} needs to be size {len(subtensor)}.'
         #     )
-
-    def use_pyphi(self) -> bool:
-        pass
-
-    def use_brute_force(self) -> bool:
-        sia_force = BruteForce()
-        sia_force.calculate_repertoire()
-        return sia_force.get_reperoire()
 
     def use_branch_and_bound(self) -> bool:
         pass

@@ -1,12 +1,11 @@
 import math
 from typing import Callable
-from fastapi import HTTPException
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
 
-from utils.consts import COLS_IDX, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE, STR_ZERO
+from utils.consts import COLS_IDX, INT_ONE, INT_ZERO, ROWS_IDX, STR_ZERO
 from utils.funcs import (
     big_endian, lil_endian,
     cout

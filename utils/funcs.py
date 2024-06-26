@@ -1,22 +1,26 @@
-import networkx as nx
-from functools import reduce
+from functools import cache, reduce
 import itertools as it
-import random
 import math
 
 from numpy.typing import NDArray
 import numpy as np
 
-''' If needed, this class could partitionate into several modules associated with the business logic. '''
+from utils.consts import INT_ONE, INT_ZERO, STR_ONE
 
-up_sep_ln: str = '\n'+'︵'*17+'\n'
-dn_sep_ln: str = '\n'+'︶'*17+'\n'
-up_sep: str = '︵'*17
-dn_sep: str = '︶'*17
+from server import conf
+
+""" If needed, this class could partitionate into several modules associated with the business logic. """
+
+up_sep_ln: str = '\n' + '︵' * 16 + '\n'
+dn_sep_ln: str = '\n' + '︶' * 16 + '\n'
+up_sep: str = '︵' * 16
+dn_sep: str = '︶' * 16
 
 
-def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> float:
-    ''' Returns the Earth Mover's Distance between two distributions.'''
+def emd(
+    u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False
+) -> float:
+    """Returns the Earth Mover's Distance between two distributions."""
     u = np.asarray(u, dtype=float).flatten()
     v = np.asarray(v, dtype=float).flatten()
 
@@ -24,8 +28,7 @@ def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> flo
         raise ValueError('Both distributions must have the same size')
 
     max_len = int(math.log2(len(u)))
-    end_keys = big_endian(max_len) if be \
-        else lil_endian(max_len)
+    end_keys = big_endian(max_len) if be else lil_endian(max_len)
     earth_moved = 0.0
 
     while not np.allclose(u, 0):
@@ -48,27 +51,22 @@ def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> flo
 
 
 def be_product(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
-    ''' Returns the tensor product of a list of arrays.'''
-    return reduce(
-        lambda x, y: np.kron(x, y),
-        arrays
-    )
+    """Returns the tensor product of a list of arrays."""
+    return reduce(lambda x, y: np.kron(x, y), arrays)
 
 
 def le_product(arrays: list[NDArray[np.float64]]) -> NDArray:
-    ''' Returns the tensor product of a list of arrays.'''
-    return reduce(
-        lambda x, y: np.kron(y, x),
-        arrays
-    )
+    """Returns the tensor product of a list of arrays."""
+    return reduce(lambda x, y: np.kron(y, x), arrays)
 
 
 def hamming_distance(a: int, b: int) -> int:
-    return bin(a ^ b).count('1')
+    return bin(a ^ b).count(STR_ONE)
 
 
-def all_states(n, big_endian=False):
-    """Return all binary states for a system.
+@cache
+def all_states(n, lil_endian=conf.little_endian):
+    """Return all binary states until N.
 
     Args:
         n (int): The number of elements in the system.
@@ -82,13 +80,11 @@ def all_states(n, big_endian=False):
     if n == 0:
         return
 
-    for state in it.product((0, 1), repeat=n):
-        if big_endian:
-            yield state
-        else:
-            yield state[::-1]  # Convert to little-endian ordering
+    for state in it.product((INT_ZERO, INT_ONE), repeat=n):
+        yield state if lil_endian else state[::-1]
 
 
+@cache
 def lil_endian(n: int) -> list[str]:
     """Generate a list of strings representing the numbers in
     little-endian for indices in ``range(2**n)``.
@@ -96,6 +92,7 @@ def lil_endian(n: int) -> list[str]:
     return [bin(i)[2:].zfill(n)[::-1] for i in range(2**n)]
 
 
+@cache
 def big_endian(n: int) -> list[str]:
     """Generate a list of strings representing the numbers in
     big-endian for indices in ``range(2**n)``.
@@ -103,13 +100,15 @@ def big_endian(n: int) -> list[str]:
     return [bin(i)[2:].zfill(n) for i in range(2**n)]
 
 
+@cache
 def get_labels(n: int) -> tuple[str]:
     def get_excel_column(n: int) -> str:
         if n <= 0:
             return ''
-        return get_excel_column((n-1) // 26) + chr((n-1) % 26 + ord('A'))
+        return get_excel_column((n - 1) // 26) + chr((n - 1) % 26 + ord('A'))
+
     # return tuple([get_excel_column(i) for i in range(1, n+1)] + ['∅'])
-    return tuple([get_excel_column(i) for i in range(1, n+1)])
+    return tuple([get_excel_column(i) for i in range(1, n + 1)])
 
 
 async def logger(func):
@@ -118,6 +117,7 @@ async def logger(func):
         result = func(*args, **kwargs)
         print('\n')
         return result
+
     return wrapper
 
 

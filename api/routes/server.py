@@ -1,18 +1,9 @@
-import io
 from logging import *
 
-from typing import Annotated, Callable
-import numpy as np
-import openpyxl as op
-from fastapi import Body, File, Form, HTTPException, Response, UploadFile, status, APIRouter, Depends
+from fastapi import Form, status, APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-import pandas as pd
-from pydantic import Field
-from sqlalchemy.orm import Session
-from api.schemas.system import SystemRequest
-from data.base import get_sqlite
 
 
 from server import conf

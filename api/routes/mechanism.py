@@ -1,29 +1,33 @@
-from logging import *
-from os import system
-
-
-from fastapi import Body, File, Form, HTTPException, Response, UploadFile, status, APIRouter, Depends
+from fastapi import (
+    APIRouter,
+    status,
+    UploadFile,
+    HTTPException,
+    File,
+    Form,
+    Depends,
+)
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from matplotlib.pylab import f
-import numpy as np
-import pandas as pd
 from sqlalchemy.orm import Session
-from api.models.props.system import SysProps
-from api.schemas.system import SystemRequest
-from constants.system import R4A, SYSTEMS
-from data.base import get_sqlite
+from api.models.props.mechanism import SysProps
+from api.schemas.mechanism import MechanismRequest, MechanismResponse
+from constants.mechanism import R4A, MECHANISMS
+from data.motors import get_sqlite
 
-
-from api.services.system.service import *
+from api.services.mechanism.service import (
+    get_all,
+    get_mechanism,
+    delete_mechanism,
+    post_mechanism,
+)
 from api.shared.formatter import Format
 
-
-from constants.format import (
-    DEFAULT_FORMAT, DEFFAULT_SHEET, S2C, S2P, S2S
-)
+from constants.format import DEFFAULT_SHEET
+from data.tables import MechanismTable
 from utils.consts import DATA
+
 
 router: APIRouter = APIRouter()
 
@@ -32,51 +36,45 @@ router: APIRouter = APIRouter()
     '/',
     response_description='Crea un sistema.',
     status_code=status.HTTP_201_CREATED,
-    response_model=SystemResponse,
+    response_model=MechanismResponse,
 )
 async def create_system(
-    title: str = Form(default=SYSTEMS[R4A][SysProps.TITLE]),
+    title: str = Form(default=MECHANISMS[R4A][SysProps.TITLE]),
     # istate: str = Form(default=SYSTEMS[R4A][SysProps.ISTATE]),
-    format: str = Form(default=SYSTEMS[R4A][SysProps.FORMAT]),
+    format: str = Form(default=MECHANISMS[R4A][SysProps.FORMAT]),
     tensor: UploadFile = File(...),
     sheet: str = Form(default=DEFFAULT_SHEET),
     db: Session = Depends(get_sqlite),
 ):
-    system_req: SystemRequest = SystemRequest(
+    system_req: MechanismRequest = MechanismRequest(
         title=title, format=format
     )
     form: Format = Format(tensor, sheet, format)
     await form.set_array()
-    new_system: SystemResponse = post_system(system_req, form, db)
-    return JSONResponse(
-        content={DATA: jsonable_encoder(new_system)}
-    )
+    new_system: MechanismResponse = post_mechanism(system_req, form, db)
+    return JSONResponse(content={DATA: jsonable_encoder(new_system)})
 
 
 @router.get(
     '/all',
     response_description='Obtiene todos los sistemas.',
-    response_model=list[SystemResponse],
+    response_model=list[MechanismResponse],
     status_code=status.HTTP_200_OK,
 )
 async def all_systems(db: Session = Depends(get_sqlite)):
-    systems: list[SystemTable] = get_all(db)
-    return JSONResponse(
-        content={DATA: jsonable_encoder(systems)}
-    )
+    systems: list[MechanismTable] = get_all(db)
+    return JSONResponse(content={DATA: jsonable_encoder(systems)})
 
 
 @router.get(
     '/{id}',
     response_description='Obtiene un sistema.',
-    response_model=SystemResponse,
+    response_model=MechanismResponse,
     status_code=status.HTTP_200_OK,
 )
 async def get_system_by_id(id: int, db: Session = Depends(get_sqlite)):
-    system: SystemResponse = get_system(id, db)
-    return JSONResponse(
-        content={DATA: jsonable_encoder(system)}
-    )
+    system: MechanismResponse = get_mechanism(id, db)
+    return JSONResponse(content={DATA: jsonable_encoder(system)})
 
 
 @router.delete(
@@ -85,16 +83,16 @@ async def get_system_by_id(id: int, db: Session = Depends(get_sqlite)):
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_system_by_id(id: int, db: Session = Depends(get_sqlite)):
-    system_removed: bool = delete_system(id, db)
+    system_removed: bool = delete_mechanism(id, db)
     if system_removed:
         return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content={'data': True}
+            status_code=status.HTTP_200_OK, content={'data': True}
         )
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=f'System with id {id} not found.'
+        detail=f'System with id {id} not found.',
     )
+
 
 # async def strategy_zero(system_schema: SystemSchema):
 # res: dict = await compute_zero(system_schema)

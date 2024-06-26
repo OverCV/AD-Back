@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 
 
 class Individual:
-    ''' Class Individual is used to represent a solution. '''
+    """Class Individual is used to represent a solution."""
 
     def __init__(
         self, cms: NDArray[np.bool_], dist: NDArray[np.float64]

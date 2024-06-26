@@ -1,9 +1,4 @@
-import numpy as np
 
-from utils.consts import (
-    ISTATE, TENSOR,
-    R2A, F3A, F4A, F5A, F6A, F8A,
-)
 
 # SYSTEMS: dict[str, dict[str, str | list[list[list[float]]]]] = {
 #     R2A: {

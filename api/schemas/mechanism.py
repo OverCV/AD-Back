@@ -1,14 +1,12 @@
-from pydantic import BaseModel, field_validator
-import numpy as np
+from pydantic import BaseModel
 
 
-class SystemRequest(BaseModel):
+class MechanismRequest(BaseModel):
     title: str
     format: str
-    # istate: str
 
 
-class SystemResponse(SystemRequest):
+class MechanismResponse(MechanismRequest):
     id: int
     tensor: str
     size: int

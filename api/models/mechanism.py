@@ -1,14 +1,12 @@
-import array
 from collections import OrderedDict
-from math import dist
 from typing import Callable
 from fastapi import HTTPException
 from numpy.typing import NDArray
 import numpy as np
 
 from api.models.matrix import Matrix
-from api.models.props.system import SysProps
-from utils.consts import INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE, STR_ZERO
+from api.models.props.mechanism import SysProps
+from utils.consts import INT_ONE, INT_ZERO
 
 
 from utils.funcs import be_product, cout, le_product

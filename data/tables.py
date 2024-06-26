@@ -1,11 +1,11 @@
 from sqlalchemy import Boolean, Column, Integer, String, CLOB, DateTime
-from data.base import Base
+from data.motors import Base
 
 
 # Se almacenan las matrices ya marginalizadas y a su vez se tiene la distribución objetivo #
 
 
-class SystemTable(Base):
+class MechanismTable(Base):
     __tablename__ = 'system'
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(31))

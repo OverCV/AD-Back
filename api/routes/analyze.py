@@ -1,18 +1,20 @@
-import io
 from logging import *
 
 from fastapi import status, APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from api.models.props.system import SysProps
+from api.models.props.mechanism import SysProps
 from api.services.analyze.compute import Compute
-from constants.system import R10A, R2A, R4A, R5A, SYSTEMS
-from data.base import get_sqlite
+from constants.mechanism import R5A, MECHANISMS
+from api.shared.formatter import Format
 
-from api.services.system.service import *
+from data.motors import get_sqlite
 
-from utils.funcs import cout
+from api.services.mechanism.service import (
+    get_mechanism_by_title,
+)
+
 
 router: APIRouter = APIRouter()
 
@@ -24,21 +26,26 @@ router: APIRouter = APIRouter()
     response_model_by_alias=False,
 )
 async def genetic_strategy(
-    title:  str = SYSTEMS[R5A][SysProps.TITLE],
-    istate: str = SYSTEMS[R5A][SysProps.ISTATE],
-    effect: str = SYSTEMS[R5A][SysProps.EFFECT],
-    causes: str = SYSTEMS[R5A][SysProps.CAUSES],
+    title: str = MECHANISMS[R5A][SysProps.TITLE],
+    istate: str = MECHANISMS[R5A][SysProps.ISTATE],
+    effect: str = MECHANISMS[R5A][SysProps.EFFECT],
+    causes: str = MECHANISMS[R5A][SysProps.CAUSES],
     # ! Should be a GLOBAL configuration
     store_network: bool = False,
-    db=Depends(get_sqlite)
+    db=Depends(get_sqlite),
 ):
-    db_system = get_system_by_title(title, db)
+    db_system = get_mechanism_by_title(title, db)
     form: Format = Format()
     subtensor = form.deserialize_tensor(db_system.tensor)
 
-    computing: Compute = Compute(db_system, istate, effect, causes, subtensor)
+    computing: Compute = Compute(
+        db_system, istate, effect, causes, subtensor
+    )
     results = computing.use_genetic_algorithm()
-    return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
+    return JSONResponse(
+        content=jsonable_encoder(results), status_code=status.HTTP_200_OK
+    )
+
 
 # @router.get(
 #     '/sia-pyphi/',

@@ -1,9 +1,6 @@
-from ast import List
 # from numpy import 
 # from numpy.typing import NDArray
-from typing_extensions import Doc
-from fastapi import Body, HTTPException, Query, Response, status, APIRouter, Depends
-from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi import Body, HTTPException, Query, Response, status, APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pymongo.errors import ServerSelectionTimeoutError
@@ -13,7 +10,7 @@ from bson import ObjectId
 from api.schemas.networks import NetworkCollection
 
 from api.schemas.network.schema import NetworkSchema
-from data.base import get_mongo
+from data.motors import get_mongo
 from utils.consts import DATA
 
 from server import conf
@@ -39,7 +36,7 @@ async def list_networks(quantity: int = Query(default=10, ge=1)):
                 NetworkCollection(networks=networks)
             )}
         )
-    except ServerSelectionTimeoutError as e:
+    except ServerSelectionTimeoutError:
         print('Error conectando a MongoDB remoto, caída en vuelta a MongoDB local.')
         conf.use_locale_nosql()
         db = await get_mongo()
@@ -68,7 +65,7 @@ async def get_network_by_id(id: str):
             network := await db.find_one({'_id': ObjectId(id)})
         ) is not None:
             return network
-    except ServerSelectionTimeoutError as e:
+    except ServerSelectionTimeoutError:
         print('Error connecting to remote MongoDB, falling back to local MongoDB.')
         conf.use_locale_nosql()
         db = await get_mongo()
@@ -100,7 +97,7 @@ async def create_network(network: NetworkSchema = Body(...)):
                 NetworkSchema(**stored_network)
             )}
         )
-    except ServerSelectionTimeoutError as e:
+    except ServerSelectionTimeoutError:
         print('Error connecting to remote MongoDB, falling back to local MongoDB.')
         conf.use_locale_nosql()
         db = await get_mongo()
@@ -144,7 +141,7 @@ async def update_network(id: str, network: NetworkSchema = Body(...)):
                         NetworkSchema(**network.dict(), id=id)
                     )}
                 )
-    except ServerSelectionTimeoutError as e:
+    except ServerSelectionTimeoutError:
         print('Error connecting to remote MongoDB, falling back to local MongoDB.')
         conf.use_locale_nosql()
         db = await get_mongo()
@@ -185,7 +182,7 @@ async def delete_network(id: str):
             return Response(
                 status_code=status.HTTP_204_NO_CONTENT
             )
-    except ServerSelectionTimeoutError as e:
+    except ServerSelectionTimeoutError:
         print('Error connecting to remote MongoDB, falling back to local MongoDB.')
         conf.use_locale_nosql()
         db = await get_mongo()

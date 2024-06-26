@@ -1,25 +1,28 @@
 import networkx as nx
 from api.services.analyze.sia import Sia
-from utils.consts import (
-    BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
-)
-from utils.funcs import cout
+from utils.consts import BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
 
 
 class Genetic(Sia):
-    ''' Class Zero is used to solve the problem by brute force. '''
+    """Class Zero is used to solve the problem by brute force."""
 
     def __init__(self, system) -> None:
         super().__init__(system)
 
     def analyze(self) -> dict:
         # cout('Do some logic to obtain the parameters')
-        def network(x): x *= 2; y = 2; return x-y
+        def network(x):
+            x *= 2
+            y = 2
+            return x - y
 
         target_dist = self._system.get_distribution()
 
-        def loss(): return 0.3
-        def distribution(): return {0: (0.3, 0.3), 1: (0.3, 0.3)}
+        def loss():
+            return 0.3
+
+        def distribution():
+            return {0: (0.3, 0.3), 1: (0.3, 0.3)}
 
         return {
             # ! Store the network, get the id and return it to invoque in front ! #
