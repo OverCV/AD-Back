@@ -1,6 +1,6 @@
 from api.models.genetic.individual import Individual
 from api.models.matrix import Matrix
-from api.models.system import System
+from api.models.mechanism import Mechanism
 
 
 class Population:
@@ -10,7 +10,7 @@ class Population:
         self.__individuals: list[Individual] = []
         # self.__channels: dict[str, list[str]] = None
         # self._subtensor: list[Matrix] = list()
-        self.__system: System = None
+        self.__system: Mechanism = None
 
     def get_size(self) -> int:
         return len(self.__individuals)

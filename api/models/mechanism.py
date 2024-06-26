@@ -1,4 +1,5 @@
 import array
+from collections import OrderedDict
 from math import dist
 from typing import Callable
 from fastapi import HTTPException
@@ -9,16 +10,12 @@ from api.models.matrix import Matrix
 from api.models.props.system import SysProps
 from utils.consts import INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE, STR_ZERO
 
-from collections import OrderedDict
-from matplotlib.cbook import _OrderedSet
-
 
 from utils.funcs import be_product, cout, le_product
-
 from server import conf
 
 
-class System:
+class Mechanism:
     ''' Class System is used to easily manage the tensorial operations. '''
 
     def __init__(
@@ -30,37 +27,72 @@ class System:
         self.__istate: str = istate
 
         # Setted parameters
-        self.__effect: str = {True: list(range(len(tensor))), False: list()}
-        self.__causes: str = {True: list(range(len(tensor))), False: list()}
+        self.__effect: str | None = None
+        self.__causes: str | None = None
 
-        self.__tensor: dict[int, Matrix] = {
-            idx: Matrix(arr) for idx, arr in enumerate(tensor)
-        }
+        self.__tensor: dict[int, Matrix] = OrderedDict(
+            (idx, Matrix(arr)) for idx, arr in enumerate(tensor)
+        )
         self.__distribution: NDArray[np.float64] = None
 
         # self.__size = self.get_tensor_len()
-        self.__nodes = set(range(db_sys.get(SysProps.SIZE, -1)))
+        # self.__nodes = set(range(db_sys.get(SysProps.SIZE, -1)))
         # validate.network(self)
 
-    def subsystem(self, dual: bool = False) -> None:
-        # Given the effect and causes, this function takes the primal selection for the tensor and returns the subsystem.
-        subtensor = dict()
-        for idx in self.__effect[not dual]:
-            cout(f'idx: {idx}')
+    def correlate(self) -> None:
+        if self.__effect == None or self.__causes == None:
+            raise HTTPException(
+                status_code=400,
+                detail='Effect and causes must be setted.'
+            )
+        # subtensor = dict()
+        for idx in self.__effect[True]:
+            cout(f'T idx: {idx}')
             mat: Matrix = self.__tensor[idx]
-            mat.margin(self.__causes[not dual])
-            subtensor[idx] = self.__tensor[idx]
-        # Eliminamos los estados del lado elegido para
-        self.__effect[dual] = list()
-        self.__causes[dual] = list()
-        # Asignamos el tensor reducido
-        self.__tensor = subtensor
+            mat.margin(self.__causes[True])
+            # subtensor[idx] = self.__tensor[idx]
+        for idx in self.__effect[False]:
+            cout(f'F idx: {idx}')
+            mat: Matrix = self.__tensor[idx]
+            mat.margin(self.__causes[False])
+            # subtensor[idx] = self.__tensor[idx]
+        # [
+        #     cout(k, m) for k, m in self.__tensor.items()
+        # ]
 
-    def obtain_dist(self, data: bool = False) -> NDArray[np.float64] | None:
+    def drop_matrices(self, mat_idxs: list[int]) -> None:
+        self.__effect = None
+        self.__causes = None
+        for elem in mat_idxs:
+            self.__tensor.pop(elem)
+
+    # def subsystem(self, dual: bool = False) -> None:
+    #     # Given the effect and causes, this function takes the primal selection for the tensor and returns the subsystem.
+    #     subtensor = dict()
+
+    #     for idx in self.__effect[dual]:
+    #         cout(f'idx: {idx}')
+    #         mat: Matrix = self.__tensor[idx]
+    #         mat.margin(self.__causes[dual])
+    #         subtensor[idx] = self.__tensor[idx]
+
+    #     # for idx in self.__effect[not dual]:
+    #     #     cout(f'idx: {idx}')
+    #     #     mat: Matrix = self.__tensor[idx]
+    #     #     mat.margin(self.__causes[not dual])
+    #     #     subtensor[idx] = self.__tensor[idx]
+
+    #     # Eliminamos los estados del lado elegido
+    #     self.__effect[not dual] = list()
+    #     self.__causes[not dual] = list()
+    #     # Asignamos el tensor reducido
+    #     self.__tensor = subtensor
+
+    def calculate_dist(self, data: bool = False) -> NDArray[np.float64] | None:
         """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and causes correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
 
-        effect = {T;[0,1,4], F:[]} causes = {T: [2,4], F: []}
-        effect 101 ; causes 01
+        {set_effect 101 - set_causes 01}:
+            effect = {T:[0,1,4], F:[]} causes = {T: [2,4], F: []}
 
         Args:
             data (bool, optional): When set to true, returns the probability distribution, by default is set as a calculated attribute. Defaults to False.
@@ -98,12 +130,22 @@ class System:
         ]
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
-        product: Callable = be_product if conf.little_endian else le_product
+        product: Callable = le_product if conf.little_endian else be_product
         prim_dist = product(prim_tensor)
         dual_dist = product(dual_tensor)
 
         dist = product([prim_dist, dual_dist])
         return dist if data else None
+
+    def set_effect(self, effect: str) -> None:
+        self.__effect = {True: list(), False: list()}
+        for i, b in enumerate(effect):
+            self.__effect[bool(int(b))].append(i)
+
+    def set_causes(self, causes: str) -> None:
+        self.__causes = {True: list(), False: list()}
+        for i, b in enumerate(causes):
+            self.__causes[bool(int(b))].append(i)
 
     def get_distribution(self) -> NDArray[np.float64]:
         pass
@@ -116,16 +158,6 @@ class System:
 
     def get_causes(self) -> str:
         return self.__causes
-
-    def set_effect(self, effect: str) -> None:
-        self.__effect[True], self.__effect[False] = list(), list()
-        for i, b in enumerate(effect):
-            self.__effect[bool(int(b))].append(i)
-
-    def set_causes(self, causes: str) -> None:
-        self.__causes[True], self.__causes[False] = list(), list()
-        for i, b in enumerate(causes):
-            self.__causes[bool(int(b))].append(i)
 
     def get_tensor(self) -> list[Matrix]:
         return self.__tensor

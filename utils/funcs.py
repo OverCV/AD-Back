@@ -47,7 +47,7 @@ def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> flo
     return earth_moved
 
 
-def be_product(arrays: list[NDArray]) -> NDArray:
+def be_product(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
     ''' Returns the tensor product of a list of arrays.'''
     return reduce(
         lambda x, y: np.kron(x, y),
@@ -55,7 +55,7 @@ def be_product(arrays: list[NDArray]) -> NDArray:
     )
 
 
-def le_product(arrays: list[NDArray]) -> NDArray:
+def le_product(arrays: list[NDArray[np.float64]]) -> NDArray:
     ''' Returns the tensor product of a list of arrays.'''
     return reduce(
         lambda x, y: np.kron(y, x),

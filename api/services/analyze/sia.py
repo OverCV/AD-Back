@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import networkx as nx
-from api.models.system import System
+from api.models.mechanism import Mechanism
 from utils.consts import (
     BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
 )
@@ -13,7 +13,7 @@ class Sia(ABC):
     ''' Class Sia is used as parent class to use it's props in the used strategies. '''
 
     def __init__(self, system) -> None:
-        self._system: System = system  # Passed
+        self._system: Mechanism = system  # Passed
         self._dist_sys: NDArray[np.float64] = None  # Calculated
 
         self._network: nx.Graph | nx.DiGraph = None

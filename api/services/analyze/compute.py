@@ -1,7 +1,7 @@
 from re import S
 import numpy as np
 from fastapi import HTTPException
-from api.models.system import System
+from api.models.mechanism import Mechanism
 from api.schemas.system import SystemResponse
 
 from numpy.typing import NDArray
@@ -24,11 +24,16 @@ class Compute:
     ) -> None:
         self.__effect: str = effect
         self.__causes: str = causes
-        self.__supsystem: System = System(
+        self.__supsystem: Mechanism = Mechanism(
             db_sys=system.model_dump(),
             istate=istate,
             tensor=subtensor,
         )
+
+    def use_brute_force(self) -> bool:
+        sia_force = BruteForce()
+        sia_force.calculate_repertoire()
+        return sia_force.get_reperoire()
 
     def use_genetic_algorithm(self) -> bool:
         if not av.has_valid_inputs(
@@ -47,8 +52,9 @@ class Compute:
         self.__supsystem.set_causes(self.__causes)
 
         system = self.__supsystem
-        system.subsystem()
-        dist = system.obtain_dist()
+        # system.subsystem()
+        system.correlate()
+        system.calculate_dist()
 
         sia_genetic: Genetic = Genetic(system)
         sia_genetic.calculate_repertoire()

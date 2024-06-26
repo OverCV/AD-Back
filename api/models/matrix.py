@@ -45,7 +45,6 @@ class Matrix:
         """
         self.__array = self.__array.transpose() \
             if axis == COLS_IDX else self.__array
-        # margin_df: pd.DataFrame
         # We init an empty dataframe to fill it with the new values
         margin_df: pd.DataFrame = pd.DataFrame()
         dataframe = self.as_dataframe()
@@ -83,7 +82,7 @@ class Matrix:
             self.__causes = states
         self.__array = margin_df.to_numpy().transpose() \
             if axis == COLS_IDX else margin_df.to_numpy()
-        cout('margined', self.__causes, self.__array)
+        cout('keeped', self.__causes, margin_df)
         return self.__array if data else None
 
     def at_state(
