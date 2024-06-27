@@ -8,7 +8,7 @@ from api.models.enums.frontend import NextJSPort
 
 from data.motors import Base, engine
 
-from api.routes import analyze, mechanism, server, network
+from api.routes import analyze, server, network, structure
 
 
 """ Relational Database """
@@ -40,9 +40,7 @@ app.add_middleware(ExceptionMiddleware)
 
 app.include_router(server.router, tags=['Server'], prefix='/server')
 app.include_router(network.router, tags=['Networks'], prefix='/network')
-app.include_router(
-    mechanism.router, tags=['Mechanisms'], prefix='/mechanism'
-)
+app.include_router(structure.router, tags=['Structures'], prefix='/structure')
 app.include_router(analyze.router, tags=['Analyze'], prefix='/analyze')
 
 """ Default routes """

@@ -8,7 +8,7 @@ import openpyxl as op
 import pandas as pd
 
 from api.models.enums.extensions import FileExt
-from api.models.props.mechanism import SysProps
+from api.models.props.structure import StructProps
 from constants.format import S2C, S2P, S2S
 from utils.consts import COLS_IDX
 
@@ -122,7 +122,7 @@ class Format:
         decoded = base64.b64decode(encoded_tensor)
         buffer = io.BytesIO(decoded)
         with np.load(buffer) as data:
-            tensor = data[SysProps.TENSOR]
+            tensor = data[StructProps.TENSOR]
         return tensor
 
     # def serialize_tensor(self):

@@ -1,7 +1,8 @@
 import numpy as np
 from fastapi import HTTPException
-from api.models.mechanism import Mechanism
-from api.schemas.mechanism import MechanismResponse
+from sqlalchemy.orm import Session
+from api.models.structure import Structure
+from api.schemas.structure import StructureResponse
 
 from numpy.typing import NDArray
 
@@ -15,53 +16,54 @@ class Compute:
 
     def __init__(
         self,
-        system: MechanismResponse,
+        struct: StructureResponse,
         istate: str,
         effect: str,
         causes: str,
         subtensor: list[NDArray[np.float64]],
+        dual: bool = False,
     ) -> None:
         self.__effect: str = effect
         self.__causes: str = causes
-        self.__supsystem: Mechanism = Mechanism(
-            db_sys=system.model_dump(),
+        self.__structure: Structure = Structure(
+            db_struct=struct.model_dump(),
             istate=istate,
             tensor=subtensor,
         )
 
     def validate_input(self) -> bool:
         if not av.has_valid_inputs(
-            len(self.__supsystem.get_istate()),
+            len(self.__structure.get_istate()),
             len(self.__effect),
             len(self.__causes),
-            len(self.__supsystem.get_tensor()),
+            len(self.__structure.get_tensor()),
         ):
-            raise HTTPException(
-                status_code=400, detail='Invalid effect, causes or istate.'
-            )
+            raise HTTPException(status_code=400, detail='Invalid effect, causes or istate.')
 
     def use_pyphi(self) -> bool:
         pass
 
     def use_brute_force(self) -> bool:
         sia_force = BruteForce()
-        sia_force.calculate_repertoire()
+        sia_force.calculate_concept()
         return sia_force.get_reperoire()
 
-    def use_genetic_algorithm(self) -> bool:
+    def use_genetic_algorithm(self, db: Session) -> bool:
         self.validate_input()
         # ! Made for S2P
         # Seteamos los estados futuros y presentes
-        self.__supsystem.set_effect(self.__effect)
-        self.__supsystem.set_causes(self.__causes)
 
-        system = self.__supsystem
+        self.__structure.set_concept(self.__effect, self.__causes)
+        # self.__mechanism.set_effect(self.__effect)
+        # self.__mechanism.set_causes(self.__causes)
+
+        system = self.__structure
         # system.subsystem()
         system.correlate()
         system.calculate_dist()
 
         sia_genetic: Genetic = Genetic(system)
-        sia_genetic.calculate_repertoire()
+        sia_genetic.calculate_concept()
         return sia_genetic.get_reperoire()
         # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje
 

@@ -6,8 +6,8 @@ from utils.consts import BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
 class Genetic(Sia):
     """Class Zero is used to solve the problem by brute force."""
 
-    def __init__(self, system) -> None:
-        super().__init__(system)
+    def __init__(self, structure) -> None:
+        super().__init__(structure)
 
     def analyze(self) -> dict:
         # cout('Do some logic to obtain the parameters')
@@ -16,7 +16,7 @@ class Genetic(Sia):
             y = 2
             return x - y
 
-        target_dist = self._system.get_distribution()
+        target_dist = self._structure.get_distribution()
 
         def loss():
             return 0.3

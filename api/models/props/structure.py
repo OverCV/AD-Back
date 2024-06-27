@@ -1,4 +1,4 @@
-class SysProps:
+class StructProps:
     TITLE: str = 'title'
     ISTATE: str = 'istate'
     EFFECT: str = 'effect'

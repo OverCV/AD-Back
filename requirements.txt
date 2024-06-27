@@ -14,5 +14,6 @@ matplotlib
 openpyxl
 
 python-dotenv
+icecream
 pytest
 ruff

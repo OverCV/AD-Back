@@ -5,23 +5,24 @@ from numpy.typing import NDArray
 import numpy as np
 
 from api.models.matrix import Matrix
-from api.models.props.mechanism import SysProps
+from api.models.props.structure import StructProps
 from utils.consts import INT_ONE, INT_ZERO
 
 
 from utils.funcs import be_product, cout, le_product
 from server import conf
 
+from icecream import ic
 
-class Mechanism:
-    ''' Class System is used to easily manage the tensorial operations. '''
+
+class Structure:
+    """Class Structure is used to easily manage the tensorial operations."""
 
     def __init__(
-        self, db_sys: dict[str, int | str],
-        istate: str, tensor: list[NDArray[np.float64]]
+        self, db_struct: dict[str, int | str], istate: str, tensor: list[NDArray[np.float64]]
     ) -> None:
         # ! Acá se debería poder marginalizar muy eficientemente!
-        self.__title: str = db_sys.get(SysProps.TITLE, 'no title')
+        self.__title: str = db_struct.get(StructProps.TITLE, 'no title')
         self.__istate: str = istate
 
         # Setted parameters
@@ -38,11 +39,8 @@ class Mechanism:
         # validate.network(self)
 
     def correlate(self) -> None:
-        if self.__effect == None or self.__causes == None:
-            raise HTTPException(
-                status_code=400,
-                detail='Effect and causes must be setted.'
-            )
+        if self.__effect is None or self.__causes is None:
+            raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
         # subtensor = dict()
         for idx in self.__effect[True]:
             cout(f'T idx: {idx}')
@@ -99,7 +97,7 @@ class Mechanism:
             NDArray[np.float64]: The probability distribution array.
             None: If the data is set to False, else returns the distribution of the system.
         """
-        ''' Returns the distribution of the system. '''
+        """ Returns the distribution of the system. """
 
         # if len(effect) != len(causes) and len(effect) != len(self.__tensor):
         #     raise HTTPException(
@@ -113,19 +111,19 @@ class Mechanism:
 
         prim_tensor: list[NDArray[np.float64]]
         dual_tensor: list[NDArray[np.float64]]
-        unit_matrix: NDArray[np.float64] = np.array(
-            [INT_ONE], dtype=np.float64
-        )
+        unit_matrix: NDArray[np.float64] = np.array([INT_ONE], dtype=np.float64)
         # cout(f'1. prim {prim_effect}, dual {dual_effect}')
         # By definition, is not possible to have both tensors empty
-        prim_tensor = unit_matrix if len(prim_effect) == INT_ZERO else [
-            self.__tensor[idx].at_state(self.__istate)
-            for idx in prim_effect
-        ]
-        dual_tensor = unit_matrix if len(dual_effect) == INT_ZERO else [
-            self.__tensor[idx].at_state(self.__istate)
-            for idx in dual_effect
-        ]
+        prim_tensor = (
+            unit_matrix
+            if len(prim_effect) == INT_ZERO
+            else [self.__tensor[idx].at_state(self.__istate) for idx in prim_effect]
+        )
+        dual_tensor = (
+            unit_matrix
+            if len(dual_effect) == INT_ZERO
+            else [self.__tensor[idx].at_state(self.__istate) for idx in dual_effect]
+        )
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
         product: Callable = le_product if conf.little_endian else be_product
@@ -135,13 +133,18 @@ class Mechanism:
         dist = product([prim_dist, dual_dist])
         return dist if data else None
 
-    def set_effect(self, effect: str) -> None:
+    def set_concept(self, effect: str, causes: str) -> None:
+        # ! Here may be a validation of the ec [#00] ! #
         self.__effect = {True: list(), False: list()}
+        self.__causes = {True: list(), False: list()}
+        self.__set_effect(effect)
+        self.__set_causes(causes)
+
+    def __set_effect(self, effect: str) -> None:
         for i, b in enumerate(effect):
             self.__effect[bool(int(b))].append(i)
 
-    def set_causes(self, causes: str) -> None:
-        self.__causes = {True: list(), False: list()}
+    def __set_causes(self, causes: str) -> None:
         for i, b in enumerate(causes):
             self.__causes[bool(int(b))].append(i)
 

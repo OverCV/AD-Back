@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
 
-class MechanismRequest(BaseModel):
+class StructureRequest(BaseModel):
     title: str
     format: str
 
 
-class MechanismResponse(MechanismRequest):
+class StructureResponse(StructureRequest):
     id: int
     tensor: str
     size: int
