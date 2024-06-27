@@ -5,10 +5,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from api.shared.formatter import Format
-from api.shared.validators import mechanism as sv
+from api.shared.validators import structure as sv
 from api.schemas.structure import StructureRequest, StructureResponse
 from data.tables import StructureTable
-from utils.funcs import cout
+
+# from utils.funcs import cout
+from icecream import ic
 
 
 def post_structure(
@@ -20,9 +22,9 @@ def post_structure(
             detail=f'Structure was not created.《{structure.title}》already exists',
         )
     formatter.set_matrices()
-    subtensor: NDArray[np.float64] = np.array(formatter.get_matrices(), dtype=float)
+    subtensor: NDArray[np.float64] = np.array(formatter.get_matrices(), dtype=np.float64)
     subtensor_size: int = len(subtensor)
-    cout(subtensor_size)
+    ic(subtensor_size)
 
     subtensor_str = formatter.serialize_tensor(subtensor)
 

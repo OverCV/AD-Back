@@ -38,6 +38,7 @@ app.add_middleware(ExceptionMiddleware)
 
 """ Routes """
 
+
 app.include_router(server.router, tags=['Server'], prefix='/server')
 app.include_router(network.router, tags=['Networks'], prefix='/network')
 app.include_router(structure.router, tags=['Structures'], prefix='/structure')

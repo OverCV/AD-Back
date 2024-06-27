@@ -9,6 +9,9 @@ from numpy.typing import NDArray
 from api.shared.validators import analyze as av
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
+from utils.consts import STR_ONE, STR_ZERO
+
+from icecream import ic
 
 
 class Compute:
@@ -30,6 +33,7 @@ class Compute:
             istate=istate,
             tensor=subtensor,
         )
+        self.__dual: bool = dual
 
     def validate_input(self) -> bool:
         if not av.has_valid_inputs(
@@ -51,16 +55,16 @@ class Compute:
     def use_genetic_algorithm(self, db: Session) -> bool:
         self.validate_input()
         # ! Made for S2P
-        # Seteamos los estados futuros y presentes
 
-        self.__structure.set_concept(self.__effect, self.__causes)
-        # self.__mechanism.set_effect(self.__effect)
-        # self.__mechanism.set_causes(self.__causes)
+        # Definimos los concepto causa y efecto
 
+        self.__structure.create_concept(self.__effect, self.__causes)
         system = self.__structure
+        # From this superior level we have control of the EC structure.
+        effect = [i for i, e in enumerate(self.__effect) if (e == STR_ZERO) == self.__dual]
+        causes = [i for i, c in enumerate(self.__causes) if (c == STR_ZERO) == self.__dual]
+        ic(effect, causes)
         # system.subsystem()
-        system.correlate()
-        system.calculate_dist()
 
         sia_genetic: Genetic = Genetic(system)
         sia_genetic.calculate_concept()

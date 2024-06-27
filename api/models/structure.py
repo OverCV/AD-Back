@@ -6,10 +6,11 @@ import numpy as np
 
 from api.models.matrix import Matrix
 from api.models.props.structure import StructProps
-from utils.consts import INT_ONE, INT_ZERO
+from constants.structure import BIN_RANGE
+from utils.consts import INT_ONE, INT_ZERO, STR_ONE
 
 
-from utils.funcs import be_product, cout, le_product
+from utils.funcs import be_product, le_product
 from server import conf
 
 from icecream import ic
@@ -32,59 +33,23 @@ class Structure:
         self.__tensor: dict[int, Matrix] = OrderedDict(
             (idx, Matrix(arr)) for idx, arr in enumerate(tensor)
         )
-        self.__distribution: NDArray[np.float64] = None
+        self.__prim_dist: NDArray[np.float64] = None
+        self.__dual_dist: NDArray[np.float64] = None
 
-        # self.__size = self.get_tensor_len()
         # self.__nodes = set(range(db_sys.get(SysProps.SIZE, -1)))
         # validate.network(self)
 
-    def correlate(self) -> None:
-        if self.__effect is None or self.__causes is None:
-            raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
-        # subtensor = dict()
-        for idx in self.__effect[True]:
-            cout(f'T idx: {idx}')
-            mat: Matrix = self.__tensor[idx]
-            mat.margin(self.__causes[True])
-            # subtensor[idx] = self.__tensor[idx]
-        for idx in self.__effect[False]:
-            cout(f'F idx: {idx}')
-            mat: Matrix = self.__tensor[idx]
-            mat.margin(self.__causes[False])
-            # subtensor[idx] = self.__tensor[idx]
-        # [
-        #     cout(k, m) for k, m in self.__tensor.items()
-        # ]
+    def create_concept(
+        self, effect: str, causes: str, data: bool = False
+    ) -> NDArray[np.float64] | None:
+        # ! Here may be a validation of the ec inputs, validate effect.size == tensor.size and for all matrices, the effect of its side=(prim|dual) is 2^n == matriz.rows [#00] ! #
+        # ic(f'using {conf.little_endian=}') #
+        self.__set_effect(effect)
+        self.__set_causes(causes)
+        self.__correlate()
+        return self.set_dists(data=data)
 
-    def drop_matrices(self, mat_idxs: list[int]) -> None:
-        self.__effect = None
-        self.__causes = None
-        for elem in mat_idxs:
-            self.__tensor.pop(elem)
-
-    # def subsystem(self, dual: bool = False) -> None:
-    #     # Given the effect and causes, this function takes the primal selection for the tensor and returns the subsystem.
-    #     subtensor = dict()
-
-    #     for idx in self.__effect[dual]:
-    #         cout(f'idx: {idx}')
-    #         mat: Matrix = self.__tensor[idx]
-    #         mat.margin(self.__causes[dual])
-    #         subtensor[idx] = self.__tensor[idx]
-
-    #     # for idx in self.__effect[not dual]:
-    #     #     cout(f'idx: {idx}')
-    #     #     mat: Matrix = self.__tensor[idx]
-    #     #     mat.margin(self.__causes[not dual])
-    #     #     subtensor[idx] = self.__tensor[idx]
-
-    #     # Eliminamos los estados del lado elegido
-    #     self.__effect[not dual] = list()
-    #     self.__causes[not dual] = list()
-    #     # Asignamos el tensor reducido
-    #     self.__tensor = subtensor
-
-    def calculate_dist(self, data: bool = False) -> NDArray[np.float64] | None:
+    def set_dists(self, data: bool = False) -> NDArray[np.float64] | None:
         """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and causes correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
 
         {set_effect 101 - set_causes 01}:
@@ -97,7 +62,6 @@ class Structure:
             NDArray[np.float64]: The probability distribution array.
             None: If the data is set to False, else returns the distribution of the system.
         """
-        """ Returns the distribution of the system. """
 
         # if len(effect) != len(causes) and len(effect) != len(self.__tensor):
         #     raise HTTPException(
@@ -105,7 +69,6 @@ class Structure:
         #         detail='Effect and causes must have the same length. Also the tensor
 
         # Accedemos al primal y dual del sistema
-
         prim_effect = self.__effect[True]
         dual_effect = self.__effect[False]
 
@@ -127,29 +90,47 @@ class Structure:
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
         product: Callable = le_product if conf.little_endian else be_product
-        prim_dist = product(prim_tensor)
-        dual_dist = product(dual_tensor)
+        self.__prim_dist = product(prim_tensor)
+        self.__dual_dist = product(dual_tensor)
 
-        dist = product([prim_dist, dual_dist])
+        dist = product([self.__prim_dist, self.__dual_dist])
         return dist if data else None
 
-    def set_concept(self, effect: str, causes: str) -> None:
-        # ! Here may be a validation of the ec [#00] ! #
-        self.__effect = {True: list(), False: list()}
-        self.__causes = {True: list(), False: list()}
-        self.__set_effect(effect)
-        self.__set_causes(causes)
+    def __correlate(self) -> None:
+        """Sets the tensor matrices to it's primal and dual marginalization. The effect and causes must be setted before calling this function. The effect and causes are used to select the matrices that are going to be marginalized. The marginalization is done by the effect and causes, the effect is used to select the matrices that are going to be marginalized by the causes. The causes are used to select the states that are going to be marginalized."""
+        if self.__effect is None or self.__causes is None:
+            raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
+        for i in range(BIN_RANGE):  # ! Paralelize this ! #
+            for idx in self.__effect[bool(i)]:
+                ic(bool(i), idx)
+                mat: Matrix = self.__tensor[idx]
+                mat.margin(self.__causes[bool(i)])
+        # for idx in self.__effect[False]:
+        #     cout(f'F idx: {idx}')
+        #     mat: Matrix = self.__tensor[idx]
+        #     mat.margin(self.__causes[False])
+        # for idx in self.__effect[True]:
+        #     cout(f'T idx: {idx}')
+        #     mat: Matrix = self.__tensor[idx]
+        #     mat.margin(self.__causes[True])
 
     def __set_effect(self, effect: str) -> None:
+        self.__effect = {True: list(), False: list()}
         for i, b in enumerate(effect):
-            self.__effect[bool(int(b))].append(i)
+            self.__effect[b == STR_ONE].append(i)
 
     def __set_causes(self, causes: str) -> None:
+        self.__causes = {True: list(), False: list()}
         for i, b in enumerate(causes):
-            self.__causes[bool(int(b))].append(i)
+            self.__causes[b == STR_ONE].append(i)
 
-    def get_distribution(self) -> NDArray[np.float64]:
-        pass
+            # subtensor[idx] = self.__tensor[idx]
+        # [
+        #     cout(k, m) for k, m in self.__tensor.items()
+        # ]
+
+    def get_distribution(self, dual: bool = False) -> NDArray[np.float64]:
+        return self.__dual_dist if dual else self.__prim_dist
 
     def get_istate(self) -> str:
         return self.__istate
@@ -168,3 +149,31 @@ class Structure:
 
     def __str__(self) -> str:
         return f'{self.__title} : {self.__istate}, {self.__effect}, {self.__causes}, {self.__nodes}'
+
+    # def drop_matrices(self, mat_idxs: list[int]) -> None:
+    #     self.__effect = None
+    #     self.__causes = None
+    #     for elem in mat_idxs:
+    #         self.__tensor.pop(elem)
+
+    # # def subsystem(self, dual: bool = False) -> None:
+    # #     # Given the effect and causes, this function takes the primal selection for the tensor and returns the subsystem.
+    # #     subtensor = dict()
+
+    # #     for idx in self.__effect[dual]:
+    # #         cout(f'idx: {idx}')
+    # #         mat: Matrix = self.__tensor[idx]
+    # #         mat.margin(self.__causes[dual])
+    # #         subtensor[idx] = self.__tensor[idx]
+
+    # #     # for idx in self.__effect[not dual]:
+    # #     #     cout(f'idx: {idx}')
+    # #     #     mat: Matrix = self.__tensor[idx]
+    # #     #     mat.margin(self.__causes[not dual])
+    # #     #     subtensor[idx] = self.__tensor[idx]
+
+    # #     # Eliminamos los estados del lado elegido
+    # #     self.__effect[not dual] = list()
+    # #     self.__causes[not dual] = list()
+    # #     # Asignamos el tensor reducido
+    # #     self.__tensor = subtensor

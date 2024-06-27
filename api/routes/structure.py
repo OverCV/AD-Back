@@ -11,10 +11,10 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
+from data.motors import get_sqlite
+
 from api.models.props.structure import StructProps
 from api.schemas.structure import StructureRequest, StructureResponse
-from constants.structure import R4A, STRUCTURES
-from data.motors import get_sqlite
 
 from api.services.structure.base import (
     get_all,
@@ -26,6 +26,7 @@ from api.shared.formatter import Format
 
 from constants.format import DEFFAULT_SHEET
 from data.tables import StructureTable
+from constants.structure import R4A, STRUCTURES
 from utils.consts import DATA
 
 
@@ -40,7 +41,6 @@ router: APIRouter = APIRouter()
 )
 async def create_structure(
     title: str = Form(default=STRUCTURES[R4A][StructProps.TITLE]),
-    # istate: str = Form(default=SYSTEMS[R4A][SysProps.ISTATE]),
     format: str = Form(default=STRUCTURES[R4A][StructProps.FORMAT]),
     tensor: UploadFile = File(...),
     sheet: str = Form(default=DEFFAULT_SHEET),

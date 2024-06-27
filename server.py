@@ -1,5 +1,5 @@
 class Server:
-    ''' Class Config is used to set the main logical operations required for the application to work propperly. '''
+    """Class Config is used to set the main logical operations required for the application to work propperly."""
 
     def __init__(self) -> None:
         self.little_endian: bool = False

@@ -14,6 +14,7 @@ ISTATE: str = 'istate'
 SUBSYS: str = 'subsystem'
 TENSOR: str = 'tensor'
 
+BIN_RANGE: int = 2
 
 # DEFAULT_TITLE: str = 'System_Title'
 # DEFAULT_ISTATE: str = '1000000000'

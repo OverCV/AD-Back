@@ -1,22 +1,21 @@
-# from logging import *
-
 from fastapi import status, APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
+from sqlalchemy.orm import Session
+from data.motors import get_sqlite
+
 from api.models.props.structure import StructProps
 from api.schemas.structure import StructureResponse
 from api.services.analyze.compute import Compute
-from constants.structure import R5A, STRUCTURES
 from api.shared.formatter import Format
 
-from data.motors import get_sqlite
-
+from constants.structure import R5A, STRUCTURES
 from api.services.structure.base import (
     get_structure_by_title,
 )
 
-import icecream as ic
+from icecream import ic
 
 
 router: APIRouter = APIRouter()
@@ -36,8 +35,9 @@ async def genetic_strategy(
     # ! Should be a GLOBAL configuration
     dual: bool = False,
     store_network: bool = False,
-    db=Depends(get_sqlite),
+    db: Session = Depends(get_sqlite),
 ):
+    ic(title)
     db_struct: StructureResponse = get_structure_by_title(title, db)
     form: Format = Format()
     subtensor = form.deserialize_tensor(db_struct.tensor)
