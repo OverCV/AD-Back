@@ -1,6 +1,8 @@
+from typing import OrderedDict
 import numpy as np
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from api.models.props.structure import StructProps
 from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
 
@@ -12,6 +14,7 @@ from api.services.analyze.strats.force import BruteForce
 from utils.consts import STR_ONE, STR_ZERO
 
 from icecream import ic
+from copy import copy
 
 
 class Compute:
@@ -23,12 +26,12 @@ class Compute:
         istate: str,
         effect: str,
         causes: str,
-        subtensor: list[NDArray[np.float64]],
+        subtensor: NDArray[np.float64],
         dual: bool = False,
     ) -> None:
         self.__effect: str = effect
         self.__causes: str = causes
-        self.__structure: Structure = Structure(
+        self.__sup_struct: Structure = Structure(
             db_struct=struct.model_dump(),
             istate=istate,
             tensor=subtensor,
@@ -37,15 +40,15 @@ class Compute:
 
     def validate_input(self) -> bool:
         if not av.has_valid_inputs(
-            len(self.__structure.get_istate()),
+            len(self.__sup_struct.get_istate()),
             len(self.__effect),
             len(self.__causes),
-            len(self.__structure.get_tensor()),
+            len(self.__sup_struct.get_tensor()),
         ):
             raise HTTPException(status_code=400, detail='Invalid effect, causes or istate.')
 
-    def use_pyphi(self) -> bool:
-        pass
+    # def use_pyphi(self) -> bool:
+    #     pass
 
     def use_brute_force(self) -> bool:
         sia_force = BruteForce()
@@ -58,15 +61,27 @@ class Compute:
 
         # Definimos los concepto causa y efecto
 
-        self.__structure.create_concept(self.__effect, self.__causes)
-        system = self.__structure
+        struct: Structure = copy(self.__sup_struct)
+        struct.create_concept(self.__effect, self.__causes)
         # From this superior level we have control of the EC structure.
         effect = [i for i, e in enumerate(self.__effect) if (e == STR_ZERO) == self.__dual]
         causes = [i for i, c in enumerate(self.__causes) if (c == STR_ZERO) == self.__dual]
+        sub_dist = struct.get_distribution(self.__dual)
         ic(effect, causes)
-        # system.subsystem()
+        ic(sub_dist)
+        # [ic(k, m.as_dataframe()) for k, m in struct.get_tensor().items()]
+        sub_struct: Structure = Structure(
+            db_struct={
+                StructProps.TITLE: f'Sub-Struct {struct.get_title()}',
+                StructProps.SIZE: len(effect),
+            },
+            istate=struct.get_istate(),
+            tensor=OrderedDict(
+                (key, mat) for key, mat in struct.get_tensor().items() if (key in effect)
+            ),
+        )
 
-        sia_genetic: Genetic = Genetic(system)
+        sia_genetic: Genetic = Genetic(sub_struct, effect, causes, sub_dist, self.__dual)
         sia_genetic.calculate_concept()
         return sia_genetic.get_reperoire()
         # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje

@@ -1,3 +1,4 @@
+from icecream import ic
 import math
 from typing import Callable
 import numpy as np
@@ -6,11 +7,9 @@ from numpy.typing import NDArray
 
 
 from utils.consts import COLS_IDX, INT_ONE, INT_ZERO, ROWS_IDX, STR_ZERO
-from utils.funcs import big_endian, lil_endian, cout
+from utils.funcs import big_endian, lil_endian
 
-#
 from server import conf
-
 from icecream import ic
 
 
@@ -79,8 +78,7 @@ class Matrix:
         self.__array = (
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
-        # cout('keeped', self.__causes, margin_df)
-        ic(self.__causes, margin_df)
+        # ic(self.__causes, margin_df)
         return self.__array if data else None
 
     def at_state(

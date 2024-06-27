@@ -6,8 +6,8 @@ pymongo
 motor
 
 numpy
-pandas
-# polars
+# pandas
+polars
 networkx
 matplotlib
 # seaborn

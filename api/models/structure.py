@@ -20,7 +20,10 @@ class Structure:
     """Class Structure is used to easily manage the tensorial operations."""
 
     def __init__(
-        self, db_struct: dict[str, int | str], istate: str, tensor: list[NDArray[np.float64]]
+        self,
+        db_struct: dict[str, int | str],
+        istate: str,
+        tensor: NDArray[np.float64] | OrderedDict[int, Matrix],
     ) -> None:
         # ! Acá se debería poder marginalizar muy eficientemente!
         self.__title: str = db_struct.get(StructProps.TITLE, 'no title')
@@ -30,9 +33,16 @@ class Structure:
         self.__effect: str | None = None
         self.__causes: str | None = None
 
-        self.__tensor: dict[int, Matrix] = OrderedDict(
-            (idx, Matrix(arr)) for idx, arr in enumerate(tensor)
+        self.__tensor: dict[int, Matrix] = (
+            OrderedDict((idx, Matrix(arr)) for idx, arr in enumerate(tensor))
+            if isinstance(tensor, np.ndarray)
+            else tensor
         )
+        # (
+
+        #     if isinstance(tensor, list)
+        #     else tensor
+        # )
         self.__prim_dist: NDArray[np.float64] = None
         self.__dual_dist: NDArray[np.float64] = None
 
@@ -43,7 +53,7 @@ class Structure:
         self, effect: str, causes: str, data: bool = False
     ) -> NDArray[np.float64] | None:
         # ! Here may be a validation of the ec inputs, validate effect.size == tensor.size and for all matrices, the effect of its side=(prim|dual) is 2^n == matriz.rows [#00] ! #
-        # ic(f'using {conf.little_endian=}') #
+        ic(conf.little_endian)
         self.__set_effect(effect)
         self.__set_causes(causes)
         self.__correlate()
@@ -92,8 +102,10 @@ class Structure:
         product: Callable = le_product if conf.little_endian else be_product
         self.__prim_dist = product(prim_tensor)
         self.__dual_dist = product(dual_tensor)
+        ic(self.__prim_dist, self.__dual_dist)
 
         dist = product([self.__prim_dist, self.__dual_dist])
+
         return dist if data else None
 
     def __correlate(self) -> None:
@@ -141,11 +153,14 @@ class Structure:
     def get_causes(self) -> str:
         return self.__causes
 
-    def get_tensor(self) -> list[Matrix]:
+    def get_tensor(self) -> OrderedDict[int, Matrix]:
         return self.__tensor
 
     def get_tensor_len(self) -> int:
         return len(self.__tensor)
+
+    def get_title(self) -> str:
+        return self.__title
 
     def __str__(self) -> str:
         return f'{self.__title} : {self.__istate}, {self.__effect}, {self.__causes}, {self.__nodes}'

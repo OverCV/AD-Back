@@ -2,6 +2,9 @@ from fastapi import status, APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
+import numpy as np
+from numpy.typing import NDArray
+
 from sqlalchemy.orm import Session
 from data.motors import get_sqlite
 
@@ -32,16 +35,16 @@ async def genetic_strategy(
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
     causes: str = STRUCTURES[R5A][StructProps.CAUSES],
-    # ! Should be a GLOBAL configuration
     dual: bool = False,
-    store_network: bool = False,
+    # ! Should be a GLOBAL configuration
+    # store_network: bool = False,
     db: Session = Depends(get_sqlite),
 ):
     ic(title)
     db_struct: StructureResponse = get_structure_by_title(title, db)
     form: Format = Format()
-    subtensor = form.deserialize_tensor(db_struct.tensor)
-    ic(db_struct.size)
+    subtensor: NDArray[np.float64] = form.deserialize_tensor(db_struct.tensor)
+    ic(type(subtensor))
 
     computing: Compute = Compute(db_struct, istate, effect, causes, subtensor, dual)
     results = computing.use_genetic_algorithm(db)
