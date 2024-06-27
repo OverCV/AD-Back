@@ -19,8 +19,10 @@ class Sia(ABC):
 
         self._network: nx.Graph | nx.DiGraph = None
         self._integrated_info: float = None
-        self._min_info_part: dict = None
-        self._distribution: dict[str, tuple] = None
+        self._min_info_part: tuple[tuple[tuple[str], tuple[str]], tuple[tuple[str], tuple[str]]] = (
+            None
+        )
+        self._distribution: NDArray[np.float64] = None
 
     @abstractmethod
     def analyze(self) -> SiaType:

@@ -1,7 +1,11 @@
 import networkx as nx
+import numpy as np
 from api.models.props.sia import SiaType
 from api.services.analyze.sia import Sia
 from utils.consts import BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
+from utils.funcs import emd
+
+from icecream import ic
 
 
 class Genetic(Sia):
@@ -14,21 +18,27 @@ class Genetic(Sia):
         self.environments: list = []
 
     def analyze(self) -> dict:
-        # cout('Do some logic to obtain the parameters')
-        net_ID = lambda x: x + 1
+        # ! cout('Do some logic to obtain the parameters')
 
-        target_dist = self._structure.get_distribution(self._dual)
+        net_id = lambda x: x + 1
+        mip = (('A', 'B', 'C'), ('B',)), ((), ('A', 'C'))
 
-        loss = lambda x: x + 1
+        # Calculate distribution... by algorithm!
+        best_dist = self._structure.create_concept(
+            '11100', '11100', data=True
+        )  #! TESTING with 11100 11100 !#
+        # best_dist = self._structure.get_distribution(self._dual).tolist()
 
-        distribution = lambda: {0: (0.3, 0.3), 1: (0.3, 0.3)}
+        ic(best_dist, self._target_dist)
+        emd_dist = emd(best_dist, self._target_dist)
+        ic(emd_dist)
 
         return {
             # ! Store the network, get the id and return it to invoque in front ! #
-            NET_ID: network(1),
-            SMALL_PHI: 0.3,
-            MIP: 0.3,
-            BEST_DISTRIBUTION: 0.3,
+            NET_ID: net_id(1),
+            SMALL_PHI: emd_dist,
+            MIP: mip,
+            BEST_DISTRIBUTION: best_dist.tolist(),
         }
 
     def get_reperoire(self) -> SiaType:
