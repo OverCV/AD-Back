@@ -6,7 +6,7 @@ import numpy as np
 
 from api.models.matrix import Matrix
 from api.models.props.structure import StructProps
-from constants.structure import BIN_RANGE
+from constants.structure import BIN_RANGE, BOOL_RANGE
 from utils.consts import INT_ONE, INT_ZERO, STR_ONE
 
 
@@ -28,29 +28,28 @@ class Structure:
         # ! Acá se debería poder marginalizar muy eficientemente!
         self.__title: str = db_struct.get(StructProps.TITLE, 'no title')
         self.__istate: str = istate
-
-        # Setted parameters
-        self.__effect: str | None = None
-        self.__causes: str | None = None
-
+        # Effect & Causes implies the actual working bipartition
+        self.__effect: dict[bool, list[int]] | None = None
+        self.__causes: dict[bool, list[int]] | None = None
+        # Tensor composed by primal and dual matrices #
         self.__tensor: dict[int, Matrix] = (
             OrderedDict((idx, Matrix(arr)) for idx, arr in enumerate(tensor))
             if isinstance(tensor, np.ndarray)
             else tensor
         )
+        self.__prim_dist: NDArray[np.float64] = None
+        self.__dual_dist: NDArray[np.float64] = None
         # (
 
         #     if isinstance(tensor, list)
         #     else tensor
         # )
-        self.__prim_dist: NDArray[np.float64] = None
-        self.__dual_dist: NDArray[np.float64] = None
 
         # self.__nodes = set(range(db_sys.get(SysProps.SIZE, -1)))
         # validate.network(self)
 
     def create_concept(
-        self, effect: str, causes: str, data: bool = False
+        self, effect: dict[bool, list[int]], causes: dict[bool, list[int]], data: bool = False
     ) -> NDArray[np.float64] | None:
         # ! Here may be a validation of the ec inputs, validate effect.size == tensor.size and for all matrices, the effect of its side=(prim|dual) is 2^n == matriz.rows [#00] ! #
         ic(conf.little_endian)
@@ -105,18 +104,18 @@ class Structure:
         ic(self.__prim_dist, self.__dual_dist)
 
         dist = product([self.__prim_dist, self.__dual_dist])
-
         return dist if data else None
 
     def __correlate(self) -> None:
         """Sets the tensor matrices to it's primal and dual marginalization. The effect and causes must be setted before calling this function. The effect and causes are used to select the matrices that are going to be marginalized. The marginalization is done by the effect and causes, the effect is used to select the matrices that are going to be marginalized by the causes. The causes are used to select the states that are going to be marginalized."""
         if self.__effect is None or self.__causes is None:
             raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
-        for i in range(BIN_RANGE):  # ! Paralelize this ! #
-            for idx in self.__effect[bool(i)]:
-                ic(bool(i), idx)
+        ic(self.__effect, self.__causes)
+        for b in BOOL_RANGE:  # ! Paralelize this ! #
+            for idx in self.__effect[b]:
+                ic(b, idx)
                 mat: Matrix = self.__tensor[idx]
-                mat.margin(self.__causes[bool(i)])
+                mat.margin(self.__causes[b])
         # for idx in self.__effect[False]:
         #     cout(f'F idx: {idx}')
         #     mat: Matrix = self.__tensor[idx]
@@ -126,20 +125,42 @@ class Structure:
         #     mat: Matrix = self.__tensor[idx]
         #     mat.margin(self.__causes[True])
 
-    def __set_effect(self, effect: str) -> None:
-        self.__effect = {True: list(), False: list()}
-        for i, b in enumerate(effect):
-            self.__effect[b == STR_ONE].append(i)
+    def __set_effect(self, effect: dict[bool, list[int]]) -> None:
+        self.__effect = effect
+        # Hay que tener en cuenta las llaves del tensor para asignar los indices del enumerable, no iterar directamente sobre la cadena o habrá problemas
+        # for i, b in enumerate(effect):
+        #     self.__effect[b == STR_ONE].append(i)
 
-    def __set_causes(self, causes: str) -> None:
-        self.__causes = {True: list(), False: list()}
-        for i, b in enumerate(causes):
-            self.__causes[b == STR_ONE].append(i)
+        # for i, b in zip(self.__tensor.keys(), effect):
+        #     self.__effect[b == STR_ONE].append(i)
 
-            # subtensor[idx] = self.__tensor[idx]
-        # [
-        #     cout(k, m) for k, m in self.__tensor.items()
-        # ]
+    def __set_causes(self, causes: dict[bool, list[int]]) -> None:
+        self.__causes = causes
+        # Hay que pasar si quiere que el indice quede en el primal o el dual
+        # Por eso usabamos 101 porque así se sabe que cada elemento es una posición de la cadena de texto pero a cambio no conocemos cuál indice nos estamos refiriendo
+        # No podemos usar el tensor per se puesto maneja los indices de las matrices en el futuro y no conocemos el presente, además que cada matriz es distinta y no se sabe a cuál partición estaríamos referenciando; Los índices determinan la partición de la matriz y no al contrario!!!
+
+        # originamos de la cadena 10110, idx []
+        # self.__causes = {True: list(), False: list()}
+        # for idx in causes:
+        #     self.__causes[b == STR_ONE].append(idx)
+        # for i, b in enumerate(causes):
+        #     self.__causes[b == STR_ONE].append(i)
+
+    """
+
+    effect 10110
+    causes 10110
+    dual False
+
+    struct.tensor = {0: (0,1,2,3,4), 1: (0,1,2,3,4), 2: (0,1,2,3,4), 3: (0,1,2,3,4), 4: (0,1,2,3,4)}
+
+    idx_effect = [0, 2, 4]
+    idx_causes = [0, 2, 4]
+
+
+    
+    """
 
     def get_distribution(self, dual: bool = False) -> NDArray[np.float64]:
         return self.__dual_dist if dual else self.__prim_dist

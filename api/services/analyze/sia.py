@@ -12,8 +12,8 @@ class Sia(ABC):
 
     def __init__(self, structure, effect, causes, distribution, dual) -> None:
         self._structure: Structure = structure
-        self._effect: str = effect
-        self._causes: str = causes
+        self._effect: list[int] = effect
+        self._causes: list[int] = causes
         self._target_dist: NDArray[np.float64] = distribution
         self._dual: bool = dual
 

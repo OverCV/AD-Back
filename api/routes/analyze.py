@@ -1,4 +1,4 @@
-from fastapi import status, APIRouter, Depends
+from fastapi import HTTPException, status, APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
@@ -6,6 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from sqlalchemy.orm import Session
+from api.shared.validators.analyze import has_valid_inputs
 from data.motors import get_sqlite
 
 from api.models.props.structure import StructProps
@@ -36,17 +37,15 @@ async def genetic_strategy(
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
     causes: str = STRUCTURES[R5A][StructProps.CAUSES],
     dual: bool = False,
-    # ! Should be a GLOBAL configuration
-    # store_network: bool = False,
     db: Session = Depends(get_sqlite),
 ):
     ic(title)
-    db_struct: StructureResponse = get_structure_by_title(title, db)
+    struct_res: StructureResponse = get_structure_by_title(title, db)
     form: Format = Format()
-    subtensor: NDArray[np.float64] = form.deserialize_tensor(db_struct.tensor)
+    subtensor: NDArray[np.float64] = form.deserialize_tensor(struct_res.tensor)
+    has_valid_inputs(len(istate), len(effect), len(causes), len(subtensor))
     ic(type(subtensor))
-
-    computing: Compute = Compute(db_struct, istate, effect, causes, subtensor, dual)
+    computing: Compute = Compute(struct_res, istate, effect, causes, subtensor, dual)
     results = computing.use_genetic_algorithm(db)
     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
 

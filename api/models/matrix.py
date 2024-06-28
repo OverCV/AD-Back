@@ -63,10 +63,12 @@ class Matrix:
                 columns=dataframe.columns,
                 index=rows,
             )
+            # ic(states, dataframe.index)
             for row in dataframe.index:
                 for col in dataframe.columns:
                     # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
-                    selected_row = ''.join([row[i] for i in states])
+                    # ic(row, states)
+                    selected_row = ''.join([row[states.index(i)] for i in states])
                     zeros_df.at[selected_row, col] += dataframe.at[row, col]
             margin_df = zeros_df
 
@@ -78,7 +80,7 @@ class Matrix:
         self.__array = (
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
-        # ic(self.__causes, margin_df)
+        ic(self.__causes, margin_df)
         return self.__array if data else None
 
     def at_state(
@@ -88,8 +90,10 @@ class Matrix:
         if axis == COLS_IDX:
             self.__array = self.__array.transpose()
 
+        sub_istates = [istate[i] for i in self.__causes]
+        # ic('ERROR?', self.__causes, sub_istates)
         concat_digits: str = (
-            ''.join([istate[i] for i in self.__causes])
+            ''.join(sub_istates)
             if axis == ROWS_IDX
             else ''.join([istate[i] for i in self.__effect])
         )

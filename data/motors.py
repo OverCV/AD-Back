@@ -23,10 +23,10 @@ MONGO_COLLECTION: int = os.environ.get(NoSQLPort.MONGO_COLLECTION.value)
 
 
 async def get_mongo() -> AsyncIOMotorClient:
-  MONGO_URI: str = LOCAL_MONGO_URI if conf.locale_nosql else REMOTE_MONGO_URI
-  client = AsyncIOMotorClient(MONGO_URI, serverSelectionTimeoutMS=2500)
-  db = client[MONGO_CLIENT]
-  return db.get_collection(MONGO_COLLECTION)
+    MONGO_URI: str = LOCAL_MONGO_URI if conf.locale_nosql else REMOTE_MONGO_URI
+    client = AsyncIOMotorClient(MONGO_URI, serverSelectionTimeoutMS=2500)
+    db = client[MONGO_CLIENT]
+    return db.get_collection(MONGO_COLLECTION)
 
 
 """ SQL Database """
@@ -39,29 +39,29 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_sqlite():
-  db: Session = SessionLocal()
-  try:
-    yield db
-  finally:
-    db.close()
+    db: Session = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-  # try:
-  #     # Intento conectarme al MongoDB remoto
-  #     client = AsyncIOMotorClient(MONGO_URI, serverSelectionTimeoutMS=3000)
-  #     db = client[MONGO_CLIENT]
-  #     return db.get_collection(MONGO_COLLECTION)
-  # except ServerSelectionTimeoutError:
-  #     # Si falla, me conecto al MongoDB local
-  #     print("Conexión remota fallida, conectando a MongoDB local.")
-  #     client = AsyncIOMotorClient(
-  #         LOCAL_MONGO_URI, serverSelectionTimeoutMS=3000
-  #     )
-  #     db = client[LOCAL_MONGO_CLIENT]
-  #     return db.get_collection(LOCAL_MONGO_COLLECTION)
-  # except Exception as e:
-  #     # Captura cualquier otro error
-  #     print(f"Error inesperado: {e}")
-  #     raise e  # O maneja el error de una manera que no detenga tu aplicación
+    # try:
+    #     # Intento conectarme al MongoDB remoto
+    #     client = AsyncIOMotorClient(MONGO_URI, serverSelectionTimeoutMS=3000)
+    #     db = client[MONGO_CLIENT]
+    #     return db.get_collection(MONGO_COLLECTION)
+    # except ServerSelectionTimeoutError:
+    #     # Si falla, me conecto al MongoDB local
+    #     print("Conexión remota fallida, conectando a MongoDB local.")
+    #     client = AsyncIOMotorClient(
+    #         LOCAL_MONGO_URI, serverSelectionTimeoutMS=3000
+    #     )
+    #     db = client[LOCAL_MONGO_CLIENT]
+    #     return db.get_collection(LOCAL_MONGO_COLLECTION)
+    # except Exception as e:
+    #     # Captura cualquier otro error
+    #     print(f"Error inesperado: {e}")
+    #     raise e  # O maneja el error de una manera que no detenga tu aplicación
 
 
 # def get_mongo():

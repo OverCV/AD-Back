@@ -12,6 +12,8 @@ from api.models.props.structure import StructProps
 from constants.format import S2C, S2P, S2S
 from utils.consts import COLS_IDX
 
+from icecream import ic
+
 
 class Format:
     """Class Formatter is used to format the XSLX file from the user input."""
@@ -41,7 +43,8 @@ class Format:
             lst = list()
             for cells in ws.iter_rows():
                 vector = [cell.value for cell in cells if cell.value is not None]
-                lst.append(vector)
+                lst.append(vector) if vector else None
+            ic(lst)
             arr = np.array(lst, dtype=np.float64)
         elif self.__array_file.filename.endswith(FileExt.CSV.value):
             csv = io.BytesIO(bytes_chunk)

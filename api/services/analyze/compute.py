@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 from api.shared.validators import analyze as av
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
+from constants.structure import BOOL_RANGE
 from utils.consts import STR_ONE, STR_ZERO
 
 from icecream import ic
@@ -29,13 +30,13 @@ class Compute:
         subtensor: NDArray[np.float64],
         dual: bool = False,
     ) -> None:
-        self.__effect: str = effect
-        self.__causes: str = causes
         self.__sup_struct: Structure = Structure(
             db_struct=struct.model_dump(),
             istate=istate,
             tensor=subtensor,
         )
+        self.__effect: str = effect
+        self.__causes: str = causes
         self.__dual: bool = dual
 
     def validate_input(self) -> bool:
@@ -56,32 +57,46 @@ class Compute:
         return sia_force.get_reperoire()
 
     def use_genetic_algorithm(self, db: Session) -> bool:
-        self.validate_input()
         # ! Made for S2P
 
         # Definimos los concepto causa y efecto
-
-        struct: Structure = copy(self.__sup_struct)
-        struct.create_concept(self.__effect, self.__causes)
-        # From this superior level we have control of the EC structure.
-        effect = [i for i, e in enumerate(self.__effect) if (e == STR_ZERO) == self.__dual]
-        causes = [i for i, c in enumerate(self.__causes) if (c == STR_ZERO) == self.__dual]
-        sub_dist = struct.get_distribution(self.__dual)
+        effect = {False: [], True: []}
+        causes = {False: [], True: []}
+        for i, e in enumerate(self.__effect):
+            effect[e == STR_ONE].append(i)
+        for j, c in enumerate(self.__causes):
+            causes[c == STR_ONE].append(j)
         ic(effect, causes)
-        ic(sub_dist)
-        # [ic(k, m.as_dataframe()) for k, m in struct.get_tensor().items()]
+        # New strcuture with original tensor
+        struct: Structure = copy(self.__sup_struct)
+        struct.create_concept(effect, causes)
+        sub_distrib = struct.get_distribution(self.__dual)
+        # From this superior level we have control of the EC structure.
+        # Obtenemos la distribución que indique el usuario
+        ic(effect, causes)
+        ic(sub_distrib)
+        sub_tensor: OrderedDict = OrderedDict(
+            # Si estamos con le primal o dual, tomamos dichos futuros como, dichas matrices del tensor original
+            (k, struct.get_tensor()[k])
+            for k in effect[not self.__dual]
+        )
+        ic(sub_tensor)
+        # La subestructura no tiene efecto ni causa, esto puesto aún no está particionada
         sub_struct: Structure = Structure(
             db_struct={
                 StructProps.TITLE: f'Sub-Struct {struct.get_title()}',
-                StructProps.SIZE: len(effect),
+                # StructProps.SIZE: sum(len(effect[b]) for b in BOOL_RANGE),
             },
             istate=struct.get_istate(),
-            tensor=OrderedDict(
-                (key, mat) for key, mat in struct.get_tensor().items() if (key in effect)
-            ),
+            tensor=sub_tensor,
+        )
+        sia_genetic: Genetic = Genetic(
+            sub_struct, effect[not self.__dual], causes[not self.__dual], sub_distrib, self.__dual
         )
 
-        sia_genetic: Genetic = Genetic(sub_struct, effect, causes, sub_dist, self.__dual)
+
+        # [ic(k, m.as_dataframe()) for k, m in struct.get_tensor().items()]
+
         sia_genetic.calculate_concept()
         return sia_genetic.get_reperoire()
         # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje

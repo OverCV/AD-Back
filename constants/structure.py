@@ -15,6 +15,7 @@ SUBSYS: str = 'subsystem'
 TENSOR: str = 'tensor'
 
 BIN_RANGE: int = 2
+BOOL_RANGE: list[bool] = [False, True]
 
 # DEFAULT_TITLE: str = 'System_Title'
 # DEFAULT_ISTATE: str = '1000000000'
@@ -75,7 +76,7 @@ STRUCTURES: dict[str, MechaInt] = {
     },
     R5A: {
         StructProps.TITLE: R5A,
-        StructProps.ISTATE: '10000',
+        StructProps.ISTATE: '10001',
         StructProps.EFFECT: '11111',
         StructProps.CAUSES: '11111',
         StructProps.FORMAT: S2C,
