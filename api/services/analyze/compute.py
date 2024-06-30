@@ -71,16 +71,6 @@ class Compute:
         ic(effect, causes)
         # New strcuture with original tensor
         struct: Structure = copy(self.__sup_struct)
-        # Obtenemos la distribución original partiendo de la estructura superior
-        # sub_serie = [
-        #     struct.get_tensor()[k].at_state(self.__sup_struct.get_istate(), axis=ROWS_IDX)
-        #     for k in effect[not self.__dual]
-        # ]
-        # endian_product: Callable = le_product if conf.little_endian else be_product
-        # ic(sub_serie)
-        # sub_distrib = endian_product(sub_serie)
-        # ic(sub_distrib)
-
         # raise HTTPException(status_code=400, detail='TESTING STOP.')
         struct.create_concept(effect, causes)
         sub_distrib = struct.get_distribution(self.__dual)

@@ -58,7 +58,9 @@ class Structure:
         self.__correlate()
         return self.set_dists(data=data)
 
-    def set_dists(self, data: bool = False) -> NDArray[np.float64] | None:
+    def set_dists(
+        self, data: bool = False, le: bool = conf.little_endian
+    ) -> NDArray[np.float64] | None:
         """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and causes correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
 
         {set_effect 101 - set_causes 01}:
@@ -98,7 +100,7 @@ class Structure:
         )
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
-        endian_product: Callable = le_product if conf.little_endian else be_product
+        endian_product: Callable = le_product if le else be_product
         ic('2PROD', prim_tensor)
         self.__prim_dist = endian_product(prim_tensor)
         self.__dual_dist = endian_product(dual_tensor)

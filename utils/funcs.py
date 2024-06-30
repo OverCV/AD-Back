@@ -4,6 +4,7 @@ import math
 
 from numpy.typing import NDArray
 import numpy as np
+from scipy.stats import wasserstein_distance
 
 from utils.consts import INT_ONE, INT_ZERO, STR_ONE
 
@@ -20,6 +21,7 @@ dn_sep: str = '︶' * 16
 
 def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> float:
     """Returns the Earth Mover's Distance between two distributions."""
+    # return wasserstein_distance(u, v)
     u = np.asarray(u, dtype=np.float64).flatten()
     v = np.asarray(v, dtype=np.float64).flatten()
 

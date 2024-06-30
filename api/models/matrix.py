@@ -49,7 +49,7 @@ class Matrix:
         # We init an empty dataframe to fill it with the new values
         margin_df: pd.DataFrame = pd.DataFrame()
         dataframe = self.as_dataframe()
-        # ic('IN', dataframe)
+        ic('IN', dataframe)
         margined_rows = 2 ** (
             len(self.__causes if axis == ROWS_IDX else self.__effect) - len(states)
         )

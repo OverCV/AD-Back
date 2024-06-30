@@ -7,6 +7,7 @@ motor
 
 numpy
 pandas
+scipy
 # polars
 networkx
 matplotlib
