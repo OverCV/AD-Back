@@ -98,12 +98,13 @@ class Structure:
         )
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
-        product: Callable = le_product if conf.little_endian else be_product
-        self.__prim_dist = product(prim_tensor)
-        self.__dual_dist = product(dual_tensor)
+        endian_product: Callable = le_product if conf.little_endian else be_product
+        ic('2PROD', prim_tensor)
+        self.__prim_dist = endian_product(prim_tensor)
+        self.__dual_dist = endian_product(dual_tensor)
         ic(self.__prim_dist, self.__dual_dist)
 
-        dist = product([self.__prim_dist, self.__dual_dist])
+        dist = endian_product([self.__dual_dist, self.__prim_dist])
         return dist if data else None
 
     def __correlate(self) -> None:

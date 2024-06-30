@@ -20,7 +20,11 @@ class Matrix:
         self.__array: NDArray[np.float64] = array
         # cout(1)
         self.__effect: list[int] = list(range(self.__array.shape[COLS_IDX]))
-        self.__causes: list[int] = list(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
+        self.__causes: list[int] = {
+            c: j for j, c in enumerate(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
+        }
+        # self.__effect: list[int] = list(range(self.__array.shape[COLS_IDX]))
+        # self.__causes: list[int] = list(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
 
     @property
     def shape(self):
@@ -45,6 +49,7 @@ class Matrix:
         # We init an empty dataframe to fill it with the new values
         margin_df: pd.DataFrame = pd.DataFrame()
         dataframe = self.as_dataframe()
+        # ic('IN', dataframe)
         margined_rows = 2 ** (
             len(self.__causes if axis == ROWS_IDX else self.__effect) - len(states)
         )
@@ -68,15 +73,27 @@ class Matrix:
                 for col in dataframe.columns:
                     # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
                     # ic(row, states)
-                    selected_row = ''.join([row[states.index(i)] for i in states])
+                    # element is the key, value is the position or index
+                    selected_row = ''.join([row[self.__causes[k]] for k in states])
+                    """ 
+                    STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]
+                    
+                    Necesitamos usar el tamaño actual de la matriz usada, como se manja una única matriz, independiente del tamaño del arreglo, 
+
+
+                    (b)b(bb)b
+                    [0:0, 1:1, 2:2, 3:3, 4:4]
+                    [0:0, 2:1, 3:2]                     
+
+                    """
                     zeros_df.at[selected_row, col] += dataframe.at[row, col]
             margin_df = zeros_df
 
         margin_df /= margined_rows if axis == ROWS_IDX else INT_ONE
         if axis == COLS_IDX:
-            self.__effect = states
+            self.__effect = states  #! Check case !#
         else:
-            self.__causes = states
+            self.__causes = {c: k for k, c in enumerate(states)}
         self.__array = (
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
@@ -99,6 +116,7 @@ class Matrix:
         )
         tpm = self.as_dataframe()
         # If the dataframe has only one row(collapsed tpm), return it
+        ic(concat_digits)
         arr = tpm.values if len(tpm.index) == 1 else tpm.loc[[concat_digits]].values
 
         if axis == COLS_IDX:

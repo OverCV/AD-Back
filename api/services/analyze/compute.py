@@ -1,4 +1,4 @@
-from typing import OrderedDict
+from typing import Callable, OrderedDict
 import numpy as np
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -12,10 +12,12 @@ from api.shared.validators import analyze as av
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
 from constants.structure import BOOL_RANGE
-from utils.consts import STR_ONE, STR_ZERO
+from utils.consts import COLS_IDX, ROWS_IDX, STR_ONE, STR_ZERO
 
 from icecream import ic
 from copy import copy
+from server import conf
+from utils.funcs import be_product, le_product
 
 
 class Compute:
@@ -69,6 +71,17 @@ class Compute:
         ic(effect, causes)
         # New strcuture with original tensor
         struct: Structure = copy(self.__sup_struct)
+        # Obtenemos la distribución original partiendo de la estructura superior
+        # sub_serie = [
+        #     struct.get_tensor()[k].at_state(self.__sup_struct.get_istate(), axis=ROWS_IDX)
+        #     for k in effect[not self.__dual]
+        # ]
+        # endian_product: Callable = le_product if conf.little_endian else be_product
+        # ic(sub_serie)
+        # sub_distrib = endian_product(sub_serie)
+        # ic(sub_distrib)
+
+        # raise HTTPException(status_code=400, detail='TESTING STOP.')
         struct.create_concept(effect, causes)
         sub_distrib = struct.get_distribution(self.__dual)
         # From this superior level we have control of the EC structure.
@@ -93,7 +106,6 @@ class Compute:
         sia_genetic: Genetic = Genetic(
             sub_struct, effect[not self.__dual], causes[not self.__dual], sub_distrib, self.__dual
         )
-
 
         # [ic(k, m.as_dataframe()) for k, m in struct.get_tensor().items()]
 
