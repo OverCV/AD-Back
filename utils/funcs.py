@@ -4,12 +4,12 @@ import math
 
 from numpy.typing import NDArray
 import numpy as np
-from scipy.stats import wasserstein_distance
+# from scipy.stats import wasserstein_distance
 
 from utils.consts import INT_ONE, INT_ZERO, STR_ONE
 
 from server import conf
-from icecream import ic
+# from icecream import ic
 
 """ If needed, this class could partitionate into several modules associated with the business logic. """
 
@@ -19,7 +19,7 @@ up_sep: str = '︵' * 16
 dn_sep: str = '︶' * 16
 
 
-def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> float:
+def emd(u: NDArray[np.float64], v: NDArray[np.float64], le: bool = conf.little_endian) -> float:
     """Returns the Earth Mover's Distance between two distributions."""
     # return wasserstein_distance(u, v)
     u = np.asarray(u, dtype=np.float64).flatten()
@@ -29,7 +29,7 @@ def emd(u: NDArray[np.float64], v: NDArray[np.float64], be: bool = False) -> flo
         raise ValueError('Both distributions must have the same size')
 
     max_len = int(math.log2(len(u)))
-    end_keys = big_endian(max_len) if be else lil_endian(max_len)
+    end_keys = lil_endian(max_len) if le else big_endian(max_len)
     earth_moved = 0.0
 
     while not np.allclose(u, 0):
@@ -105,7 +105,7 @@ def big_endian(n: int) -> list[str]:
 def get_labels(n: int) -> tuple[str]:
     def get_excel_column(n: int) -> str:
         if n <= 0:
-            return ''
+            return '∅'
         return get_excel_column((n - 1) // 26) + chr((n - 1) % 26 + ord('A'))
 
     # return tuple([get_excel_column(i) for i in range(1, n+1)] + ['∅'])

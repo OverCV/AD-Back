@@ -15,6 +15,8 @@ INT_ONE: int = int(1)
 STR_ZERO: str = str(INT_ZERO)
 STR_ONE: str = str(INT_ONE)
 
+BASE_2: int = 2
+
 ROWS_IDX = EFFECT = INT_ZERO
 COLS_IDX = CAUSES = INT_ONE
 
@@ -30,7 +32,8 @@ EXAMPLE: str = 'example'
 NET_ID: str = 'net_view_id'
 SMALL_PHI: str = 'φ'
 MIP: str = 'mip'
-BEST_DISTRIBUTION: str = 'dist'
+SUB_DISTRIBUTION: str = 'subdist'
+DISTRIBUTION: str = 'dist'
 
 """ Netowork """
 

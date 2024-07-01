@@ -48,7 +48,6 @@ class Matrix:
         # We init an empty dataframe to fill it with the new values
         margin_df: pd.DataFrame = pd.DataFrame()
         dataframe = self.as_dataframe()
-        ic('IN', dataframe)
         margined_rows = 2 ** (
             len(self.__causes if axis == ROWS_IDX else self.__effect) - len(states)
         )
@@ -67,11 +66,9 @@ class Matrix:
                 columns=dataframe.columns,
                 index=rows,
             )
-            # ic(states, dataframe.index)
             for row in dataframe.index:
                 for col in dataframe.columns:
                     # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
-                    # ic(row, states)
                     # element is the key, value is the position or index
                     selected_row = ''.join(
                         [row[self.__causes.index(k)] for k in states],
@@ -83,8 +80,8 @@ class Matrix:
 
 
                     (b)b(bb)b
-                    [0:0, 1:1, 2:2, 3:3, 4:4]
-                    [0:0, 2:1, 3:2]                     
+                    [0->0, 1->1, 2->2, 3->3, 4->4]
+                    [0->0, 2->1, 3->2]                     
 
                     """
                     zeros_df.at[selected_row, col] += dataframe.at[row, col]
@@ -98,7 +95,6 @@ class Matrix:
         self.__array = (
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
-        ic(self.__causes, margin_df)
         return self.__array if data else None
 
     def at_state(

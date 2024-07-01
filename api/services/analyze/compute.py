@@ -2,6 +2,7 @@ from typing import Callable, OrderedDict
 import numpy as np
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from api.models.props.sia import SiaType
 from api.models.props.structure import StructProps
 from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
@@ -44,7 +45,7 @@ class Compute:
     # def use_pyphi(self) -> bool:
     #     pass
 
-    def use_brute_force(self) -> bool:
+    def use_brute_force(self) -> SiaType:
         effect = {False: [], True: []}
         causes = {False: [], True: []}
         for i, e in enumerate(self.__effect):

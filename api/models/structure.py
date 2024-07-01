@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 import numpy as np
 
 from api.models.matrix import Matrix
-from api.models.props.structure import StructProps
+from api.models.props.structure import ConceptType, StructProps
 from constants.structure import BOOL_RANGE
 from utils.consts import INT_ONE, INT_ZERO
 
@@ -117,7 +117,7 @@ class Structure:
             raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
         ic(self.__effect, self.__causes)
 
-        # Concurrencia
+        # Concurrency
 
         def process_matrices(b: bool) -> None:
             for idx in self.__effect[b]:
@@ -125,19 +125,19 @@ class Structure:
                 mat: Matrix = self.__tensor[idx]
                 mat.margin(self.__causes[b])
 
-        # for b in BOOL_RANGE:  # ! Paralelize this ! #
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_matrices, b) for b in BOOL_RANGE]
+            # Esperar a que todas las tareas completen
+            concurrent.futures.wait(futures)
+
+        # non-parallel: #
+        # for b in BOOL_RANGE:
         #     for idx in self.__effect[b]:
         #         ic(b, idx)
         #         mat: Matrix = self.__tensor[idx]
         #         mat.margin(self.__causes[b])
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(process_matrices, b) for b in BOOL_RANGE]
-
-            # Esperar a que todas las tareas completen
-            concurrent.futures.wait(futures)
-
-    def __set_effect(self, effect: dict[bool, list[int]]) -> None:
+    def __set_effect(self, effect: ConceptType) -> None:
         self.__effect = effect
         # Hay que tener en cuenta las llaves del tensor para asignar los indices del enumerable, no iterar directamente sobre la cadena o habrá problemas
         # for i, b in enumerate(effect):
@@ -146,7 +146,7 @@ class Structure:
         # for i, b in zip(self.__tensor.keys(), effect):
         #     self.__effect[b == STR_ONE].append(i)
 
-    def __set_causes(self, causes: dict[bool, list[int]]) -> None:
+    def __set_causes(self, causes: ConceptType) -> None:
         self.__causes = causes
         # Hay que pasar si quiere que el indice quede en el primal o el dual
         # Por eso usabamos 101 porque así se sabe que cada elemento es una posición de la cadena de texto pero a cambio no conocemos cuál indice nos estamos refiriendo

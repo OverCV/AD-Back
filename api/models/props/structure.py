@@ -1,3 +1,6 @@
+from typing import TypedDict
+
+
 class StructProps:
     TITLE: str = 'title'
     ISTATE: str = 'istate'
@@ -6,3 +9,8 @@ class StructProps:
     FORMAT: str = 'format'
     TENSOR: str = 'tensor'
     SIZE: str = 'size'
+
+
+class ConceptType(TypedDict):
+    bool: list[int]
+    # bool: list[int]

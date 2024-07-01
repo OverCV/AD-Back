@@ -23,7 +23,7 @@ class Format:
         self.__sheet: str = sheet
         self.__format: str = format
         self.__array: NDArray[np.float64] | None = None
-        self.__matrices: list[NDArray[np.float64]] = list()
+        self.__matrices: list[NDArray[np.float64]] = []
 
     def get_matrices(self) -> list[NDArray[np.float64]]:
         return self.__matrices
@@ -40,7 +40,7 @@ class Format:
             wb = op.load_workbook(xlsx)
             ws = wb[self.__sheet]
             # ws = wb.active
-            lst = list()
+            lst = []
             for cells in ws.iter_rows():
                 vector = [cell.value for cell in cells if cell.value is not None]
                 lst.append(vector) if vector else None

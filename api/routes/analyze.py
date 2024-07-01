@@ -45,6 +45,7 @@ async def force_strategy(
     has_valid_inputs(istate, effect, causes, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, causes, subtensor, dual)
     results = computing.use_brute_force()
+    ic(results)
     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
 
 

@@ -1,18 +1,15 @@
 from typing import NotRequired, TypedDict
 
-import numpy as np
-from numpy.typing import NDArray
-
-from utils.consts import BEST_DISTRIBUTION, MIP, NET_ID, SMALL_PHI
-
 
 class SiaType(TypedDict):
-    NET_ID: str | None
+    NET_ID: NotRequired[str]
     SMALL_PHI: float
     MIP: list
-    BEST_DISTRIBUTION: NDArray
+    SUB_DISTRIBUTION: list[list[float | int]]
+    DISTRIBUTION: list[list[float | int]]
 
 
+# Object instance:
 # SiaType = TypedDict(
 #     'SiaType',
 #     {

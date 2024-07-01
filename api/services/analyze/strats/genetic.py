@@ -9,7 +9,7 @@ from utils.funcs import emd
 
 from numpy.typing import NDArray
 
-from utils.consts import BEST_DISTRIBUTION, NET_ID, MIP, SMALL_PHI, STR_ONE
+from utils.consts import SUB_DISTRIBUTION, NET_ID, MIP, SMALL_PHI, STR_ONE
 from icecream import ic
 
 
@@ -48,7 +48,7 @@ class Genetic(Sia):
         ic(effect, causes)
 
         # Calculate distribution... by algorithm!
-        iter_distrib = self.structure.create_concept(effect, causes, data=True)  #! TESTING !#
+        iter_distrib = self._structure.create_concept(effect, causes, data=True)  #! TESTING !#
         # best_dist = self._structure.get_distribution(self._dual).tolist()
 
         mip = ((('?',), ('¿',)), (('¿',), ('?',)))
@@ -64,14 +64,14 @@ class Genetic(Sia):
             NET_ID: net_id(1),
             SMALL_PHI: emd_dist,
             MIP: mip,
-            BEST_DISTRIBUTION: iter_distrib.tolist(),
+            SUB_DISTRIBUTION: iter_distrib.tolist(),
         }
 
     def get_reperoire(self) -> SiaType:
         concept: SiaType = {
-            NET_ID: self._network,
-            SMALL_PHI: self._integrated_info,
-            MIP: self._min_info_part,
-            BEST_DISTRIBUTION: self.distribution,
+            NET_ID: self.network_id,
+            SMALL_PHI: self.integrated_info,
+            MIP: self.min_info_part,
+            SUB_DISTRIBUTION: self.sub_distrib,
         }
         return concept
