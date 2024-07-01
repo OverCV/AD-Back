@@ -5,7 +5,8 @@ from main import app  # Asegúrate de importar tu aplicación FastAPI aquí
 
 client = TestClient(app)
 
-def test_genetic_strategy():
-    response = client.get('/sia-genetic/')
+
+def test_force_strategy():
+    response = client.get('/sia-force/')
     assert response.status_code == 200
     # Aquí puedes añadir más aserciones para verificar la integridad de los datos devueltos

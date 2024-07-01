@@ -126,7 +126,7 @@ class Structure:
             # Esperar a que todas las tareas completen
             concurrent.futures.wait(futures)
 
-        # non-parallel: #
+        # Non-Threaded version
         # for b in BOOL_RANGE:
         #     for idx in self.__effect[b]:
         #         ic(b, idx)
