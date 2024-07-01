@@ -14,7 +14,7 @@ ISTATE: str = 'istate'
 SUBSYS: str = 'subsystem'
 TENSOR: str = 'tensor'
 
-BIN_RANGE: int = 2
+BIN_RANGE: int = range(2)
 BOOL_RANGE: list[bool] = [False, True]
 
 # DEFAULT_TITLE: str = 'System_Title'

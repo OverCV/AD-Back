@@ -6,9 +6,10 @@ import numpy as np
 
 from api.models.matrix import Matrix
 from api.models.props.structure import StructProps
-from constants.structure import BIN_RANGE, BOOL_RANGE
-from utils.consts import INT_ONE, INT_ZERO, STR_ONE
+from constants.structure import BOOL_RANGE
+from utils.consts import INT_ONE, INT_ZERO
 
+import concurrent.futures
 
 from utils.funcs import be_product, le_product
 from server import conf
@@ -115,19 +116,26 @@ class Structure:
         if self.__effect is None or self.__causes is None:
             raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
         ic(self.__effect, self.__causes)
-        for b in BOOL_RANGE:  # ! Paralelize this ! #
+
+        # Concurrencia
+
+        def process_matrices(b: bool) -> None:
             for idx in self.__effect[b]:
                 ic(b, idx)
                 mat: Matrix = self.__tensor[idx]
                 mat.margin(self.__causes[b])
-        # for idx in self.__effect[False]:
-        #     cout(f'F idx: {idx}')
-        #     mat: Matrix = self.__tensor[idx]
-        #     mat.margin(self.__causes[False])
-        # for idx in self.__effect[True]:
-        #     cout(f'T idx: {idx}')
-        #     mat: Matrix = self.__tensor[idx]
-        #     mat.margin(self.__causes[True])
+
+        # for b in BOOL_RANGE:  # ! Paralelize this ! #
+        #     for idx in self.__effect[b]:
+        #         ic(b, idx)
+        #         mat: Matrix = self.__tensor[idx]
+        #         mat.margin(self.__causes[b])
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_matrices, b) for b in BOOL_RANGE]
+
+            # Esperar a que todas las tareas completen
+            concurrent.futures.wait(futures)
 
     def __set_effect(self, effect: dict[bool, list[int]]) -> None:
         self.__effect = effect
