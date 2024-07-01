@@ -18,6 +18,8 @@ from utils.consts import (
 from utils.funcs import dec2bin, emd, get_labels
 import concurrent.futures
 
+from server import conf
+
 from icecream import ic
 
 
@@ -36,17 +38,22 @@ class BruteForce(Sia):
 
     def analyze(self) -> bool:
         # Declare
-        ic(self._target_dist)
+        # ic(self._target_dist)
         ic(self._effect, self._causes, self._dual)
 
         # raise HTTPException(status_code=500, detail='Not implemented')
 
         bipartitions = self.bipartitionate(len(self._effect), len(self._causes))
+        # No usamos la distribución original, es un caso absurdo.
         origin: tuple[str, str] = bipartitions.pop(0)
 
-        ic(bipartitions)
+        # ic(bipartitions)
         # Begin
-        part = self.calculate_dists(bipartitions)
+        part = (
+            self.calculate_dists_threaded(bipartitions)
+            if conf.threaded
+            else self.calculate_dists(bipartitions)
+        )
         mip = self.label_mip(part)
 
         self.network_id = -1
@@ -90,7 +97,7 @@ class BruteForce(Sia):
 
         return tuple(mip)
 
-    def calculate_dists(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
+    def calculate_dists_threaded(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
         self.integrated_info = INFTY
         mip = None
 
@@ -119,34 +126,32 @@ class BruteForce(Sia):
                     self.integrated_info = emd_dist
                     self.sub_distrib = iter_distrib
                     mip = current_mip
-
         return mip
 
     # Non-Threaded version:
-    # def calculate_dists(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
-    #     self.integrated_info = INFTY
-    #     mip: tuple[str, str] = None
+    def calculate_dists(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
+        self.integrated_info = INFTY
+        mip: tuple[str, str] = None
 
-    #     for partition in bipartitions:
-    #         sub_struct: Structure = copy.deepcopy(self._structure)
-    #         str_effect: str = partition[EFFECT]
-    #         str_causes: str = partition[CAUSES]
+        for partition in bipartitions:
+            sub_struct: Structure = copy.deepcopy(self._structure)
+            str_effect: str = partition[EFFECT]
+            str_causes: str = partition[CAUSES]
 
-    #         effect = {bin: [] for bin in BOOL_RANGE}
-    #         for j, e in zip(self._effect, str_effect):
-    #             effect[e == STR_ONE].append(j)
-    #         causes = {bin: [] for bin in BOOL_RANGE}
-    #         for i, c in zip(self._causes, str_causes):
-    #             causes[c == STR_ONE].append(i)
-    #         iter_distrib = sub_struct.create_concept(effect, causes, data=True)
-    #         # Comparar con la distribución original (objetivo)
-    #         emd_dist = emd(*iter_distrib, *self._target_dist)
-    #         if emd_dist < self.integrated_info:
-    #             self.integrated_info = emd_dist
-    #             self.sub_distrib = iter_distrib
-    #             mip = partition
-
-    #     return mip
+            effect = {bin: [] for bin in BOOL_RANGE}
+            for j, e in zip(self._effect, str_effect):
+                effect[e == STR_ONE].append(j)
+            causes = {bin: [] for bin in BOOL_RANGE}
+            for i, c in zip(self._causes, str_causes):
+                causes[c == STR_ONE].append(i)
+            iter_distrib = sub_struct.create_concept(effect, causes, data=True)
+            # Comparar con la distribución original (objetivo)
+            emd_dist = emd(*iter_distrib, *self._target_dist)
+            if emd_dist < self.integrated_info:
+                self.integrated_info = emd_dist
+                self.sub_distrib = iter_distrib
+                mip = partition
+        return mip
 
     def bipartitionate(self, m: int, n: int) -> list[tuple[str, str]]:
         """Genera las biparticiones binarias para un tamaño m de filas por m columnas, de forma que se genera la mitad de combinaciones para filas pero todas las columnas.

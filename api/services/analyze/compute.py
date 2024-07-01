@@ -56,7 +56,7 @@ class Compute:
         struct: Structure = copy(self.__sup_struct)
         struct.create_concept(effect, causes)
         distrib = struct.get_distribution(self.__dual)
-        ic(distrib)
+        # ic(distrib)
 
         # raise HTTPException(status_code=400, detail='TESTING STOP.')
 
@@ -80,7 +80,7 @@ class Compute:
             effect[e == STR_ONE].append(i)
         for j, c in enumerate(self.__causes):
             causes[c == STR_ONE].append(j)
-        ic(effect, causes)
+        # ic(effect, causes)
         # New strcuture with original tensor
         struct: Structure = copy(self.__sup_struct)
         # raise HTTPException(status_code=400, detail='TESTING STOP.')
@@ -89,13 +89,12 @@ class Compute:
         # From this superior level we have control of the EC structure.
         # Obtenemos la distribución que indique el usuario
         ic(effect, causes)
-        ic(distrib)
         sub_tensor: OrderedDict = OrderedDict(
             # Si estamos con le primal o dual, tomamos dichos futuros como, dichas matrices del tensor original
             (k, struct.get_tensor()[k])
             for k in effect[not self.__dual]
         )
-        ic(sub_tensor)
+        # ic(sub_tensor)
         # La subestructura no tiene efecto ni causa, esto puesto aún no está particionada
         sub_struct: Structure = Structure(
             db_struct={

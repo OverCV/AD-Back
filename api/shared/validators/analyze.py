@@ -3,6 +3,9 @@ from fastapi import HTTPException
 
 from icecream import ic
 
+from utils.consts import INT_ZERO
+
+
 def has_valid_inputs(istate: str, effect: str, causes: str, tensor_len: int) -> bool:
     # Check with a reg exp if is a binary string
     ic(istate, effect, causes, tensor_len)
@@ -16,6 +19,8 @@ def has_valid_inputs(istate: str, effect: str, causes: str, tensor_len: int) -> 
     ):
         raise HTTPException('Initial state should be a binary string')
 
+    # ! Validate the no-sense of giving empty the future or the causes [#10] ! #
+    
     if len(effect) != len(causes):
         raise HTTPException('Effect and Causes should have the same length')
 

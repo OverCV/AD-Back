@@ -3,6 +3,7 @@ class Server:
 
     def __init__(self) -> None:
         self.little_endian: bool = True
+        self.threaded: bool = True
         self.locale_nosql: bool = False
         self.store_nets: bool = False
 
@@ -11,6 +12,12 @@ class Server:
 
     def use_be(self) -> None:
         self.little_endian = False
+
+    def use_threads(self) -> None:
+        self.threaded = True
+
+    def dont_use_threads(self) -> None:
+        self.threaded = False
 
     def use_locale_nosql(self) -> None:
         self.locale_nosql = True

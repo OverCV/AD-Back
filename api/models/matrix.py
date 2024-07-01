@@ -37,7 +37,9 @@ class Matrix:
         le: bool = conf.little_endian,
         data: bool = False,
     ) -> None | NDArray[np.float64]:
-        """#! Propper documentation: Ahora se envían las que se salvan!!!
+        """
+        Marginalize the matrix over the given states. The states to marginalize are the states to drop if dual is disabled, else the given states are the states to preserve.
+
         Args:
             states (list[int]): Represents the states to marginalize if dual is disabled, these states must be a subset of the causes because are the states to drop or preserve.
             axis (int, optional): _description_. Defaults to ROWS_IDX. This determine if we're marginalizing rows (0) or columns (1).

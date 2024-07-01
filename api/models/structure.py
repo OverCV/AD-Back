@@ -113,25 +113,25 @@ class Structure:
         if self.__effect is None or self.__causes is None:
             raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
 
-        # Concurrency
+        if conf.threaded:
+            # Threaded version
+            def process_matrices(b: bool) -> None:
+                for idx in self.__effect[b]:
+                    # ic(b, idx)
+                    mat: Matrix = self.__tensor[idx]
+                    mat.margin(self.__causes[b])
 
-        def process_matrices(b: bool) -> None:
-            for idx in self.__effect[b]:
-                # ic(b, idx)
-                mat: Matrix = self.__tensor[idx]
-                mat.margin(self.__causes[b])
-
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(process_matrices, b) for b in BOOL_RANGE]
-            # Esperar a que todas las tareas completen
-            concurrent.futures.wait(futures)
-
-        # Non-Threaded version
-        # for b in BOOL_RANGE:
-        #     for idx in self.__effect[b]:
-        #         ic(b, idx)
-        #         mat: Matrix = self.__tensor[idx]
-        #         mat.margin(self.__causes[b])
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                futures = [executor.submit(process_matrices, b) for b in BOOL_RANGE]
+                # Esperar a que todas las tareas completen
+                concurrent.futures.wait(futures)
+        else:
+            # Non-Threaded version
+            for b in BOOL_RANGE:
+                for idx in self.__effect[b]:
+                    ic(b, idx)
+                    mat: Matrix = self.__tensor[idx]
+                    mat.margin(self.__causes[b])
 
     def __set_effect(self, effect: ConceptType) -> None:
         self.__effect = effect
