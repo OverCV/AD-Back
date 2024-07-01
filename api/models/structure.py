@@ -53,7 +53,6 @@ class Structure:
         self, effect: dict[bool, list[int]], causes: dict[bool, list[int]], data: bool = False
     ) -> NDArray[np.float64] | None:
         # ! Here may be a validation of the ec inputs, validate effect.size == tensor.size and for all matrices, the effect of its side=(prim|dual) is 2^n == matriz.rows [#00] ! #
-        ic(conf.little_endian)
         self.__set_effect(effect)
         self.__set_causes(causes)
         self.__correlate()
@@ -102,10 +101,8 @@ class Structure:
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
         endian_product: Callable = le_product if le else be_product
-        ic('2PROD', prim_tensor)
         self.__prim_dist = endian_product(prim_tensor)
         self.__dual_dist = endian_product(dual_tensor)
-        ic(self.__prim_dist, self.__dual_dist)
 
         # ! Critical error ! #
         dist = endian_product([self.__dual_dist, self.__prim_dist])
@@ -115,13 +112,12 @@ class Structure:
         """Sets the tensor matrices to it's primal and dual marginalization. The effect and causes must be setted before calling this function. The effect and causes are used to select the matrices that are going to be marginalized. The marginalization is done by the effect and causes, the effect is used to select the matrices that are going to be marginalized by the causes. The causes are used to select the states that are going to be marginalized."""
         if self.__effect is None or self.__causes is None:
             raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
-        ic(self.__effect, self.__causes)
 
         # Concurrency
 
         def process_matrices(b: bool) -> None:
             for idx in self.__effect[b]:
-                ic(b, idx)
+                # ic(b, idx)
                 mat: Matrix = self.__tensor[idx]
                 mat.margin(self.__causes[b])
 

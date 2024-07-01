@@ -67,7 +67,7 @@ async def genetic_strategy(
     struct_res: StructureResponse = get_structure_by_title(title, db)
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_res.tensor)
     has_valid_inputs(istate, effect, causes, len(subtensor))
-    ic(type(subtensor))
+    # ic(type(subtensor))
     computing: Compute = Compute(struct_res, istate, effect, causes, subtensor, dual)
     results = computing.use_genetic_algorithm(db)
     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)

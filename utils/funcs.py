@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 import numpy as np
 # from scipy.stats import wasserstein_distance
 
-from utils.consts import INT_ONE, INT_ZERO, STR_ONE
+from utils.consts import BASE_2, FLOAT_ZERO, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE
 
 from server import conf
 # from icecream import ic
@@ -30,17 +30,17 @@ def emd(u: NDArray[np.float64], v: NDArray[np.float64], le: bool = conf.little_e
 
     max_len = int(math.log2(len(u)))
     end_keys = lil_endian(max_len) if le else big_endian(max_len)
-    earth_moved = 0.0
+    earth_moved = FLOAT_ZERO
 
-    while not np.allclose(u, 0):
+    while not np.allclose(u, ROWS_IDX):
         u_sorter = np.argsort(-u)
         v_sorter = np.argsort(-v)
 
-        u_idx = u_sorter[0]
-        v_idx = v_sorter[0]
+        u_idx = u_sorter[ROWS_IDX]
+        v_idx = v_sorter[ROWS_IDX]
 
-        end_u_key = int(end_keys[u_idx], 2)
-        end_v_key = int(end_keys[v_idx], 2)
+        end_u_key = int(end_keys[u_idx], BASE_2)
+        end_v_key = int(end_keys[v_idx], BASE_2)
 
         restar = min(u[u_idx], v[v_idx])
         u[u_idx] -= restar
@@ -105,7 +105,7 @@ def big_endian(n: int) -> list[str]:
 def get_labels(n: int) -> tuple[str]:
     def get_excel_column(n: int) -> str:
         if n <= 0:
-            return '∅'
+            return ''
         return get_excel_column((n - 1) // 26) + chr((n - 1) % 26 + ord('A'))
 
     # return tuple([get_excel_column(i) for i in range(1, n+1)] + ['∅'])
