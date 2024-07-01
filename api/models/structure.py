@@ -106,6 +106,7 @@ class Structure:
         self.__dual_dist = endian_product(dual_tensor)
         ic(self.__prim_dist, self.__dual_dist)
 
+        # ! Critical error ! #
         dist = endian_product([self.__dual_dist, self.__prim_dist])
         return dist if data else None
 

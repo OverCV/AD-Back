@@ -37,10 +37,6 @@ class Genetic(Sia):
         str_effect = '101'
         str_causes = '111'
 
-        # Dilema existencial:
-        #  Si normalizo los valores 0,2,3 a funciona para seleccionar el estado en la marginalización como 0,1,2. Pero, si normalizo entonces pierdo la posición de las mat originales!!!
-        # No puedo perder los indices matriciales...
-
         effect = {b: [] for b in BOOL_RANGE}
         for i, e in zip(self._effect, str_effect):
             effect[e == STR_ONE].append(i)
@@ -76,6 +72,6 @@ class Genetic(Sia):
             NET_ID: self._network,
             SMALL_PHI: self._integrated_info,
             MIP: self._min_info_part,
-            BEST_DISTRIBUTION: self._distribution,
+            BEST_DISTRIBUTION: self.distribution,
         }
         return concept

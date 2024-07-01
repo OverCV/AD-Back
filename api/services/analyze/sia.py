@@ -22,15 +22,15 @@ class Sia(ABC):
         self._min_info_part: tuple[tuple[tuple[str], tuple[str]], tuple[tuple[str], tuple[str]]] = (
             None
         )
-        self._distribution: NDArray[np.float64] = None
-
-    @abstractmethod
-    def analyze(self) -> SiaType:
-        pass
+        self.distribution: NDArray[np.float64] = None
 
     def calculate_concept(self) -> None:
         analysis: SiaType = self.analyze()
         self._network = analysis.get(NET_ID, None)
         self._integrated_info = analysis.get(SMALL_PHI, None)
         self._min_info_part = analysis.get(MIP, None)
-        self._distribution = analysis.get(BEST_DISTRIBUTION, None)
+        self.distribution = analysis.get(BEST_DISTRIBUTION, None)
+
+    @abstractmethod
+    def analyze(self) -> SiaType:
+        pass

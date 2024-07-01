@@ -112,6 +112,10 @@ def get_labels(n: int) -> tuple[str]:
     return tuple([get_excel_column(i) for i in range(1, n + 1)])
 
 
+def dec2bin(number: int, size: int) -> str:
+    return f'{number:0{size}b}'
+
+
 async def logger(func):
     def wrapper(*args, **kwargs):
         print('\n')

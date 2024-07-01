@@ -1,3 +1,9 @@
+"""Database"""
+
+TO_SECONDS: float = 1000
+
+""" General """
+
 INFTY: float = float('inf')
 FLOAT_ZERO: float = float(0)
 
@@ -30,14 +36,25 @@ BEST_DISTRIBUTION: str = 'dist'
 
 W_LBL: str = 'weight'
 
-NODE_DATA_OPTIONS: list[str] = [
-    'color', 'label', 'value'
-]
-EDGE_DATA_OPTIONS: list[str] = [
-    W_LBL, 'color'
-]
+NODE_DATA_OPTIONS: list[str] = ['color', 'label', 'value']
+EDGE_DATA_OPTIONS: list[str] = [W_LBL, 'color']
 COLORS_NAMES_LIST: list[str] = [
-    'red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'magenta', 'orange', 'lime', 'pink', 'teal', 'indigo', 'brown', 'grey', 'black', 'white'
+    'red',
+    'green',
+    'blue',
+    'yellow',
+    'purple',
+    'cyan',
+    'magenta',
+    'orange',
+    'lime',
+    'pink',
+    'teal',
+    'indigo',
+    'brown',
+    'grey',
+    'black',
+    'white',
 ]
 
 """ Analyze - Genetic """

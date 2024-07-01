@@ -9,6 +9,9 @@ from api.models.enums.frontend import NextJSPort
 from data.motors import Base, engine
 
 from api.routes import analyze, server, network, structure
+from icecream import install
+
+install()
 
 
 """ Relational Database """

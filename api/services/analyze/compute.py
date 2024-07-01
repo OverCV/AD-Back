@@ -17,7 +17,6 @@ from utils.consts import COLS_IDX, ROWS_IDX, STR_ONE, STR_ZERO
 from icecream import ic
 from copy import copy
 from server import conf
-from utils.funcs import be_product, le_product
 
 
 class Compute:
@@ -32,6 +31,7 @@ class Compute:
         subtensor: NDArray[np.float64],
         dual: bool = False,
     ) -> None:
+        # Siempre preservamos la superestructura
         self.__sup_struct: Structure = Structure(
             db_struct=struct.model_dump(),
             istate=istate,
@@ -41,20 +41,31 @@ class Compute:
         self.__causes: str = causes
         self.__dual: bool = dual
 
-    def validate_input(self) -> bool:
-        if not av.has_valid_inputs(
-            len(self.__sup_struct.get_istate()),
-            len(self.__effect),
-            len(self.__causes),
-            len(self.__sup_struct.get_tensor()),
-        ):
-            raise HTTPException(status_code=400, detail='Invalid effect, causes or istate.')
-
     # def use_pyphi(self) -> bool:
     #     pass
 
     def use_brute_force(self) -> bool:
-        sia_force = BruteForce()
+        effect = {False: [], True: []}
+        causes = {False: [], True: []}
+        for i, e in enumerate(self.__effect):
+            effect[e == STR_ONE].append(i)
+        for j, c in enumerate(self.__causes):
+            causes[c == STR_ONE].append(j)
+        # Preservamos la superestructura para trabajar con una nueva
+        struct: Structure = copy(self.__sup_struct)
+        struct.create_concept(effect, causes)
+        distrib = struct.get_distribution(self.__dual)
+        ic(distrib)
+
+        # raise HTTPException(status_code=400, detail='TESTING STOP.')
+
+        sia_force: BruteForce = BruteForce(
+            struct,
+            effect[not self.__dual],
+            causes[not self.__dual],
+            distrib,
+            self.__dual,
+        )
         sia_force.calculate_concept()
         return sia_force.get_reperoire()
 
@@ -73,11 +84,11 @@ class Compute:
         struct: Structure = copy(self.__sup_struct)
         # raise HTTPException(status_code=400, detail='TESTING STOP.')
         struct.create_concept(effect, causes)
-        sub_distrib = struct.get_distribution(self.__dual)
+        distrib = struct.get_distribution(self.__dual)
         # From this superior level we have control of the EC structure.
         # Obtenemos la distribución que indique el usuario
         ic(effect, causes)
-        ic(sub_distrib)
+        ic(distrib)
         sub_tensor: OrderedDict = OrderedDict(
             # Si estamos con le primal o dual, tomamos dichos futuros como, dichas matrices del tensor original
             (k, struct.get_tensor()[k])
@@ -94,7 +105,7 @@ class Compute:
             tensor=sub_tensor,
         )
         sia_genetic: Genetic = Genetic(
-            sub_struct, effect[not self.__dual], causes[not self.__dual], sub_distrib, self.__dual
+            sub_struct, effect[not self.__dual], causes[not self.__dual], distrib, self.__dual
         )
 
         # [ic(k, m.as_dataframe()) for k, m in struct.get_tensor().items()]

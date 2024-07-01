@@ -23,6 +23,29 @@ from icecream import ic
 
 
 router: APIRouter = APIRouter()
+fmt: Format = Format()
+
+
+@router.get(
+    '/sia-force/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
+    status_code=status.HTTP_200_OK,
+    response_model_by_alias=False,
+)
+async def force_strategy(
+    title: str = STRUCTURES[R5A][StructProps.TITLE],
+    istate: str = STRUCTURES[R5A][StructProps.ISTATE],
+    effect: str = STRUCTURES[R5A][StructProps.EFFECT],
+    causes: str = STRUCTURES[R5A][StructProps.CAUSES],
+    dual: bool = False,
+    db: Session = Depends(get_sqlite),
+):
+    struct_response: StructureResponse = get_structure_by_title(title, db)
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
+    has_valid_inputs(istate, effect, causes, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, causes, subtensor, dual)
+    results = computing.use_brute_force()
+    return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
 
 
 @router.get(
@@ -41,9 +64,8 @@ async def genetic_strategy(
 ):
     ic(title)
     struct_res: StructureResponse = get_structure_by_title(title, db)
-    form: Format = Format()
-    subtensor: NDArray[np.float64] = form.deserialize_tensor(struct_res.tensor)
-    has_valid_inputs(len(istate), len(effect), len(causes), len(subtensor))
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_res.tensor)
+    has_valid_inputs(istate, effect, causes, len(subtensor))
     ic(type(subtensor))
     computing: Compute = Compute(struct_res, istate, effect, causes, subtensor, dual)
     results = computing.use_genetic_algorithm(db)

@@ -1,6 +1,5 @@
-from icecream import ic
 import math
-from typing import Callable
+from typing import Callable, OrderedDict
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
@@ -20,9 +19,9 @@ class Matrix:
         self.__array: NDArray[np.float64] = array
         # cout(1)
         self.__effect: list[int] = list(range(self.__array.shape[COLS_IDX]))
-        self.__causes: list[int] = {
-            c: j for j, c in enumerate(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
-        }
+        self.__causes: dict[int:int] = OrderedDict(
+            {c: j for j, c in enumerate(range(int(math.log2(self.__array.shape[ROWS_IDX]))))}
+        )
         # self.__effect: list[int] = list(range(self.__array.shape[COLS_IDX]))
         # self.__causes: list[int] = list(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
 
@@ -93,7 +92,7 @@ class Matrix:
         if axis == COLS_IDX:
             self.__effect = states  #! Check case !#
         else:
-            self.__causes = {c: k for k, c in enumerate(states)}
+            self.__causes = OrderedDict({c: k for k, c in enumerate(states)})
         self.__array = (
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
@@ -116,7 +115,7 @@ class Matrix:
         )
         tpm = self.as_dataframe()
         # If the dataframe has only one row(collapsed tpm), return it
-        ic(concat_digits)
+        # ic(concat_digits)
         arr = tpm.values if len(tpm.index) == 1 else tpm.loc[[concat_digits]].values
 
         if axis == COLS_IDX:

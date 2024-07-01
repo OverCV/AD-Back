@@ -1,18 +1,28 @@
+import re
 from fastapi import HTTPException
 
+from icecream import ic
 
-def has_valid_inputs(
-    istate: int, effect_len: int, causes_len: int, tensor_len: int
-) -> bool:
-    if effect_len != causes_len:
+def has_valid_inputs(istate: str, effect: str, causes: str, tensor_len: int) -> bool:
+    # Check with a reg exp if is a binary string
+    ic(istate, effect, causes, tensor_len)
+    binary_pattern = r'^[01]+$'
+    if not all(
+        [
+            re.match(binary_pattern, istate),
+            re.match(binary_pattern, effect),
+            re.match(binary_pattern, causes),
+        ]
+    ):
+        raise HTTPException('Initial state should be a binary string')
+
+    if len(effect) != len(causes):
         raise HTTPException('Effect and Causes should have the same length')
 
-    if istate != tensor_len:
-        raise HTTPException(
-            'Initial state and Tensor should have the same length'
-        )
+    if len(istate) != tensor_len:
+        raise HTTPException('Initial state and Tensor should have the same length')
 
-    if effect_len != tensor_len:
+    if len(effect) != tensor_len:
         raise HTTPException('Effect and Tensor should have the same length')
 
-    return effect_len == causes_len == tensor_len
+    return len(effect) == len(causes) == tensor_len
