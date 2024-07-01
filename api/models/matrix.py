@@ -19,11 +19,11 @@ class Matrix:
         self.__array: NDArray[np.float64] = array
         # cout(1)
         self.__effect: list[int] = list(range(self.__array.shape[COLS_IDX]))
-        self.__causes: dict[int:int] = OrderedDict(
-            {c: j for j, c in enumerate(range(int(math.log2(self.__array.shape[ROWS_IDX]))))}
-        )
+        # self.__causes: dict[int:int] = OrderedDict(
+        #     (c, j) for j, c in enumerate(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
+        # )
         # self.__effect: list[int] = list(range(self.__array.shape[COLS_IDX]))
-        # self.__causes: list[int] = list(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
+        self.__causes: list[int] = list(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
 
     @property
     def shape(self):
@@ -73,7 +73,9 @@ class Matrix:
                     # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
                     # ic(row, states)
                     # element is the key, value is the position or index
-                    selected_row = ''.join([row[self.__causes[k]] for k in states])
+                    selected_row = ''.join(
+                        [row[self.__causes.index(k)] for k in states],
+                    )
                     """ 
                     STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]
                     
@@ -92,7 +94,7 @@ class Matrix:
         if axis == COLS_IDX:
             self.__effect = states  #! Check case !#
         else:
-            self.__causes = OrderedDict({c: k for k, c in enumerate(states)})
+            self.__causes = states
         self.__array = (
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
@@ -106,13 +108,10 @@ class Matrix:
         if axis == COLS_IDX:
             self.__array = self.__array.transpose()
 
-        sub_istates = [istate[i] for i in self.__causes]
+        row_istates = ''.join([istate[e] for e in self.__causes])
+        col_istates = ''.join([istate[i] for i in self.__effect])
         # ic('ERROR?', self.__causes, sub_istates)
-        concat_digits: str = (
-            ''.join(sub_istates)
-            if axis == ROWS_IDX
-            else ''.join([istate[i] for i in self.__effect])
-        )
+        concat_digits: str = row_istates if axis == ROWS_IDX else col_istates
         tpm = self.as_dataframe()
         # If the dataframe has only one row(collapsed tpm), return it
         # ic(concat_digits)

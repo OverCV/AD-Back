@@ -48,7 +48,7 @@ class Genetic(Sia):
         ic(effect, causes)
 
         # Calculate distribution... by algorithm!
-        iter_distrib = self._structure.create_concept(effect, causes, data=True)  #! TESTING !#
+        iter_distrib = self.structure.create_concept(effect, causes, data=True)  #! TESTING !#
         # best_dist = self._structure.get_distribution(self._dual).tolist()
 
         mip = ((('?',), ('¿',)), (('¿',), ('?',)))

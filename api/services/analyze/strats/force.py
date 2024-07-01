@@ -1,3 +1,4 @@
+import copy
 from email.iterators import _structure
 import itertools
 
@@ -38,22 +39,7 @@ class BruteForce(Sia):
 
         bipartitions = self.bipartitionate(len(self._effect), len(self._causes))
         origin = bipartitions.pop(0)
-        # str_effect = origin[EFFECT]
-        # str_causes = origin[CAUSES]
 
-        # dict_effect = {bin: [] for bin in BOOL_RANGE}
-        # for i, e in zip(self._effect, str_effect):
-        #     dict_effect[e == STR_ONE].append(i)
-        # dict_causes = {bin: [] for bin in BOOL_RANGE}
-        # for j, c in zip(self._causes, str_causes):
-        #     dict_causes[c == STR_ONE].append(j)
-        # ic(str_effect, str_causes, dict_effect, dict_causes)
-        # raise HTTPException(status_code=500, detail='Not implemented')
-        # origin_dist = self._structure.create_concept(
-        #     dict_effect,
-        #     dict_causes,
-        #     data=True,
-        # )
         ic(bipartitions)
         min_emd: bool = INFTY
         mip: tuple[tuple[str, str], tuple[str, str]] = None
@@ -61,6 +47,7 @@ class BruteForce(Sia):
 
         # Begin
         for part in bipartitions:
+            sub_struct = copy.deepcopy(self.structure)
             str_effect: str = part[EFFECT]
             str_causes: str = part[CAUSES]
 
@@ -73,12 +60,12 @@ class BruteForce(Sia):
             ic(effect, causes)
             # Calculate distribution... by algorithm!
             ic(str_effect, str_causes, effect, causes)
-            iter_distrib = self._structure.create_concept(effect, causes, data=True)
-            # ! Check with the original one
+            iter_distrib = sub_struct.create_concept(effect, causes, data=True)
+            # Comparar con la distribución original
             emd_dist = emd(*iter_distrib, *self._target_dist)
             if emd_dist < min_emd:
                 min_emd = emd_dist
-                mip = ((str_effect, str_causes), (str_causes, str_effect))
+                mip = (str_effect, str_causes)
                 best_dist = iter_distrib
 
         return {
