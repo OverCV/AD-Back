@@ -40,14 +40,6 @@ class Structure:
         )
         self.__prim_dist: NDArray[np.float64] = None
         self.__dual_dist: NDArray[np.float64] = None
-        # (
-
-        #     if isinstance(tensor, list)
-        #     else tensor
-        # )
-
-        # self.__nodes = set(range(db_sys.get(SysProps.SIZE, -1)))
-        # validate.network(self)
 
     def create_concept(
         self, effect: dict[bool, list[int]], causes: dict[bool, list[int]], data: bool = False

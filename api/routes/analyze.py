@@ -6,8 +6,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from sqlalchemy.orm import Session
-from api.shared.validators.analyze import has_valid_inputs
-from data.motors import get_sqlite
+from api.shared.validators import analyze as av
+from data.motors import get_mongo, get_sqlite
 
 from api.models.props.structure import StructProps
 from api.schemas.structure import StructureResponse
@@ -19,7 +19,11 @@ from api.services.structure.base import (
     get_structure_by_title,
 )
 
+from api.services.network import reconstruct_network
+
 from icecream import ic
+
+from utils.consts import MIP
 
 
 router: APIRouter = APIRouter()
@@ -38,13 +42,17 @@ async def force_strategy(
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
     causes: str = STRUCTURES[R5A][StructProps.CAUSES],
     dual: bool = False,
-    db: Session = Depends(get_sqlite),
+    db_sql: Session = Depends(get_sqlite),
+    db_nosql: Session = Depends(get_mongo),
 ):
-    struct_response: StructureResponse = get_structure_by_title(title, db)
+    struct_response: StructureResponse = get_structure_by_title(title, db_sql)
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    has_valid_inputs(istate, effect, causes, len(subtensor))
+    av.has_valid_inputs(istate, effect, causes, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, causes, subtensor, dual)
     results = computing.use_brute_force()
+
+    reconstruct_network(results[MIP], db_nosql)
+
     ic(results)
     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
 
@@ -66,7 +74,7 @@ async def genetic_strategy(
     ic(title)
     struct_res: StructureResponse = get_structure_by_title(title, db)
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_res.tensor)
-    has_valid_inputs(istate, effect, causes, len(subtensor))
+    av.has_valid_inputs(istate, effect, causes, len(subtensor))
     # ic(type(subtensor))
     computing: Compute = Compute(struct_res, istate, effect, causes, subtensor, dual)
     results = computing.use_genetic_algorithm(db)

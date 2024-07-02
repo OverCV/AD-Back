@@ -2,14 +2,15 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic
+
 pymongo
 motor
 
 numpy
 pandas
-scipy
-# polars
 networkx
+scipy
+# polars #
 matplotlib
 # seaborn
 openpyxl

@@ -9,7 +9,7 @@ from utils.funcs import emd
 
 from numpy.typing import NDArray
 
-from utils.consts import SUB_DISTRIBUTION, NET_ID, MIP, SMALL_PHI, STR_ONE
+from utils.consts import SUB_DIST, NET_ID, MIP, SMALL_PHI, STR_ONE
 from icecream import ic
 
 
@@ -64,7 +64,7 @@ class Genetic(Sia):
             NET_ID: net_id(1),
             SMALL_PHI: emd_dist,
             MIP: mip,
-            SUB_DISTRIBUTION: iter_distrib.tolist(),
+            SUB_DIST: iter_distrib.tolist(),
         }
 
     def get_reperoire(self) -> SiaType:
@@ -72,6 +72,6 @@ class Genetic(Sia):
             NET_ID: self.network_id,
             SMALL_PHI: self.integrated_info,
             MIP: self.min_info_part,
-            SUB_DISTRIBUTION: self.sub_distrib,
+            SUB_DIST: self.sub_distrib,
         }
         return concept

@@ -4,7 +4,7 @@ import numpy as np
 import networkx as nx
 from api.models.props.sia import SiaType
 from api.models.structure import Structure
-from utils.consts import DISTRIBUTION, INFTY, SUB_DISTRIBUTION, NET_ID, MIP, SMALL_PHI
+from utils.consts import DIST, INFTY, SUB_DIST, NET_ID, MIP, SMALL_PHI
 from numpy.typing import NDArray
 
 from icecream import ic
@@ -23,6 +23,7 @@ class Sia(ABC):
         self.integrated_info: float = None
         self.min_info_part: tuple[tuple[tuple[str], tuple[str]]] = None
         self.sub_distrib: NDArray[np.float64] = None
+        # ! Eliminar la id de red [#12] ! #
         self.network_id: nx.Graph | nx.DiGraph = None
 
     def calculate_concept(self) -> None:
@@ -31,14 +32,14 @@ class Sia(ABC):
             raise HTTPException(
                 status_code=500,
                 detail=f'One or more of the SIA properties are not calculated: {self.integrated_info}, {self.min_info_part}, {self.sub_distrib}, {self.network_id}',
-            )   
+            )
 
     def get_reperoire(self) -> dict:
         concept: SiaType = {
             SMALL_PHI: self.integrated_info,
             MIP: self.min_info_part,
-            SUB_DISTRIBUTION: self.sub_distrib.tolist(),
-            DISTRIBUTION: self._target_dist.tolist(),
+            SUB_DIST: self.sub_distrib.tolist(),
+            DIST: self._target_dist.tolist(),
             NET_ID: self.network_id,
         }
         return concept

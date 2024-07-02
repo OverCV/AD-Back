@@ -59,14 +59,14 @@ def get_structure(id: int, db: Session) -> StructureResponse:
     return StructureResponse(**db_struct.__dict__)
 
 
-def get_structure_by_title(title: str, db: Session) -> StructureResponse:
-    if not sv.exist_structure_title(title, db):
+def get_structure_by_title(title: str, db_sql: Session) -> StructureResponse:
+    if not sv.exist_structure_title(title, db_sql):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Structure with title {title} not found.',
         )
     db_structure: StructureTable = (
-        db.query(StructureTable).filter(StructureTable.title == title).first()
+        db_sql.query(StructureTable).filter(StructureTable.title == title).first()
     )
     if db_structure is None:
         raise HTTPException(

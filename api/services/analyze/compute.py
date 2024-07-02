@@ -9,11 +9,11 @@ from api.schemas.structure import StructureResponse
 
 from numpy.typing import NDArray
 
-from api.shared.validators import analyze as av
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
 from constants.structure import BOOL_RANGE
 from utils.consts import COLS_IDX, ROWS_IDX, STR_ONE, STR_ZERO
+
 
 from icecream import ic
 from copy import copy
@@ -72,7 +72,6 @@ class Compute:
 
     def use_genetic_algorithm(self, db: Session) -> bool:
         # ! Made for S2P
-
         # Definimos los concepto causa y efecto
         effect = {False: [], True: []}
         causes = {False: [], True: []}

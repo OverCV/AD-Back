@@ -118,8 +118,13 @@ class BruteForce(Sia):
             return emd_dist, iter_distrib, (str_effect, str_causes)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(process_partition, partition) for partition in bipartitions]
-
+            futures = [
+                executor.submit(
+                    process_partition,
+                    partition,
+                )
+                for partition in bipartitions
+            ]
             for future in concurrent.futures.as_completed(futures):
                 emd_dist, iter_distrib, current_mip = future.result()
                 if emd_dist < self.integrated_info:

@@ -32,10 +32,10 @@ EXAMPLE: str = 'example'
 NET_ID: str = 'net_view_id'
 SMALL_PHI: str = 'φ'
 MIP: str = 'mip'
-SUB_DISTRIBUTION: str = 'subdist'
-DISTRIBUTION: str = 'dist'
+SUB_DIST: str = 'sub_distribution'
+DIST: str = 'distribution'
 
-""" Netowork """
+""" Network """
 
 W_LBL: str = 'weight'
 
