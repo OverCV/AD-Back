@@ -6,6 +6,7 @@ TO_SECONDS: float = 1000
 
 INFTY: float = float('inf')
 FLOAT_ZERO: float = float(0)
+FLOAT_ONE: float = float(1)
 
 DATA: str = 'data'
 
