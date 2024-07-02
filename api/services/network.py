@@ -1,14 +1,18 @@
 import networkx as nx
 import itertools
 from pytest import Session
+from api.models.props.network import DataProps, VertexProps
 from api.schemas.network.schema import NetworkSchema
 
-from icecream import ic
+from api.models.props import spectrum
 
 from constants.structure import VOID
+from utils.color import get_rnd_colors
 from utils.consts import BASE_2, CAUSES, COLS_IDX, EFFECT, ROWS_IDX
 
-# ! Debería haber un decorador, puesto para almacenar la mip debe pode existir el endpoint que haga la llamada al otro endpoint con el servicio para redes [#10] ! #
+from matplotlib import pyplot as plt
+from icecream import ic
+# ! Debería haber un decorador para stablish_connection, puesto para almacenar la mip debe pode existir el endpoint que haga la llamada al otro endpoint con el servicio para redes [#10] ! #
 # async def stablish_connection(db: Session) -> None:
 #     # async def create_network(network: NetworkSchema = Body(...)):
 #     try:
@@ -45,83 +49,96 @@ from utils.consts import BASE_2, CAUSES, COLS_IDX, EFFECT, ROWS_IDX
 
 def reconstruct_network(mip: tuple[tuple[tuple[str], tuple[str]]], db: Session) -> NetworkSchema:
     """Designer for bipartite graphs"""
-    ic()
     ic(mip)
-
     # ic| mip: ([['A', 'B', 'D'], ['∅']], [['∅'], ['B', 'D', 'E']])
-    nodes = set()
-
-    prim = mip[ROWS_IDX]
-    dual = mip[COLS_IDX]
+    prim_effect = [] if mip[ROWS_IDX][EFFECT] == [VOID] else mip[ROWS_IDX][EFFECT]
+    prim_causes = [] if mip[ROWS_IDX][CAUSES] == [VOID] else mip[ROWS_IDX][CAUSES]
+    dual_effect = [] if mip[COLS_IDX][EFFECT] == [VOID] else mip[COLS_IDX][EFFECT]
+    dual_causes = [] if mip[COLS_IDX][CAUSES] == [VOID] else mip[COLS_IDX][CAUSES]
     # Creación de los nodos
+    n_colors = get_rnd_colors(BASE_2, spectrum.FormatProp.HEX)
+    e_colors = get_rnd_colors(BASE_2, spectrum.FormatProp.HEX)
+    # ic(n_colors,e_colors)
     nodes = [
-        []
-        if prim[EFFECT] == [VOID]
-        else [{'name': x + 'f', 'type': 'effect'} for x in prim[EFFECT]],
-        []
-        if prim[CAUSES] == [VOID]
-        else [{'name': x + 'c', 'type': 'cause'} for x in prim[CAUSES]],
-        []
-        if dual[EFFECT] == [VOID]
-        else [{'name': y + 'f', 'type': 'effect'} for y in dual[EFFECT]],
-        []
-        if dual[CAUSES] == [VOID]
-        else [{'name': y + 'c', 'type': 'cause'} for y in dual[CAUSES]],
+        [
+            {DataProps.LBL: x + 'f', DataProps.COLOR: n_colors[ROWS_IDX], DataProps.value: 0}
+            for x in prim_effect
+        ],
+        [
+            {DataProps.LBL: x + 'c', DataProps.COLOR: n_colors[ROWS_IDX], DataProps.value: 0}
+            for x in prim_causes
+        ],
+        [
+            {DataProps.LBL: y + 'f', DataProps.COLOR: n_colors[COLS_IDX], DataProps.value: 0}
+            for y in dual_effect
+        ],
+        [
+            {DataProps.LBL: y + 'c', DataProps.COLOR: n_colors[COLS_IDX], DataProps.value: 0}
+            for y in dual_causes
+        ],
     ]
-
-    # Flatten the list and discard VOID nodes
+    # Flatten the list
     nodes = [node for sublist in nodes for node in sublist]
-    nodes = [node for node in nodes if node['name'] != VOID]
 
     ic(nodes)
 
-    prim_edges = list(
+    used_prim_edges = list(
         itertools.product(
-            [] if prim[COLS_IDX] == [VOID] else [x + 'c' for x in prim[COLS_IDX]],
-            [] if prim[ROWS_IDX] == [VOID] else [x + 'f' for x in prim[ROWS_IDX]],
+            [x + 'c' for x in prim_causes],
+            [x + 'f' for x in prim_effect],
         )
     )
-    # dual_edges = list(itertools.product(dual[COLS_IDX], dual[ROWS_IDX]))
-    dual_edges = list(
+    used_dual_edges = list(
         itertools.product(
-            [] if dual[COLS_IDX] == [VOID] else [x + 'c' for x in dual[COLS_IDX]],
-            [] if dual[ROWS_IDX] == [VOID] else [y + 'f' for y in dual[ROWS_IDX]],
+            [x + 'c' for x in dual_causes],
+            [y + 'f' for y in dual_effect],
         )
     )
-    ic(prim_edges, dual_edges)
+    cutted_edges = list(
+        itertools.product(
+            [x + 'c' for x in dual_causes],
+            [y + 'f' for y in prim_effect],
+        )
+    ) + list(
+        itertools.product(
+            [x + 'c' for x in prim_causes],
+            [y + 'f' for y in dual_effect],
+        )
+    )
+
+    ic(used_prim_edges, used_dual_edges, cutted_edges)
 
     # Crear un grafo dirigido
     G = nx.DiGraph()
 
     # Añadir vértices
-    # G.add_nodes_from(nodes)
-
     for node in nodes:
-        G.add_node(node['name'], **node)
+        G.add_node(node[DataProps.LBL], **node)
+
     # Añadir aristas
-    G.add_edges_from(prim_edges)
-    G.add_edges_from(dual_edges)
+    G.add_edges_from(used_prim_edges)
+    G.add_edges_from(used_dual_edges)
+    G.add_edges_from(cutted_edges)
 
     # Imprimir el grafo para verificar
 
     ic(G.nodes)
     ic(G.edges)
 
-    vertices = set()
-    for node in G.nodes(data=True):
-        ic(node)
+    # vertices = set()
+    # for node in G.nodes(data=True):
+    #     ic(node)
 
-    arcs = set()
-    for u, v, data in G.edges(data=True):
-        ic(u, v, data)
-        # vertices.add(node)
+    # arcs = set()
+    # for u, v, data in G.edges(data=True):
+    #     ic(u, v, data)
+    # vertices.add(node)
 
     # Opcional: Dibujar el grafo para visualizarlo
-    # import matplotlib.pyplot as plt
 
-    # pos = nx.spring_layout(G)  # Posiciones de los nodos para la visualización
-    # nx.draw(G, pos, with_labels=True, node_size=700, node_color='skyblue', arrowsize=20)
-    # plt.show()
+    pos = nx.shell_layout(G)  # Posiciones de los nodos para la visualización
+    nx.draw(G, pos, with_labels=True, node_size=700, node_color='skyblue', arrowsize=20)
+    plt.show()
 
     # for effect, cause in mip:
     #     ic(effect, cause)

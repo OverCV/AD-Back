@@ -11,7 +11,7 @@ class Vertex(BaseModel):
 
 class vertex_collection(BaseModel):
     """
-    A container holding a list of `CreateNode` instances.
+    A container holding a list of `Vertex` instances.
 
     This exists because providing a top-level array in a JSON response can be a [vulnerability](https://haacked.com/archive/2009/06/25/json-hijacking.aspx/)
     """
