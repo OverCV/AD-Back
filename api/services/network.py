@@ -49,26 +49,31 @@ def reconstruct_network(mip: tuple[tuple[tuple[str], tuple[str]]], db: Session) 
     ic(mip)
 
     # ic| mip: ([['A', 'B', 'D'], ['∅']], [['∅'], ['B', 'D', 'E']])
-    vertices = set()
-    # for con, part in enumerate(mip):
-    #     for lbl in part[EFFECT]:
-    #         vertices.update(lbl)
-    #     for lbl in part[CAUSES]:
-    #         vertices.update(lbl)
+    nodes = set()
 
     prim = mip[ROWS_IDX]
     dual = mip[COLS_IDX]
     # Creación de los nodos
-    vertices = [
-        [] if prim[EFFECT] == [VOID] else [x + 'f' for x in prim[EFFECT]],
-        [] if prim[CAUSES] == [VOID] else [x + 'c' for x in prim[CAUSES]],
-        [] if dual[EFFECT] == [VOID] else [y + 'f' for y in dual[EFFECT]],
-        [] if dual[CAUSES] == [VOID] else [y + 'c' for y in dual[CAUSES]],
+    nodes = [
+        []
+        if prim[EFFECT] == [VOID]
+        else [{'name': x + 'f', 'type': 'effect'} for x in prim[EFFECT]],
+        []
+        if prim[CAUSES] == [VOID]
+        else [{'name': x + 'c', 'type': 'cause'} for x in prim[CAUSES]],
+        []
+        if dual[EFFECT] == [VOID]
+        else [{'name': y + 'f', 'type': 'effect'} for y in dual[EFFECT]],
+        []
+        if dual[CAUSES] == [VOID]
+        else [{'name': y + 'c', 'type': 'cause'} for y in dual[CAUSES]],
     ]
-    vertices = set(itertools.chain(*vertices))
-    vertices.discard(VOID)
-    vertices
-    ic(vertices)
+
+    # Flatten the list and discard VOID nodes
+    nodes = [node for sublist in nodes for node in sublist]
+    nodes = [node for node in nodes if node['name'] != VOID]
+
+    ic(nodes)
 
     prim_edges = list(
         itertools.product(
@@ -89,15 +94,27 @@ def reconstruct_network(mip: tuple[tuple[tuple[str], tuple[str]]], db: Session) 
     G = nx.DiGraph()
 
     # Añadir vértices
-    G.add_nodes_from(vertices)
+    # G.add_nodes_from(nodes)
 
+    for node in nodes:
+        G.add_node(node['name'], **node)
     # Añadir aristas
     G.add_edges_from(prim_edges)
     G.add_edges_from(dual_edges)
 
     # Imprimir el grafo para verificar
+
     ic(G.nodes)
     ic(G.edges)
+
+    vertices = set()
+    for node in G.nodes(data=True):
+        ic(node)
+
+    arcs = set()
+    for u, v, data in G.edges(data=True):
+        ic(u, v, data)
+        # vertices.add(node)
 
     # Opcional: Dibujar el grafo para visualizarlo
     # import matplotlib.pyplot as plt
