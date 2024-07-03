@@ -81,89 +81,89 @@ def reconstruct_network(
 
     raise HTTPException(status_code=500, detail='STOP NOW')
 
-    arcs: list[Arc] = reconstruct_edges(mip)
+    # arcs: list[Arc] = reconstruct_edges(mip)
 
-    e_colors = get_rnd_colors(BASE_2, spectrum.FormatProp.HEX)
-    # ic(n_colors,e_colors)
+    # e_colors = get_rnd_colors(BASE_2, spectrum.FormatProp.HEX)
+    # # ic(n_colors,e_colors)
 
-    ic(nodes)
+    # ic(nodes)
 
-    used_prim_edges = list(itertools.product(prim_causes, prim_effect))
-    used_dual_edges = list(itertools.product(dual_causes, dual_effect))
-    cutted_edges = list(
-        itertools.product(dual_causes, prim_effect),
-    ) + list(itertools.product(prim_causes, dual_effect))
+    # used_prim_edges = list(itertools.product(prim_causes, prim_effect))
+    # used_dual_edges = list(itertools.product(dual_causes, dual_effect))
+    # cutted_edges = list(
+    #     itertools.product(dual_causes, prim_effect),
+    # ) + list(itertools.product(prim_causes, dual_effect))
 
-    ic(used_prim_edges, used_dual_edges, cutted_edges)
+    # ic(used_prim_edges, used_dual_edges, cutted_edges)
 
-    # Creación de esquema
+    # # Creación de esquema
 
-    vertices = [
-        Vertex(
-            id=node[nk.VertexDataProps.LBL],
-            data=node,
-            position={'x': prim_x_pos, 'y': prim_y_pos},
-            type='custom',
-        )
-        for node in nodes
-    ]
+    # vertices = [
+    #     Vertex(
+    #         id=node[nk.VertexDataProps.LBL],
+    #         data=node,
+    #         position={'x': prim_x_pos, 'y': prim_y_pos},
+    #         type='custom',
+    #     )
+    #     for node in nodes
+    # ]
 
-    arcs_dual = [
-        Arc(
-            id=f'{ude[0]}-{ude[1]}',
-            source=ude[0],
-            target=ude[1],
-            data={
-                nk.ArcDataProps.COLOR: e_colors[0],
-                nk.ArcDataProps.WEIGHT: -1,
-            },
-            animated=True,
-        )
-        for ude in used_dual_edges
-    ]
-    arcs_prim = [
-        Arc(
-            id=f'{ude[0]}-{ude[1]}',
-            source=ude[0],
-            target=ude[1],
-            data={
-                nk.ArcDataProps.COLOR: e_colors[1],
-                nk.ArcDataProps.WEIGHT: -1,
-            },
-            animated=True,
-        )
-        for ude in used_prim_edges
-    ]
-    arcs_dual = [
-        Arc(
-            id=f'{ude[0]}-{ude[1]}',
-            source=ude[0],
-            target=ude[1],
-            data={
-                nk.ArcDataProps.COLOR: e_colors[0],
-                nk.ArcDataProps.WEIGHT: -1,
-            },
-            animated=True,
-        )
-        for ude in used_dual_edges
-    ]
+    # arcs_dual = [
+    #     Arc(
+    #         id=f'{ude[0]}-{ude[1]}',
+    #         source=ude[0],
+    #         target=ude[1],
+    #         data={
+    #             nk.ArcDataProps.COLOR: e_colors[0],
+    #             nk.ArcDataProps.WEIGHT: -1,
+    #         },
+    #         animated=True,
+    #     )
+    #     for ude in used_dual_edges
+    # ]
+    # arcs_prim = [
+    #     Arc(
+    #         id=f'{ude[0]}-{ude[1]}',
+    #         source=ude[0],
+    #         target=ude[1],
+    #         data={
+    #             nk.ArcDataProps.COLOR: e_colors[1],
+    #             nk.ArcDataProps.WEIGHT: -1,
+    #         },
+    #         animated=True,
+    #     )
+    #     for ude in used_prim_edges
+    # ]
+    # arcs_dual = [
+    #     Arc(
+    #         id=f'{ude[0]}-{ude[1]}',
+    #         source=ude[0],
+    #         target=ude[1],
+    #         data={
+    #             nk.ArcDataProps.COLOR: e_colors[0],
+    #             nk.ArcDataProps.WEIGHT: -1,
+    #         },
+    #         animated=True,
+    #     )
+    #     for ude in used_dual_edges
+    # ]
 
-    # Crear un grafo dirigido
-    G = nx.DiGraph()
+    # # Crear un grafo dirigido
+    # G = nx.DiGraph()
 
-    # Añadir vértices
-    for node in nodes:
-        G.add_node(node[nk.VertexDataProps.LBL], **node)
+    # # Añadir vértices
+    # for node in nodes:
+    #     G.add_node(node[nk.VertexDataProps.LBL], **node)
 
-    # Añadir aristas
-    G.add_edges_from(used_prim_edges)
-    G.add_edges_from(used_dual_edges)
-    G.add_edges_from(cutted_edges)
+    # # Añadir aristas
+    # G.add_edges_from(used_prim_edges)
+    # G.add_edges_from(used_dual_edges)
+    # G.add_edges_from(cutted_edges)
 
-    # Imprimir el grafo para verificar
+    # # Imprimir el grafo para verificar
 
-    ic(G.nodes)
-    ic(G.edges)
+    # ic(G.nodes)
+    # ic(G.edges)
 
     # vertices = set()
     # for node in G.nodes(data=True):
@@ -176,10 +176,10 @@ def reconstruct_network(
 
     # Opcional: Dibujar el grafo para visualizarlo
 
-    pos = nx.shell_layout(G)  # Posiciones de los nodos para la visualización
-    ic(pos)
-    nx.draw(G, pos, with_labels=True, node_size=700, node_color='skyblue', arrowsize=20)
-    plt.show()
+    # pos = nx.shell_layout(G)  # Posiciones de los nodos para la visualización
+    # ic(pos)
+    # nx.draw(G, pos, with_labels=True, node_size=700, node_color='skyblue', arrowsize=20)
+    # plt.show()
 
     # for effect, cause in mip:
     #     ic(effect, cause)
