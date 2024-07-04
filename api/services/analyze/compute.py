@@ -68,7 +68,7 @@ class Compute:
         sia_force.calculate_concept()
         return sia_force.get_reperoire()
 
-    def use_genetic_algorithm(self, ctrl_params: list[dict]) -> bool:
+    def use_genetic_algorithm(self, ctrl_params: list[dict[str, int | float]]) -> bool:
         # ! Made for S2P
         sia_genetic: Genetic = Genetic(
             self.__struct,

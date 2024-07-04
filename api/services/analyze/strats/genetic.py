@@ -4,6 +4,9 @@ from numpy.typing import NDArray
 
 from fastapi import HTTPException
 
+from api.models.genetic.environ import Environ
+from api.models.genetic.individual import Individual
+from api.models.genetic.recorder import Recorder
 from api.models.structure import Structure
 from api.schemas.genetic.control import ControlSchema
 from api.services.analyze.sia import Sia
@@ -24,46 +27,42 @@ class Genetic(Sia):
         causes: list[int],
         distrib: NDArray[np.float64],
         dual: bool,
-        ctrl_params: list[dict],
+        ctrl_params: list[list[dict[str, int | float]]],
     ) -> None:
         super().__init__(structure, effect, causes, distrib, dual)
         # There's an environment for each control parameter
         self.__control_params: list[ControlSchema] = ctrl_params
+        #! Use all envs required by ctrl params
         self.__environments: list = []
 
-    def analyze(self) -> dict:
+    def analyze(self) -> bool:
         # Definimos los parámetros de control para cada entorno del algoritmo genético, tal vez pueda paralelizarse #
-
-        # ctrl_params: OrderedDict[int, dict[str, float | int]]
-        # for param in self.__control_params:
-        #     if all(value == 0 for value in param.values()):
-        #         ctrl_params: dict[int, dict[str, float | int]] = OrderedDict(
-        #             (0, DEFAULT_PARAMS),
-        #         )
-        #         break
-
-        # num_envs = len(ctrl_params)
-        #! rep: Reporter = Reporter()
-
         ic(self.__control_params)
-
 
         # ! Start time measurement ! #
         # ! Finish time measurement ! #
-        raise HTTPException(status_code=300, detail='STOP TESTING')
+        # raise HTTPException(status_code=300, detail='STOP TESTING')
 
-
-        for k, env in ctrl_params.items():
+        for param in self.__control_params:
             #! rep.report('Creating environment')
-            self.__environments.append(
-                # Environment
+            env: Environ = Environ(
+                param,
+                self._structure,
+                self._target_dist,
+                (self._effect, self._causes),
+                self._dual,
             )
+            env.evolve()
+            # self.__environments.append(
+            #     # Environment
+            # )
             #! rep.report(f'Environment {i} created')
-            pass
+
+        # ! Obtain the best solution from the registers ! #
 
         # Post obtain solution
 
-        mip = self.label_mip()
+        #! mip = self.label_mip()
 
         # ic(iter_distrib.flatten(), self._target_dist.flatten())
         # 000 100 010 110 001 101 011 111

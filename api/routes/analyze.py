@@ -90,7 +90,7 @@ async def genetic_strategy(
             status_code=500,
             detail='One or more of the SIA properties are not calculated',
         )
-    results = computing.use_genetic_algorithm(ctrl_params)
+    results = computing.use_genetic_algorithm([ctrl_params.model_dump()])
     ic(results)
     reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
