@@ -26,7 +26,7 @@ EMPTY_STR: str = ''
 
 """ Schemas """
 
-EXAMPLE: str = 'example'
+EX_STR: str = 'example'
 
 """ Analyze """
 
@@ -60,23 +60,3 @@ COLORS_NAMES_LIST: list[str] = [
     'black',
     'white',
 ]
-
-""" Analyze - Genetic """
-
-INIT_POP_SIZE: str = 'r'
-CROSS_RATE: str = 'xi'
-MUTATE_RATE: str = 'mu'
-MAX_GENS_STR: str = 'G'
-BAD_STREAKS: str = 'unimprovement'
-
-PARENTS_NUM: int = 2
-CROSSED_IND: int = 2
-MAX_STREAK: int = 3
-
-DEFAULT_PARAMS: dict[str, float | int] = {
-    INIT_POP_SIZE: 60,
-    CROSS_RATE: 0.6,
-    MUTATE_RATE: 0.1,
-    MAX_GENS_STR: 100,
-    BAD_STREAKS: 10,
-}

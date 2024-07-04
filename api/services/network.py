@@ -69,7 +69,7 @@ def reconstruct_network(
         [] if mip[COLS_IDX][CAUSES] == [VOID] else [x + 'c' for x in mip[COLS_IDX][CAUSES]]
     )
 
-    ic(mip)
+    # ic(mip)
     # ic| mip: ([['A', 'B', 'D'], ['∅']], [['∅'], ['B', 'D', 'E']])
 
     # Creación de los nodos
@@ -77,8 +77,9 @@ def reconstruct_network(
         [prim_effect, prim_causes], [dual_effect, dual_causes]
     )
 
-    ic(vertices)
+    # ic(vertices)
 
+    return
     raise HTTPException(status_code=500, detail='STOP NOW')
 
     # arcs: list[Arc] = reconstruct_edges(mip)
@@ -374,14 +375,14 @@ def reconstruct_nodes(
     #     # Flatten the list
     #     nodes = [node for sublist in nodes for node in sublist]
 
-    vertices = []
-    for de, dc in zip(*dual):
-        ic(de, dc)
-    for pe, pc in zip(*prim):
-        ic(pe, pc)
+    # vertices = []
+    # for de, dc in zip(*dual):
+    #     ic(de, dc)
+    # for pe, pc in zip(*prim):
+    #     ic(pe, pc)
 
-        # nodes.append(Vertex(id=effect, data={nk.VertexDataProps.LBL: effect}))
-        # nodes.append(Vertex(id=cause, data={nk.VertexDataProps.LBL: cause}))
+    # nodes.append(Vertex(id=effect, data={nk.VertexDataProps.LBL: effect}))
+    # nodes.append(Vertex(id=cause, data={nk.VertexDataProps.LBL: cause}))
     # return nodes
 
 

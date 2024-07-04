@@ -1,23 +1,19 @@
-from typing import Callable, OrderedDict
 import numpy as np
-from fastapi import HTTPException
+from numpy.typing import NDArray
+
 from sqlalchemy.orm import Session
 from api.models.props.sia import SiaType
-from api.models.props.structure import StructProps
 from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
 
-from numpy.typing import NDArray
 
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
-from constants.structure import BOOL_RANGE
-from utils.consts import COLS_IDX, ROWS_IDX, STR_ONE, STR_ZERO
 
 
 from icecream import ic
 from copy import copy
-from server import conf
+from utils.consts import STR_ONE
 
 
 class Compute:
@@ -27,8 +23,8 @@ class Compute:
         self,
         struct: StructureResponse,
         istate: str,
-        effect: str,
-        causes: str,
+        str_effect: str,
+        str_causes: str,
         subtensor: NDArray[np.float64],
         dual: bool = False,
     ) -> None:
@@ -38,77 +34,50 @@ class Compute:
             istate=istate,
             tensor=subtensor,
         )
-        self.__effect: str = effect
-        self.__causes: str = causes
+        self.__str_effect: str = str_effect
+        self.__str_causes: str = str_causes
         self.__dual: bool = dual
+
+        self.__struct: Structure = None
+        self.__effect: dict[bool, list[int]] = {False: [], True: []}
+        self.__causes: dict[bool, list[int]] = {False: [], True: []}
+        self.__distribution: NDArray[np.float64] = None
+
+    def init_concept(self) -> bool:
+        for i, e in enumerate(self.__str_effect):
+            self.__effect[e == STR_ONE].append(i)
+        for j, c in enumerate(self.__str_causes):
+            self.__causes[c == STR_ONE].append(j)
+        # Preservamos la superestructura para trabajar con una nueva
+        self.__struct: Structure = copy(self.__sup_struct)
+        self.__struct.create_distrib(self.__effect, self.__causes)
+        self.__distribution = self.__struct.get_distribution(self.__dual)
+        return self.__distribution is not None
 
     # def use_pyphi(self) -> bool:
     #     pass
 
     def use_brute_force(self) -> SiaType:
-        effect = {False: [], True: []}
-        causes = {False: [], True: []}
-        for i, e in enumerate(self.__effect):
-            effect[e == STR_ONE].append(i)
-        for j, c in enumerate(self.__causes):
-            causes[c == STR_ONE].append(j)
-        # Preservamos la superestructura para trabajar con una nueva
-        struct: Structure = copy(self.__sup_struct)
-        struct.create_concept(effect, causes)
-        distrib = struct.get_distribution(self.__dual)
-        # ic(distrib)
-
-        # raise HTTPException(status_code=400, detail='TESTING STOP.')
-
         sia_force: BruteForce = BruteForce(
-            struct,
-            effect[not self.__dual],
-            causes[not self.__dual],
-            distrib,
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__causes[not self.__dual],
+            self.__distribution,
             self.__dual,
         )
         sia_force.calculate_concept()
         return sia_force.get_reperoire()
 
-    def use_genetic_algorithm(self, db: Session) -> bool:
+    def use_genetic_algorithm(self, ctrl_params: list[dict]) -> bool:
         # ! Made for S2P
-        # Definimos los concepto causa y efecto
-        effect = {False: [], True: []}
-        causes = {False: [], True: []}
-        for i, e in enumerate(self.__effect):
-            effect[e == STR_ONE].append(i)
-        for j, c in enumerate(self.__causes):
-            causes[c == STR_ONE].append(j)
-        # ic(effect, causes)
-        # New strcuture with original tensor
-        struct: Structure = copy(self.__sup_struct)
-        # raise HTTPException(status_code=400, detail='TESTING STOP.')
-        struct.create_concept(effect, causes)
-        distrib = struct.get_distribution(self.__dual)
-        # From this superior level we have control of the EC structure.
-        # Obtenemos la distribución que indique el usuario
-        ic(effect, causes)
-        sub_tensor: OrderedDict = OrderedDict(
-            # Si estamos con le primal o dual, tomamos dichos futuros como, dichas matrices del tensor original
-            (k, struct.get_tensor()[k])
-            for k in effect[not self.__dual]
-        )
-        # ic(sub_tensor)
-        # La subestructura no tiene efecto ni causa, esto puesto aún no está particionada
-        sub_struct: Structure = Structure(
-            db_struct={
-                StructProps.TITLE: f'Sub-Struct {struct.get_title()}',
-                # StructProps.SIZE: sum(len(effect[b]) for b in BOOL_RANGE),
-            },
-            istate=struct.get_istate(),
-            tensor=sub_tensor,
-        )
         sia_genetic: Genetic = Genetic(
-            sub_struct, effect[not self.__dual], causes[not self.__dual], distrib, self.__dual
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__causes[not self.__dual],
+            self.__distribution,
+            self.__dual,
+            ctrl_params,
         )
-
-        # [ic(k, m.as_dataframe()) for k, m in struct.get_tensor().items()]
-
         sia_genetic.calculate_concept()
         return sia_genetic.get_reperoire()
         # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje

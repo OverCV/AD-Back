@@ -41,16 +41,16 @@ class Structure:
         self.__prim_dist: NDArray[np.float64] = None
         self.__dual_dist: NDArray[np.float64] = None
 
-    def create_concept(
+    def create_distrib(
         self, effect: dict[bool, list[int]], causes: dict[bool, list[int]], data: bool = False
     ) -> NDArray[np.float64] | None:
         # ! Here may be a validation of the ec inputs, validate effect.size == tensor.size and for all matrices, the effect of its side=(prim|dual) is 2^n == matriz.rows [#00] ! #
         self.__set_effect(effect)
         self.__set_causes(causes)
         self.__correlate()
-        return self.set_dists(data=data)
+        return self.prod_dual_primal(data=data)
 
-    def set_dists(
+    def prod_dual_primal(
         self, data: bool = False, le: bool = conf.little_endian
     ) -> NDArray[np.float64] | None:
         """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and causes correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
@@ -113,7 +113,7 @@ class Structure:
                     mat: Matrix = self.__tensor[idx]
                     mat.margin(self.__causes[b])
 
-            with concurrent.futures.ProcessPoolExecutor() as executor:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [executor.submit(process_matrices, b) for b in BOOL_RANGE]
                 # Esperar a que todas las tareas completen
                 concurrent.futures.wait(futures)

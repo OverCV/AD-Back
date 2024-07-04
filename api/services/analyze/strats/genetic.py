@@ -1,16 +1,17 @@
-from fastapi import HTTPException
-import networkx as nx
+from collections import OrderedDict
 import numpy as np
-from api.models.props.sia import SiaType
-from api.models.structure import Structure
-from api.services.analyze.sia import Sia
-from constants.structure import BOOL_RANGE
-from utils.funcs import emd
-
 from numpy.typing import NDArray
 
-from utils.consts import SUB_DIST, NET_ID, MIP, SMALL_PHI, STR_ONE
+from fastapi import HTTPException
+
+from api.models.structure import Structure
+from api.schemas.genetic.control import ControlSchema
+from api.services.analyze.sia import Sia
+
 from icecream import ic
+
+from constants.genetic import DEFAULT_PARAMS
+from utils.consts import INFTY
 
 
 class Genetic(Sia):
@@ -21,57 +22,64 @@ class Genetic(Sia):
         structure: Structure,
         effect: list[int],
         causes: list[int],
-        distribution: NDArray[np.float64],
+        distrib: NDArray[np.float64],
         dual: bool,
+        ctrl_params: list[dict],
     ) -> None:
-        super().__init__(structure, effect, causes, distribution, dual)
+        super().__init__(structure, effect, causes, distrib, dual)
         # There's an environment for each control parameter
-        self.control_params: list[dict] = []
-        self.environments: list = []
+        self.__control_params: list[ControlSchema] = ctrl_params
+        self.__environments: list = []
 
     def analyze(self) -> dict:
-        # ! cout('Do some logic to obtain the parameters')
+        # Definimos los parámetros de control para cada entorno del algoritmo genético, tal vez pueda paralelizarse #
 
-        net_id = lambda x: x + 1
+        # ctrl_params: OrderedDict[int, dict[str, float | int]]
+        # for param in self.__control_params:
+        #     if all(value == 0 for value in param.values()):
+        #         ctrl_params: dict[int, dict[str, float | int]] = OrderedDict(
+        #             (0, DEFAULT_PARAMS),
+        #         )
+        #         break
 
-        str_effect = '101'
-        str_causes = '111'
+        # num_envs = len(ctrl_params)
+        #! rep: Reporter = Reporter()
 
-        effect = {b: [] for b in BOOL_RANGE}
-        for i, e in zip(self._effect, str_effect):
-            effect[e == STR_ONE].append(i)
+        ic(self.__control_params)
 
-        causes = {b: [] for b in BOOL_RANGE}
-        for j, c in zip(self._causes, str_causes):
-            causes[c == STR_ONE].append(j)
 
-        ic(effect, causes)
+        # ! Start time measurement ! #
+        # ! Finish time measurement ! #
+        raise HTTPException(status_code=300, detail='STOP TESTING')
 
-        # Calculate distribution... by algorithm!
-        iter_distrib = self._structure.create_concept(effect, causes, data=True)  #! TESTING !#
-        # best_dist = self._structure.get_distribution(self._dual).tolist()
 
-        mip = ((('?',), ('¿',)), (('¿',), ('?',)))
+        for k, env in ctrl_params.items():
+            #! rep.report('Creating environment')
+            self.__environments.append(
+                # Environment
+            )
+            #! rep.report(f'Environment {i} created')
+            pass
 
-        ic(iter_distrib.flatten(), self._target_dist.flatten())
+        # Post obtain solution
+
+        mip = self.label_mip()
+
+        # ic(iter_distrib.flatten(), self._target_dist.flatten())
         # 000 100 010 110 001 101 011 111
-        emd_dist = emd(*iter_distrib, *self._target_dist)
+        # emd_dist = emd(*iter_distrib, *self._target_dist)
 
-        ic(emd_dist)
+        self.network_id = -1
+        self.min_info_part = ((('?',), ('¿',)), (('¿',), ('?',)))
 
-        return {
-            # ! Store the network, get the id and return it to invoque in front ! #
-            NET_ID: net_id(1),
-            SMALL_PHI: emd_dist,
-            MIP: mip,
-            SUB_DIST: iter_distrib.tolist(),
-        }
-
-    def get_reperoire(self) -> SiaType:
-        concept: SiaType = {
-            NET_ID: self.network_id,
-            SMALL_PHI: self.integrated_info,
-            MIP: self.min_info_part,
-            SUB_DIST: self.sub_distrib,
-        }
-        return concept
+        # ic(emd_dist)
+        not_std_sln = any(
+            [
+                # ! Store the network, get the id and return it to invoque in front ! #
+                self.integrated_info == INFTY,
+                self.min_info_part is None,
+                self.sub_distrib is None,
+                self.network_id is None,
+            ]
+        )
+        return not_std_sln

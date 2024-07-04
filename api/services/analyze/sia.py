@@ -4,10 +4,13 @@ import numpy as np
 import networkx as nx
 from api.models.props.sia import SiaType
 from api.models.structure import Structure
-from utils.consts import DIST, INFTY, SUB_DIST, NET_ID, MIP, SMALL_PHI
+from constants.structure import VOID
+from utils.consts import CAUSES, DIST, EFFECT, INFTY, INT_ZERO, SUB_DIST, NET_ID, MIP, SMALL_PHI
 from numpy.typing import NDArray
 
 from icecream import ic
+
+from utils.funcs import get_labels
 
 
 class Sia(ABC):
@@ -47,3 +50,24 @@ class Sia(ABC):
     @abstractmethod
     def analyze(self) -> SiaType:
         pass
+
+    def label_mip(self, partition: tuple[str, str]) -> tuple[tuple[tuple[str], tuple[str]]]:
+        # Incrementamos uno puesto son índices de arreglo
+        max_len = max(*self._effect, *self._causes) + 1
+        labels = get_labels(max_len)
+        concepts = [self._effect, self._causes]
+        mip = [[[], []], [[], []]]
+
+        for k, (part, con) in enumerate(zip(partition, concepts)):
+            ic(k, part, con)
+            for b, lbl_idx in zip(part, con):
+                mip[int(b)][k].append(labels[lbl_idx])
+
+        for con in mip[EFFECT]:
+            if len(con) == INT_ZERO:
+                con.append(VOID)
+        for con in mip[CAUSES]:
+            if len(con) == INT_ZERO:
+                con.append(VOID)
+
+        return tuple(mip)
