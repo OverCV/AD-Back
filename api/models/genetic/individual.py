@@ -13,7 +13,7 @@ class Individual:
     def set_cms(self, chromosome: NDArray[np.bool_]) -> None:
         self.__chromosome = chromosome
 
-    def get_cms(self) -> NDArray[np.bool_]:
+    def get_chr(self) -> NDArray[np.bool_]:
         return self.__chromosome
 
     def set_dist(self, distribution: NDArray[np.float64]) -> None:
@@ -25,8 +25,11 @@ class Individual:
     def set_fit(self, fitness: float) -> None:
         self.__fitness = fitness
 
-    def get_fit(self) -> float:
+    def get_fitness(self) -> float:
         return self.__fitness
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return f'Individual: {self.__chromosome} - {self.__fitness}\n{self.__distribution}\n'
+
+    # def __str__(self) -> str:
+    #     return f'Individual: {self.__chromosome} - {self.__fitness}\n{self.__distribution}\n'

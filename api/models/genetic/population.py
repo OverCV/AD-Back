@@ -4,8 +4,10 @@ import numpy as np
 from numpy.typing import NDArray
 from api.models.genetic.individual import Individual
 from api.models.structure import Structure
-from utils.consts import CAUSES, EFFECT
+from constants.structure import BOOL_RANGE
+from utils.consts import CAUSES, EFFECT, STR_ONE
 
+from server import conf
 from icecream import ic
 
 
@@ -22,7 +24,7 @@ class Population:
         self.__struct: Structure = structure
         self.__effect: list[int] = concept[EFFECT]
         self.__causes: list[int] = concept[CAUSES]
-        self.__distribution: NDArray[np.float64] = distribution
+        # self.__distrib: NDArray[np.float64] = distribution
 
     def get_size(self) -> int:
         return len(self.__indivis)
@@ -36,8 +38,8 @@ class Population:
     def set_individuals(self, individuals: list[Individual]) -> None:
         self.__indivis = individuals
 
-    def get_distrib(self) -> NDArray[np.float64]:
-        return self.__distribution
+    # def get_distrib(self) -> NDArray[np.float64]:
+    #     return self.__distrib
 
     def generate_individuals(self, pop_size) -> None:
         """
@@ -45,20 +47,60 @@ class Population:
         cms1 -> ABC|DE
              -> [FVV.FV] = (BC.E)(A.D)
         """
+        # Debate: Si el máximo de combinaciones es eg. 32, cómo se le pide una población de eg. 100 individuos?
         chromosomes: NDArray[np.float64] = (
-            self.generar_random
+            self.generate_random
             if pop_size == 0
             else self.generate_k_cms(len(self.__effect), len(self.__causes), pop_size)
         )
-        ic(chromosomes)
+        validated_cms = self.validate_cms(chromosomes)
+        sub_dists = self.update_distribution(validated_cms)
 
-    def generar_random(self, m: int, n: int) -> NDArray[np.bool_]:
+        self.set_individuals(
+            [Individual(chr, sub_dist) for chr, sub_dist in zip(validated_cms, sub_dists)]
+        )
+        # [ic(ind) for ind in self.__indivis]
+
+        # self.__indivis = [Individual(chromosome, self.__struct) for chromosome in chromosomes]
+
+    def update_distribution(self, cms: list[NDArray[np.bool_]]) -> list[NDArray[np.float64]]:
+        # ! Check for the duality, also Threading! [#14] ! #
+        # self.__distrib = distribution
+        sub_distrib: list[NDArray[np.float64]] = []
+        separator: int = len(self.__effect)
+        for chromosome in cms:
+            effect = {bin: [] for bin in BOOL_RANGE}
+            causes = {bin: [] for bin in BOOL_RANGE}
+            for j, e in zip(self.__effect, chromosome[:separator]):
+                effect[e].append(j)
+            for i, c in zip(self.__causes, chromosome[separator:]):
+                causes[c].append(i)
+            sub_distrib.append(
+                deepcopy(self.__struct).create_distrib(
+                    effect,
+                    causes,
+                    data=True,
+                )
+            )
+        return sub_distrib
+
+    def validate_cms(self, cms: list[NDArray[np.bool_]]) -> list[NDArray[np.bool_]]:
+        for chr in cms:
+            all_true = np.all(chr, axis=0)
+            all_false = np.all(~chr, axis=0)
+
+            if all_false or all_true:
+                rnd_idx = np.random.randint(0, len(chr))
+                chr[rnd_idx] = ~chr[rnd_idx]
+        return cms
+
+    def generate_random(self, m: int, n: int) -> NDArray[np.bool_]:
         # Creamos un arreglo de flotantes de tamaño n + m
         floating = np.random.randint(0, 2, size=(n + m, n + m))
         # Lo volvemos uno de booleanos con la condición de que el valor > 0.5
         return floating > 0.5
 
-    def generar_cms(self, m: int, n: int) -> NDArray[np.bool_]:
+    def generate_cms(self, m: int, n: int) -> NDArray[np.bool_]:
         # Número total de combinaciones binarias para n bits
         total_combinaciones = 2**n
         # Crear un array de enteros que representa los números binarios
@@ -77,7 +119,7 @@ class Population:
 
         if k > total_combinaciones:
             # Si las combinaciones brindadas por el usuario superan el tamaño máximo de combinaciones ofrecidas por fuerza bruta, usamos la primera forma (primera línea de combinaciones)
-            return self.generar_cms(m, n)
+            return self.generate_cms(m, n)
         else:
             # Crear un arreglo de enteros desde 0 hasta mini_combs - 1
             enteros = np.arange(mini_combs, dtype=np.uint32)

@@ -14,10 +14,13 @@ class Recorder:
     def get_best_individual(self) -> Individual:
         if self.__bests_inds == list():
             return None
-        return min(self.__bests_inds, key=lambda ind: ind.get_fit())
+        return min(self.__bests_inds, key=lambda ind: ind.get_fitness())
 
     def get_bests_individuals(self) -> list[Individual]:
         return self.__bests_inds
+
+    def get_last_generation(self) -> int:
+        return len(self.__bests_inds)
 
 
 rec = Recorder()

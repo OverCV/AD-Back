@@ -1,5 +1,5 @@
-CROSS_RATE: str = 'xi'
 INIT_POP_SIZE: str = 'r'
+CROSS_RATE: str = 'xi'
 MUTATE_RATE: str = 'mu'
 MAX_GENS: str = 'G'
 
