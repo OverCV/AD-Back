@@ -16,6 +16,7 @@ La documentación completa del proyecto se encuentra en la carpeta "Documentaci�
 ## Contribución
 
 Si deseas contribuir al proyecto, sigue estos pasos:
+
 1. Haz un fork del repositorio.
 2. Crea una nueva rama (`git checkout -b feature/nueva-funcionalidad`).
 3. Realiza tus cambios y haz commits (`git commit -am 'Agrega nueva funcionalidad'`).
@@ -24,4 +25,4 @@ Si deseas contribuir al proyecto, sigue estos pasos:
 
 ## Licencia
 
-Este proyecto está bajo la Licencia MIT. Para más detalles, consulta el archivo [LICENSE](LICENSE).
+Este proyecto está bajo la Licencia MIT. Para más detalles, consulta el archivo [LICENSE](LICENSE)

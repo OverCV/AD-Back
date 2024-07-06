@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from api.models.enums.backend import ExecConfig
 
 
-load_dotenv(dotenv_path='.venv\\.dev.env')
+load_dotenv(dotenv_path='.venv/.dev.env')
 
 
 logger = logging.getLogger(__name__)
