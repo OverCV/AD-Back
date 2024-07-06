@@ -30,8 +30,8 @@ async def get_mongo() -> AsyncIOMotorClient:
 
 
 """ SQL Database """
-
 SQLITE_URL: str = os.environ.get(SQLPort.SQLITE_URL.value)
+print(SQLITE_URL)
 engine = create_engine(SQLITE_URL, echo=True, future=True)
 
 Base: registry = declarative_base()
