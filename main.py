@@ -29,7 +29,6 @@ app: FastAPI = FastAPI(
 
 
 NEXT_LOCALE_URL: str = os.environ.get(NextJSPort.NEXT_LOCALE_URL.value)
-print(NEXT_LOCALE_URL)
 
 app.add_middleware(
     CORSMiddleware,
