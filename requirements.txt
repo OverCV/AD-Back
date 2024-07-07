@@ -8,13 +8,14 @@ motor
 
 numpy
 pandas
-networkx
+numba
 scipy
+
+networkx
 # polars #
 matplotlib
 # seaborn
 openpyxl
-kiwisolver
 
 python-dotenv
 icecream

@@ -1,4 +1,8 @@
 from typing import TypedDict
+
+import numpy as np
+from numpy.typing import NDArray
+
 from api.models.props.structure import StructProps
 from constants.format import S2C
 from utils.consts import INT_ONE, INT_ZERO
@@ -14,8 +18,10 @@ ISTATE: str = 'istate'
 SUBSYS: str = 'subsystem'
 TENSOR: str = 'tensor'
 
-BIN_RANGE: int = range(2)
+BIN_RANGE = range(2)
 BOOL_RANGE: list[bool] = [False, True]
+UNIT_MATRIX: NDArray[np.float64] = np.array([INT_ONE], dtype=np.float64)
+
 
 # DEFAULT_TITLE: str = 'System_Title'
 # DEFAULT_ISTATE: str = '1000000000'

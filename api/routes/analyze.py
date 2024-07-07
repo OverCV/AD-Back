@@ -52,6 +52,8 @@ async def force_strategy(
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, causes, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, causes, subtensor, dual)
+    # ! Change to init bg conditions
+    # if not computing.init_concept():
     if not computing.init_concept():
         raise HTTPException(
             status_code=500,

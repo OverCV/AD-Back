@@ -41,9 +41,8 @@ class Genetic(Sia):
 
         # ! Start time measurement ! #
         # ! Finish time measurement ! #
-        # raise HTTPException(status_code=300, detail='STOP TESTING')
 
-        best_of_all
+        # best_of_all
         for param in self.__control_params:
             #! rep.report('Creating environment')
             env: Environ = Environ(
@@ -55,13 +54,12 @@ class Genetic(Sia):
             )
             best = env.evolve()
 
-        
         ic(best)
 
-            # self.__environments.append(
-            #     # Environment
-            # )
-            #! rep.report(f'Environment {i} created')
+        # self.__environments.append(
+        #     # Environment
+        # )
+        #! rep.report(f'Environment {i} created')
 
         # ! Obtain the best solution from the registers ! #
 

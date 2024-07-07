@@ -4,6 +4,7 @@ import math
 
 from numpy.typing import NDArray
 import numpy as np
+import pandas as pd
 # from scipy.stats import wasserstein_distance
 
 from utils.consts import BASE_2, FLOAT_ZERO, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE
@@ -51,12 +52,60 @@ def emd(u: NDArray[np.float64], v: NDArray[np.float64], le: bool = conf.little_e
     return earth_moved
 
 
-def be_product(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
+def product(
+    arrays: list[NDArray[np.float64]], le: bool = conf.little_endian
+) -> tuple[tuple[int, ...], NDArray[np.float64]]:
+    # return reduce(lambda x, y: np.kron
+    return (
+        arrays[0]
+        if len(arrays) == 1
+        else reduce(
+            lambda x, y: bin_prod(x, y, le),
+            arrays,
+        )
+    )
+
+
+def bin_prod(
+    idx_dist_u: tuple[tuple[int, ...], np.ndarray],
+    idx_dist_v: tuple[tuple[int, ...], np.ndarray],
+    le: bool,
+) -> tuple[tuple[int, ...], np.ndarray]:
+    """Returns the binary product of two arrays."""
+    u_idx, u = idx_dist_u
+    v_idx, v = idx_dist_v
+    # Flatten arrays if they're 2D with only one row
+    u = u.flatten()
+    v = v.flatten()
+    # print(u_idx, v_idx)
+    # print(u, v)
+    d_len = len(u_idx) + len(v_idx)
+    result = np.zeros(2**d_len, dtype=np.float64)
+    endian_keys = lil_endian(d_len) if le else big_endian(d_len)
+    df_result = pd.DataFrame([result], columns=endian_keys)
+    # Create the union of indices and sort
+    combined_idx = tuple(sorted(set(u_idx) | set(v_idx)))
+    # print(combined_idx)
+    for key in endian_keys:
+        u_key = ''.join(key[combined_idx.index(i)] for i in u_idx)
+        v_key = ''.join(key[combined_idx.index(i)] for i in v_idx)
+        u_val = u[int(u_key[::-1], 2)]
+        v_val = v[int(v_key[::-1], 2)]
+        # print(f'u_val <- (u[{u_key}] = {u_val})')
+        # print(f'v_val <- (v[{v_key}] = {v_val})')
+        # print(f'{key} <- ({u_val} * {v_val} = {u_val * v_val})')
+        df_result.at[ROWS_IDX, key] = u_val * v_val
+    # print(df_result)
+    # print()
+    return combined_idx, df_result.values
+
+
+def be_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
     """Returns the tensor product of a list of arrays."""
     return reduce(lambda x, y: np.kron(x, y), arrays)
 
 
-def le_product(arrays: list[NDArray[np.float64]]) -> NDArray:
+def le_prod(arrays: list[NDArray[np.float64]]) -> NDArray:
     """Returns the tensor product of a list of arrays."""
     return reduce(lambda x, y: np.kron(y, x), arrays)
 
@@ -99,6 +148,22 @@ def big_endian(n: int) -> list[str]:
     big-endian for indices in ``range(2**n)``.
     """
     return [bin(i)[2:].zfill(n) for i in range(2**n)]
+
+
+@cache
+def lil_endian_int(n: int) -> list[int]:
+    """Generate a list of integers representing the numbers in
+    little-endian for indices in ``range(2**n)``.
+    """
+    return [int(bin(i)[2:].zfill(n)[::-1], BASE_2) for i in range(2**n)]
+
+
+@cache
+def big_endian_int(n: int) -> list[int]:
+    """Generate a list of integers representing the numbers in
+    big-endian for indices in ``range(2**n)``.
+    """
+    return [int(bin(i)[2:].zfill(n), BASE_2) for i in range(2**n)]
 
 
 @cache

@@ -50,7 +50,8 @@ class Compute:
             self.__causes[c == STR_ONE].append(j)
         # Preservamos la superestructura para trabajar con una nueva
         self.__struct: Structure = copy(self.__sup_struct)
-        self.__struct.create_distrib(self.__effect, self.__causes)
+        # self.__struct.create_distrib(self.__effect, self.__causes)
+        self.__struct.set_bg_cond(self.__effect)
         self.__distribution = self.__struct.get_distribution(self.__dual)
         return self.__distribution is not None
 

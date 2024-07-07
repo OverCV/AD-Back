@@ -6,15 +6,17 @@ import numpy as np
 
 from api.models.matrix import Matrix
 from api.models.props.structure import ConceptType, StructProps
-from constants.structure import BOOL_RANGE
+from constants.structure import BOOL_RANGE, UNIT_MATRIX
 from utils.consts import INT_ONE, INT_ZERO
 
 import concurrent.futures
 
-from utils.funcs import be_product, le_product
+# from utils.funcs import be_prod, le_prod
 from server import conf
 
 from icecream import ic
+
+from utils.funcs import product
 
 
 class Structure:
@@ -38,8 +40,8 @@ class Structure:
             if isinstance(tensor, np.ndarray)
             else tensor
         )
-        self.__prim_dist: NDArray[np.float64] = None
-        self.__dual_dist: NDArray[np.float64] = None
+        self.__prim_dist: tuple[tuple[int, ...], NDArray[np.float64]] = None
+        self.__dual_dist: tuple[tuple[int, ...], NDArray[np.float64]] = None
 
     def create_distrib(
         self, effect: dict[bool, list[int]], causes: dict[bool, list[int]], data: bool = False
@@ -75,29 +77,36 @@ class Structure:
         prim_effect = self.__effect[True]
         dual_effect = self.__effect[False]
 
-        prim_tensor: list[NDArray[np.float64]]
-        dual_tensor: list[NDArray[np.float64]]
-        unit_matrix: NDArray[np.float64] = np.array([INT_ONE], dtype=np.float64)
+        # pimr o dual pueden no ((idx,...), mat[idx,...])
+
+        prim_tensor: tuple[tuple[int, ...], tuple[NDArray[np.float64], ...]]
+        dual_tensor: tuple[tuple[int, ...], tuple[NDArray[np.float64], ...]]
+
         # cout(f'1. prim {prim_effect}, dual {dual_effect}')
         # By definition, is not possible to have both tensors empty
-        prim_tensor = (
-            unit_matrix
-            if len(prim_effect) == INT_ZERO
-            else [self.__tensor[idx].at_state(self.__istate) for idx in prim_effect]
-        )
-        dual_tensor = (
-            unit_matrix
-            if len(dual_effect) == INT_ZERO
-            else [self.__tensor[idx].at_state(self.__istate) for idx in dual_effect]
-        )
+        prim_tensor = [((idx,), self.__tensor[idx].on_state(self.__istate)) for idx in prim_effect]
+        dual_tensor = [((idx,), self.__tensor[idx].on_state(self.__istate)) for idx in dual_effect]
+        ic(prim_tensor, dual_tensor)
+
+        # None
+        # if len(dual_effect) == INT_ZERO
+        # else [self.__tensor[idx].at_state(self.__istate) for idx in dual_effect]
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
-        endian_product: Callable = le_product if le else be_product
-        self.__prim_dist = endian_product(prim_tensor)
-        self.__dual_dist = endian_product(dual_tensor)
+        # endian_product: Callable = product if le else be_prod
+        self.__prim_dist = product(prim_tensor)
+        self.__dual_dist = product(dual_tensor)
 
-        # ! Critical error ! #
-        dist = endian_product([self.__dual_dist, self.__prim_dist])
+        ic(self.__prim_dist, self.__dual_dist)
+        # self.__dual_dist = endian_product(dual_tensor)
+        # How to know if a list is empty? An empty list has a boolean value of False, so we can use the following code to check if the list is empty:
+        dist = (
+            self.__dual_dist
+            if not prim_tensor
+            else self.__prim_dist
+            if not dual_tensor
+            else (product([self.__prim_dist, self.__dual_dist], le=conf.little_endian))
+        )
         return dist if data else None
 
     def __correlate(self) -> None:
@@ -159,8 +168,31 @@ class Structure:
     idx_causes = [0, 2, 4]
 
 
-    
     """
+
+    def set_bg_cond(self, effect) -> None:
+        for b in BOOL_RANGE:
+            for idx in effect[b]:
+                mat: Matrix = self.__tensor[idx]
+                mat.at_states(self.__istate, effect[b])
+        [ic(mat.as_dataframe()) for mat in self.__tensor.values()]
+
+        # Al configurar las condiciones de Background, en función al dual si envían 0 implica debemos mantener las posiciones en 0, las de 1 caso primal.
+        # Reemplazamos primero el tensor según indique el efecto
+        # effect = effect[not dual]
+        # Vamos a tomar las condiciones de bg, nos interesa conocer estos estados causales.
+        # causes = causes[dual]
+
+        # self.__tensor = OrderedDict((idx, self.__tensor[idx]) for idx in effect)
+        # self.__tensor = OrderedDict((idx, self.__tensor[idx].at_states(causes)) for idx in effect)
+        # new_tensor = OrderedDict()
+        # Seteamos las condiciones de backgroun para tanto el primal como el dual
+
+        # self.__tensor[idx].at_states(self.__istate, causes)
+        # new_tensor[idx] = self.__tensor[idx].at_states(self.__istate, causes)
+        # self.__tensor = new_tensor
+        # Subseleccionamos por cada matriz del tensor así mismo las filas donde se indique debe mantenerse la causa, de forma que si originalmente tenemos las combinaciones d  el [000, 100, 010, 110, ..., 111] pero el dual indica sólo seleccionar los elementos de forma 101 con dual off.
+        # La entrada es 1 o 0, 1si dual=False entonces 1 ses primal y por ende vamos a seleccionar en dichos elementos, si está en 0 no lo seleccionamos, el valor estará delimitado por el istate, el estado inicial determina las secciones a tomar e ignorar
 
     def get_distribution(self, dual: bool = False) -> NDArray[np.float64]:
         return self.__dual_dist if dual else self.__prim_dist
@@ -184,7 +216,7 @@ class Structure:
         return self.__title
 
     def __str__(self) -> str:
-        return f'{self.__title} : {self.__istate}, {self.__effect}, {self.__causes}, {self.__nodes}'
+        return f'{self.__title} : {self.__istate}, {self.__effect}, {self.__causes}'
 
     # def drop_matrices(self, mat_idxs: list[int]) -> None:
     #     self.__effect = None
