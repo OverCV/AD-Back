@@ -11,9 +11,10 @@ from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
 
 
-from icecream import ic
 from copy import copy
 from utils.consts import STR_ONE
+
+from icecream import ic
 
 
 class Compute:

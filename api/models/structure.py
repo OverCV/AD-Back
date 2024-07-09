@@ -174,8 +174,11 @@ class Structure:
         for b in BOOL_RANGE:
             for idx in effect[b]:
                 mat: Matrix = self.__tensor[idx]
-                mat.at_states(self.__istate, effect[b])
-        [ic(mat.as_dataframe()) for mat in self.__tensor.values()]
+                # ic(idx, mat.as_dataframe())
+                mat.at_states(self.__istate, effect[b], effect[not b])
+                ic(idx, mat.as_dataframe())
+
+        # [ic(k, mat.as_dataframe()) for k, mat in self.__tensor.items()]
 
         # Al configurar las condiciones de Background, en función al dual si envían 0 implica debemos mantener las posiciones en 0, las de 1 caso primal.
         # Reemplazamos primero el tensor según indique el efecto
