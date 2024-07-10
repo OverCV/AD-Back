@@ -132,12 +132,6 @@ class Structure:
                     mat: Matrix = self.__tensor[idx]
                     mat.margin(self.__causes[b])
 
-    def __init_effect(self, effect: dict[bool, list[int]]) -> None:
-        self.__effect = effect
-
-    def __init_causes(self, causes: dict[bool, list[int]]) -> None:
-        self.__causes = causes
-
     # Hay que tener en cuenta las llaves del tensor para asignar los indices del enumerable, no iterar directamente sobre la cadena o habrá problemas
     # for i, b in enumerate(effect):
     #     self.__effect[b == STR_ONE].append(i)
@@ -145,18 +139,34 @@ class Structure:
     # for i, b in zip(self.__tensor.keys(), effect):
     #     self.__effect[b == STR_ONE].append(i)
 
+    def init_concepts(self, effect: dict[bool, list[int]]) -> None:
+        self.__effect = effect
+        self.__causes = effect
+
     def __set_effect(self, effect: dict[bool, list[int]]) -> None:
-        self.__effect = {False: [], True: []}
+        # self.__effect = effect
+        new_states = {True: [], False: []}
+        if self.__effect is None:
+            raise HTTPException(status_code=400, detail='Effect must be setted.')
         for b in BOOL_RANGE:
-            if b in effect:
-                effect[b] = list()
+            for eff in effect[b]:
+                if eff in self.__effect[b]:
+                    new_states[b].append(eff)
 
     def __set_causes(self, causes: dict[bool, list[int]]) -> None:
-        self.__causes = causes
+        # self.__causes = causes
+        if self.__causes is None:
+            raise HTTPException(status_code=400, detail='Causes must be setted.')
+        new_states = {True: [], False: []}
+        for b in BOOL_RANGE:
+            for eff in causes[b]:
+                if eff in self.__causes[b]:
+                    new_states[b].append(eff)
 
     def set_bg_cond(self, effect: dict[bool, list[int]]) -> None:
-        self.__init_effect(effect)
-        self.__init_causes(effect)
+        # self.init_concepts(effect)
+        # self.__set_effect(effect)
+        # self.__set_causes(effect)
         for b in BOOL_RANGE:
             for idx in effect[b]:
                 mat: Matrix = self.__tensor[idx]
