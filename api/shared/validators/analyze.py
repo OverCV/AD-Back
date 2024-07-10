@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from icecream import ic
 
 
-def has_valid_inputs(istate: str, effect: str, causes: str, tensor_len: int) -> bool:
+def has_valid_inputs(istate: str, effect: str, causes: str, bgconds: str, tensor_len: int) -> bool:
     # Check with a reg exp if is a binary string
     ic(istate, effect, causes, tensor_len)
     binary_pattern = r'^[01]+$'
@@ -16,6 +16,8 @@ def has_valid_inputs(istate: str, effect: str, causes: str, tensor_len: int) -> 
         ]
     ):
         raise HTTPException('Initial state should be a binary string')
+
+    # ! Validate the bg-condition
 
     # ! Validate the no-sense of giving empty the future or the causes [#10] ! #
 

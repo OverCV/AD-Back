@@ -130,7 +130,7 @@ class Matrix:
         axis: int = ROWS_IDX,
         le: bool = conf.little_endian,
     ):
-        # ic(in_states)
+        # ic(in_states, out_states)
         m: int = len(in_states)
         if axis == COLS_IDX:
             self.__array = self.__array.transpose()
@@ -155,8 +155,8 @@ class Matrix:
                     out_row += s
                 else:
                     in_row += s
+            # ic(row_istate, row, in_row, out_row)
             if in_row == row_istate:
-                # ic(row_istate, row, in_row, out_row)
                 zeros_df.loc[out_row] = tpm.loc[row].values
         # ic(zeros_df)
         if axis == COLS_IDX:
@@ -165,6 +165,7 @@ class Matrix:
         else:
             self.__array = zeros_df.to_numpy()
             self.__causes = in_states
+
         return self.__array if data else None
 
     def as_dataframe(self, le: bool = conf.little_endian) -> pd.DataFrame:

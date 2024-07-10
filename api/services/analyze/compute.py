@@ -1,8 +1,6 @@
-from fastapi import HTTPException
 import numpy as np
 from numpy.typing import NDArray
 
-from sqlalchemy.orm import Session
 from api.models.props.sia import SiaType
 from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
@@ -12,7 +10,8 @@ from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
 
 
-from copy import copy
+import copy
+from constants.structure import BOOL_RANGE
 from utils.consts import STR_ONE
 
 from icecream import ic
@@ -27,6 +26,7 @@ class Compute:
         istate: str,
         str_effect: str,
         str_causes: str,
+        str_bgcond: str,
         subtensor: NDArray[np.float64],
         dual: bool = False,
     ) -> None:
@@ -38,22 +38,37 @@ class Compute:
         )
         self.__str_effect: str = str_effect
         self.__str_causes: str = str_causes
+        self.__str_bgcond: str = str_bgcond
         self.__dual: bool = dual
 
         self.__struct: Structure = None
-        self.__effect: dict[bool, list[int]] = {False: [], True: []}
-        self.__causes: dict[bool, list[int]] = {False: [], True: []}
+        self.__effect: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
+        self.__causes: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
+        self.__bgcond: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
         self.__distribution: NDArray[np.float64] = None
 
     def init_concept(self) -> bool:
+        """
+        Desde este nivel se deifinen las condiciones de bg, las cuales permiten conocer los elementos/ínidces usables para los diferentes subsistemas a generar.
+        """
+
+        bgcond_elems = [idx for idx, bg in enumerate(self.__str_bgcond) if bg == STR_ONE]
         for i, e in enumerate(self.__str_effect):
-            self.__effect[e == STR_ONE].append(i)
+            if i in bgcond_elems:
+                self.__effect[e == STR_ONE].append(i)
         for j, c in enumerate(self.__str_causes):
-            self.__causes[c == STR_ONE].append(j)
+            if j in bgcond_elems:
+                self.__causes[c == STR_ONE].append(j)
+        for i, e in enumerate(self.__str_bgcond):
+            self.__bgcond[e == STR_ONE].append(i)
+
+        ic(self.__effect, self.__causes, bgcond_elems, self.__bgcond)
+
         # Preservamos la superestructura para trabajar con una nueva
-        self.__struct: Structure = copy(self.__sup_struct)
+        self.__struct: Structure = copy.deepcopy(self.__sup_struct)
         # self.__struct.create_distrib(self.__effect, self.__causes)
-        self.__struct.set_bg_cond(self.__effect)
+        self.__struct.set_bg_cond(self.__bgcond)
+
         ic(str(self.__struct))
         # raise HTTPException(status_code=305, detail='Stop here')
         self.__struct.create_distrib(self.__effect, self.__causes)

@@ -42,6 +42,7 @@ async def force_strategy(
     id: Optional[int] = None,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
+    bgcond: str = STRUCTURES[R5A][StructProps.BGCOND],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
     causes: str = STRUCTURES[R5A][StructProps.CAUSES],
     dual: bool = False,
@@ -50,8 +51,8 @@ async def force_strategy(
 ):
     struct_response: StructureResponse = get_structure_by_title(title, db_sql)
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    av.has_valid_inputs(istate, effect, causes, len(subtensor))
-    computing: Compute = Compute(struct_response, istate, effect, causes, subtensor, dual)
+    av.has_valid_inputs(istate, effect, causes, bgcond, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, causes, bgcond, subtensor, dual)
     # ! Change to init bg conditions
     # if not computing.init_concept():
     if not computing.init_concept():

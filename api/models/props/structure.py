@@ -6,6 +6,7 @@ class StructProps:
     ISTATE: str = 'istate'
     EFFECT: str = 'effect'
     CAUSES: str = 'causes'
+    BGCOND: str = 'bgcond'
     FORMAT: str = 'format'
     TENSOR: str = 'tensor'
     SIZE: str = 'size'

@@ -21,6 +21,7 @@ TENSOR: str = 'tensor'
 BIN_RANGE = range(2)
 BOOL_RANGE: list[bool] = [False, True]
 UNIT_MATRIX: NDArray[np.float64] = np.array([INT_ONE], dtype=np.float64)
+UNIT_PROD: tuple[tuple[int, ...], NDArray[np.float64]] = ((), UNIT_MATRIX)
 
 
 # DEFAULT_TITLE: str = 'System_Title'
@@ -85,6 +86,7 @@ STRUCTURES: dict[str, MechaInt] = {
         StructProps.ISTATE: '10001',
         StructProps.EFFECT: '11111',
         StructProps.CAUSES: '11111',
+        StructProps.BGCOND: '11100',  # ! Implement for all ! #
         StructProps.FORMAT: S2C,
     },
     R6A: {

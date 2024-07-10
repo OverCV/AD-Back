@@ -1,21 +1,23 @@
 import copy
 import itertools
 
+from fastapi import HTTPException
+
+from api.models.props.structure import StructProps
 from api.models.structure import Structure
 from api.services.analyze.sia import Sia
 
 import numpy as np
 from numpy.typing import NDArray
 
-from constants.structure import BOOL_RANGE, VOID
+from constants.structure import BOOL_RANGE
 from utils.consts import (
-    INT_ZERO,
     CAUSES,
     EFFECT,
     INFTY,
     STR_ONE,
 )
-from utils.funcs import dec2bin, emd, get_labels
+from utils.funcs import dec2bin, emd
 import concurrent.futures
 
 from server import conf
@@ -41,14 +43,15 @@ class BruteForce(Sia):
         # Creamos todas las biparticiones posibles
         bipartitions = self.bipartitionate(len(self._effect), len(self._causes))
         # No usamos la distribución original, es un caso absurdo.
-        origin: tuple[str, str] = bipartitions.pop(0)
+        _: tuple[str, str] = bipartitions.pop(0)
         # ic(bipartitions)
-
+        ic()
         part = (
             self.calculate_dists_threaded(bipartitions)
             if conf.threaded
             else self.calculate_dists(bipartitions)
         )
+        ic(self._target_dist)
         mip = self.label_mip(part)
 
         self.network_id = -1
@@ -69,8 +72,8 @@ class BruteForce(Sia):
     def calculate_dists(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
         self.integrated_info = INFTY
         mip: tuple[str, str] = None
-
         for partition in bipartitions:
+            ic(partition)
             sub_struct: Structure = copy.deepcopy(self._structure)
             str_effect: str = partition[EFFECT]
             str_causes: str = partition[CAUSES]
@@ -83,6 +86,7 @@ class BruteForce(Sia):
                 causes[c == STR_ONE].append(i)
             iter_distrib = sub_struct.create_distrib(effect, causes, data=True)
             # Comparar con la distribución original (objetivo)
+            ic(iter_distrib, self._target_dist)
             emd_dist = emd(*iter_distrib, *self._target_dist)
             if emd_dist < self.integrated_info:
                 self.integrated_info = emd_dist
@@ -98,7 +102,6 @@ class BruteForce(Sia):
             sub_struct = copy.deepcopy(self._structure)
             str_effect = partition[EFFECT]
             str_causes = partition[CAUSES]
-
             effect = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self._effect, str_effect):
                 effect[e == STR_ONE].append(j)
@@ -106,9 +109,14 @@ class BruteForce(Sia):
             for i, c in zip(self._causes, str_causes):
                 causes[c == STR_ONE].append(i)
 
-            iter_distrib = sub_struct.create_distrib(effect, causes, data=True)
-            emd_dist = emd(*iter_distrib, *self._target_dist)
-            return emd_dist, iter_distrib, (str_effect, str_causes)
+            iter_idx_distrib: tuple[tuple[int, ...], NDArray[np.float64]] = (
+                sub_struct.create_distrib(effect, causes, data=True)
+            )
+            iter_dist = iter_idx_distrib[StructProps.DIST_ARR]
+            ic(*iter_dist, self._target_dist)
+
+            emd_dist = emd(*iter_dist, *self._target_dist)
+            return emd_dist, iter_dist, (str_effect, str_causes)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [

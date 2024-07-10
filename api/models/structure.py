@@ -5,15 +5,13 @@ import numpy as np
 
 from api.models.matrix import Matrix
 
-import concurrent.futures
-
-# from utils.funcs import be_prod, le_prod
 from api.models.props.structure import StructProps
 from constants.structure import BOOL_RANGE
 from server import conf
 
 from icecream import ic
 
+import concurrent.futures
 from utils.funcs import product
 
 
@@ -84,27 +82,38 @@ class Structure:
         # By definition, is not possible to have both tensors empty
         prim_tensor = [((idx,), self.__tensor[idx].on_state(self.__istate)) for idx in prim_effect]
         dual_tensor = [((idx,), self.__tensor[idx].on_state(self.__istate)) for idx in dual_effect]
-        ic(prim_tensor, dual_tensor)
-
+        # ic(prim_tensor, dual_tensor)
         # None
         # if len(dual_effect) == INT_ZERO
         # else [self.__tensor[idx].at_state(self.__istate) for idx in dual_effect]
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
         # endian_product: Callable = product if le else be_prod
-        self.__prim_dist: tuple[tuple[int, ...], NDArray[np.float64]] = product(prim_tensor)
-        self.__dual_dist: tuple[tuple[int, ...], NDArray[np.float64]] = product(dual_tensor)
+        self.__prim_dist: tuple[tuple[int, ...], NDArray[np.float64]] = (
+            product(prim_tensor) if len(prim_tensor) > 0 else None
+        )
+        self.__dual_dist: tuple[tuple[int, ...], NDArray[np.float64]] = (
+            product(dual_tensor) if len(dual_tensor) > 0 else None
+        )
 
-        ic(self.__prim_dist, self.__dual_dist)
+        # ic(self.__prim_dist, self.__dual_dist)
         # self.__dual_dist = endian_product(dual_tensor)
         # How to know if a list is empty? An empty list has a boolean value of False, so we can use the following code to check if the list is empty:
-        dist: tuple[tuple[int, ...], NDArray[np.float64]] = (
-            self.__dual_dist
-            if not prim_tensor
-            else self.__prim_dist
-            if not dual_tensor
-            else (product([self.__prim_dist, self.__dual_dist], le=conf.little_endian))
-        )
+        dist: tuple[tuple[int, ...], NDArray[np.float64]]
+        if self.__prim_dist is None:
+            dist = self.__dual_dist
+        elif self.__dual_dist is None:
+            dist = self.__prim_dist
+        else:
+            dist = product([self.__prim_dist, self.__dual_dist])
+        # = (
+        #     self.__dual_dist
+        #     if prim_tensor is None
+        #     else self.__prim_dist
+        #     if dual_tensor is None
+        #     else product([self.__prim_dist, self.__dual_dist])
+        # )
+        # ic(dist)
         return dist if data else None
 
     def __correlate(self) -> None:
@@ -128,51 +137,31 @@ class Structure:
             # Non-Threaded version
             for b in BOOL_RANGE:
                 for idx in self.__effect[b]:
-                    ic(b, idx)
+                    # ic(b, idx)
                     mat: Matrix = self.__tensor[idx]
                     mat.margin(self.__causes[b])
 
-    # Hay que tener en cuenta las llaves del tensor para asignar los indices del enumerable, no iterar directamente sobre la cadena o habrá problemas
-    # for i, b in enumerate(effect):
-    #     self.__effect[b == STR_ONE].append(i)
-
-    # for i, b in zip(self.__tensor.keys(), effect):
-    #     self.__effect[b == STR_ONE].append(i)
-
-    def init_concepts(self, effect: dict[bool, list[int]]) -> None:
-        self.__effect = effect
-        self.__causes = effect
-
     def __set_effect(self, effect: dict[bool, list[int]]) -> None:
-        # self.__effect = effect
-        new_states = {True: [], False: []}
-        if self.__effect is None:
-            raise HTTPException(status_code=400, detail='Effect must be setted.')
-        for b in BOOL_RANGE:
-            for eff in effect[b]:
-                if eff in self.__effect[b]:
-                    new_states[b].append(eff)
+        self.__effect = effect
 
     def __set_causes(self, causes: dict[bool, list[int]]) -> None:
-        # self.__causes = causes
-        if self.__causes is None:
-            raise HTTPException(status_code=400, detail='Causes must be setted.')
-        new_states = {True: [], False: []}
-        for b in BOOL_RANGE:
-            for eff in causes[b]:
-                if eff in self.__causes[b]:
-                    new_states[b].append(eff)
+        self.__causes = causes
 
-    def set_bg_cond(self, effect: dict[bool, list[int]]) -> None:
+    def set_bg_cond(self, bg_cond: dict[bool, list[int]]) -> None:
+        """
+        Las condiciones de fondo implican que dada una cadena se va a manejar una parte del sistema de forma que para evitar pérdida de información el futuro mantiene las matrices, no obstante estas pueden perder sus causas.
+        No se eliminan los futuros puesto simplifica operaciones, no obstante esto está regido a cambio puesto la implementación dicta una serie de selecciones basado en las matrices con su índice de existencia.
+        """
+
         # self.init_concepts(effect)
         # self.__set_effect(effect)
         # self.__set_causes(effect)
         for b in BOOL_RANGE:
-            for idx in effect[b]:
+            for idx in bg_cond[b]:
                 mat: Matrix = self.__tensor[idx]
+                mat.at_states(self.__istate, bg_cond[b], bg_cond[not b])
+                # ic(b, idx, bg_cond)
                 # ic(idx, mat.as_dataframe())
-                mat.at_states(self.__istate, effect[b], effect[not b])
-                ic(idx, mat.as_dataframe())
 
     def get_distrib(self, dual: bool = False) -> NDArray[np.float64]:
         return (
