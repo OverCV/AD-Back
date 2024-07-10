@@ -1,17 +1,15 @@
 from collections import OrderedDict
-from typing import Callable
 from fastapi import HTTPException
 from numpy.typing import NDArray
 import numpy as np
 
 from api.models.matrix import Matrix
-from api.models.props.structure import ConceptType, StructProps
-from constants.structure import BOOL_RANGE, UNIT_MATRIX
-from utils.consts import INT_ONE, INT_ZERO
 
 import concurrent.futures
 
 # from utils.funcs import be_prod, le_prod
+from api.models.props.structure import StructProps
+from constants.structure import BOOL_RANGE
 from server import conf
 
 from icecream import ic
@@ -79,8 +77,8 @@ class Structure:
 
         # pimr o dual pueden no ((idx,...), mat[idx,...])
 
-        prim_tensor: tuple[tuple[int, ...], tuple[NDArray[np.float64], ...]]
-        dual_tensor: tuple[tuple[int, ...], tuple[NDArray[np.float64], ...]]
+        prim_tensor: tuple[tuple[int, ...], NDArray[np.float64]]
+        dual_tensor: tuple[tuple[int, ...], NDArray[np.float64]]
 
         # cout(f'1. prim {prim_effect}, dual {dual_effect}')
         # By definition, is not possible to have both tensors empty
@@ -94,13 +92,13 @@ class Structure:
         # cout(f'2. prim {prim_tensor}, dual {dual_tensor}')
 
         # endian_product: Callable = product if le else be_prod
-        self.__prim_dist = product(prim_tensor)
-        self.__dual_dist = product(dual_tensor)
+        self.__prim_dist: tuple[tuple[int, ...], NDArray[np.float64]] = product(prim_tensor)
+        self.__dual_dist: tuple[tuple[int, ...], NDArray[np.float64]] = product(dual_tensor)
 
         ic(self.__prim_dist, self.__dual_dist)
         # self.__dual_dist = endian_product(dual_tensor)
         # How to know if a list is empty? An empty list has a boolean value of False, so we can use the following code to check if the list is empty:
-        dist = (
+        dist: tuple[tuple[int, ...], NDArray[np.float64]] = (
             self.__dual_dist
             if not prim_tensor
             else self.__prim_dist
@@ -134,43 +132,31 @@ class Structure:
                     mat: Matrix = self.__tensor[idx]
                     mat.margin(self.__causes[b])
 
-    def __set_effect(self, effect: ConceptType) -> None:
+    def __init_effect(self, effect: dict[bool, list[int]]) -> None:
         self.__effect = effect
-        # Hay que tener en cuenta las llaves del tensor para asignar los indices del enumerable, no iterar directamente sobre la cadena o habrá problemas
-        # for i, b in enumerate(effect):
-        #     self.__effect[b == STR_ONE].append(i)
 
-        # for i, b in zip(self.__tensor.keys(), effect):
-        #     self.__effect[b == STR_ONE].append(i)
-
-    def __set_causes(self, causes: ConceptType) -> None:
+    def __init_causes(self, causes: dict[bool, list[int]]) -> None:
         self.__causes = causes
-        # Hay que pasar si quiere que el indice quede en el primal o el dual
-        # Por eso usabamos 101 porque así se sabe que cada elemento es una posición de la cadena de texto pero a cambio no conocemos cuál indice nos estamos refiriendo
-        # No podemos usar el tensor per se puesto maneja los indices de las matrices en el futuro y no conocemos el presente, además que cada matriz es distinta y no se sabe a cuál partición estaríamos referenciando; Los índices determinan la partición de la matriz y no al contrario!!!
 
-        # originamos de la cadena 10110, idx []
-        # self.__causes = {True: list(), False: list()}
-        # for idx in causes:
-        #     self.__causes[b == STR_ONE].append(idx)
-        # for i, b in enumerate(causes):
-        #     self.__causes[b == STR_ONE].append(i)
+    # Hay que tener en cuenta las llaves del tensor para asignar los indices del enumerable, no iterar directamente sobre la cadena o habrá problemas
+    # for i, b in enumerate(effect):
+    #     self.__effect[b == STR_ONE].append(i)
 
-    """
+    # for i, b in zip(self.__tensor.keys(), effect):
+    #     self.__effect[b == STR_ONE].append(i)
 
-    effect 10110
-    causes 10110
-    dual False
+    def __set_effect(self, effect: dict[bool, list[int]]) -> None:
+        self.__effect = {False: [], True: []}
+        for b in BOOL_RANGE:
+            if b in effect:
+                effect[b] = list()
 
-    struct.tensor = {0: (0,1,2,3,4), 1: (0,1,2,3,4), 2: (0,1,2,3,4), 3: (0,1,2,3,4), 4: (0,1,2,3,4)}
+    def __set_causes(self, causes: dict[bool, list[int]]) -> None:
+        self.__causes = causes
 
-    idx_effect = [0, 2, 4]
-    idx_causes = [0, 2, 4]
-
-
-    """
-
-    def set_bg_cond(self, effect) -> None:
+    def set_bg_cond(self, effect: dict[bool, list[int]]) -> None:
+        self.__init_effect(effect)
+        self.__init_causes(effect)
         for b in BOOL_RANGE:
             for idx in effect[b]:
                 mat: Matrix = self.__tensor[idx]
@@ -178,27 +164,12 @@ class Structure:
                 mat.at_states(self.__istate, effect[b], effect[not b])
                 ic(idx, mat.as_dataframe())
 
-        # [ic(k, mat.as_dataframe()) for k, mat in self.__tensor.items()]
-
-        # Al configurar las condiciones de Background, en función al dual si envían 0 implica debemos mantener las posiciones en 0, las de 1 caso primal.
-        # Reemplazamos primero el tensor según indique el efecto
-        # effect = effect[not dual]
-        # Vamos a tomar las condiciones de bg, nos interesa conocer estos estados causales.
-        # causes = causes[dual]
-
-        # self.__tensor = OrderedDict((idx, self.__tensor[idx]) for idx in effect)
-        # self.__tensor = OrderedDict((idx, self.__tensor[idx].at_states(causes)) for idx in effect)
-        # new_tensor = OrderedDict()
-        # Seteamos las condiciones de backgroun para tanto el primal como el dual
-
-        # self.__tensor[idx].at_states(self.__istate, causes)
-        # new_tensor[idx] = self.__tensor[idx].at_states(self.__istate, causes)
-        # self.__tensor = new_tensor
-        # Subseleccionamos por cada matriz del tensor así mismo las filas donde se indique debe mantenerse la causa, de forma que si originalmente tenemos las combinaciones d  el [000, 100, 010, 110, ..., 111] pero el dual indica sólo seleccionar los elementos de forma 101 con dual off.
-        # La entrada es 1 o 0, 1si dual=False entonces 1 ses primal y por ende vamos a seleccionar en dichos elementos, si está en 0 no lo seleccionamos, el valor estará delimitado por el istate, el estado inicial determina las secciones a tomar e ignorar
-
-    def get_distribution(self, dual: bool = False) -> NDArray[np.float64]:
-        return self.__dual_dist if dual else self.__prim_dist
+    def get_distrib(self, dual: bool = False) -> NDArray[np.float64]:
+        return (
+            self.__dual_dist[StructProps.DIST_ARR]
+            if dual
+            else self.__prim_dist[StructProps.DIST_ARR]
+        )
 
     def get_istate(self) -> str:
         return self.__istate
@@ -220,6 +191,39 @@ class Structure:
 
     def __str__(self) -> str:
         return f'{self.__title} : {self.__istate}, {self.__effect}, {self.__causes}'
+
+    """
+
+    effect 10110
+    causes 10110
+    dual False
+
+    struct.tensor = {0: (0,1,2,3,4), 1: (0,1,2,3,4), 2: (0,1,2,3,4), 3: (0,1,2,3,4), 4: (0,1,2,3,4)}
+
+    idx_effect = [0, 2, 4]
+    idx_causes = [0, 2, 4]
+
+
+    """
+
+    # [ic(k, mat.as_dataframe()) for k, mat in self.__tensor.items()]
+
+    # Al configurar las condiciones de Background, en función al dual si envían 0 implica debemos mantener las posiciones en 0, las de 1 caso primal.
+    # Reemplazamos primero el tensor según indique el efecto
+    # effect = effect[not dual]
+    # Vamos a tomar las condiciones de bg, nos interesa conocer estos estados causales.
+    # causes = causes[dual]
+
+    # self.__tensor = OrderedDict((idx, self.__tensor[idx]) for idx in effect)
+    # self.__tensor = OrderedDict((idx, self.__tensor[idx].at_states(causes)) for idx in effect)
+    # new_tensor = OrderedDict()
+    # Seteamos las condiciones de backgroun para tanto el primal como el dual
+
+    # self.__tensor[idx].at_states(self.__istate, causes)
+    # new_tensor[idx] = self.__tensor[idx].at_states(self.__istate, causes)
+    # self.__tensor = new_tensor
+    # Subseleccionamos por cada matriz del tensor así mismo las filas donde se indique debe mantenerse la causa, de forma que si originalmente tenemos las combinaciones d  el [000, 100, 010, 110, ..., 111] pero el dual indica sólo seleccionar los elementos de forma 101 con dual off.
+    # La entrada es 1 o 0, 1si dual=False entonces 1 ses primal y por ende vamos a seleccionar en dichos elementos, si está en 0 no lo seleccionamos, el valor estará delimitado por el istate, el estado inicial determina las secciones a tomar e ignorar
 
     # def drop_matrices(self, mat_idxs: list[int]) -> None:
     #     self.__effect = None
@@ -248,3 +252,15 @@ class Structure:
     # #     self.__causes[not dual] = list()
     # #     # Asignamos el tensor reducido
     # #     self.__tensor = subtensor
+
+    # def set_causes():
+    # Hay que pasar si quiere que el indice quede en el primal o el dual
+    # Por eso usabamos 101 porque así se sabe que cada elemento es una posición de la cadena de texto pero a cambio no conocemos cuál indice nos estamos refiriendo
+    # No podemos usar el tensor per se puesto maneja los indices de las matrices en el futuro y no conocemos el presente, además que cada matriz es distinta y no se sabe a cuál partición estaríamos referenciando; Los índices determinan la partición de la matriz y no al contrario!!!
+
+    # originamos de la cadena 10110, idx []
+    # self.__causes = {True: list(), False: list()}
+    # for idx in causes:
+    #     self.__causes[b == STR_ONE].append(idx)
+    # for i, b in enumerate(causes):
+    #     self.__causes[b == STR_ONE].append(i)

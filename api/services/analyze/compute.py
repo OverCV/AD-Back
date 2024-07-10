@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 import numpy as np
 from numpy.typing import NDArray
 
@@ -53,7 +54,11 @@ class Compute:
         self.__struct: Structure = copy(self.__sup_struct)
         # self.__struct.create_distrib(self.__effect, self.__causes)
         self.__struct.set_bg_cond(self.__effect)
-        self.__distribution = self.__struct.get_distribution(self.__dual)
+        ic(str(self.__struct))
+        # raise HTTPException(status_code=305, detail='Stop here')
+        self.__struct.create_distrib(self.__effect, self.__causes)
+        self.__distribution = self.__struct.get_distrib(self.__dual)
+        ic(self.__distribution)
         return self.__distribution is not None
 
     # def use_pyphi(self) -> bool:

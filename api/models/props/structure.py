@@ -10,6 +10,9 @@ class StructProps:
     TENSOR: str = 'tensor'
     SIZE: str = 'size'
 
+    DIST_IDX: int = 0
+    DIST_ARR: int = 1
+
 
 class ConceptType(TypedDict):
     bool: list[int]
