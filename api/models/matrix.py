@@ -7,7 +7,7 @@ import pandas as pd
 
 
 from constants.structure import BIN_RANGE, BOOL_RANGE
-from utils.consts import COLS_IDX, INT_ONE, INT_ZERO, ROWS_IDX, STR_ZERO
+from utils.consts import COLS_IDX, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE, STR_ZERO
 from utils.funcs import big_endian, lil_endian
 # from numba import njit
 
@@ -78,16 +78,12 @@ class Matrix:
                     selected_row = ''.join(
                         [row[self.__causes.index(k)] for k in states],
                     )
-                    """ 
+                    """
                     STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]
-                    
                     Necesitamos usar el tamaño actual de la matriz usada, como se manja una única matriz, independiente del tamaño del arreglo, 
-
-
                     (b)b(bb)b
                     [0->0, 1->1, 2->2, 3->3, 4->4]
-                    [0->0, 2->1, 3->2]                     
-
+                    [0->0, 2->1, 3->2]
                     """
                     zeros_df.at[selected_row, col] += dataframe.at[row, col]
             margin_df = zeros_df
@@ -101,6 +97,42 @@ class Matrix:
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
         return self.__array if data else None
+
+    def paddin(
+        self,
+        margined_matrix: NDArray[np.float64],
+        states: list[int],
+        axis: int = ROWS_IDX,
+        dual: bool = False,
+        le: bool = conf.little_endian,
+        data: bool = False,
+    ):
+        actual_matrix: pd.DataFrame = self.as_dataframe(margined_matrix)
+        notation: Callable = lil_endian if le else big_endian
+        new_states: list[str] = notation(len(states))
+
+        #     f'states: {states}, actual_matrix (margined one)\n {actual_matrix}')
+
+        new_data: np.ndarray = np.zeros((len(new_states), actual_matrix.shape[1]))
+        matrix_zeros: pd.DataFrame = pd.DataFrame(
+            new_data, columns=actual_matrix.columns, index=new_states
+        )
+
+        # Si es sólo un estado el marginalizado directamente establecer las filas de la matriz como el valor de la fila marginalizada.
+        # Básicamente usar la única fila de la matriz marginalizada para llenar la matriz de ceros.
+        if len(states) == INT_ONE:
+            for row in matrix_zeros.index:
+                for col in matrix_zeros.columns:
+                    matrix_zeros.at[row, col] = actual_matrix.at[states, col]
+            return matrix_zeros.to_numpy()
+
+        for row in matrix_zeros.index:
+            for col in matrix_zeros.columns:
+                current_row: str = ''.join([row[j] for j, s in enumerate(states) if s == STR_ONE])
+                if current_row in actual_matrix.index:
+                    matrix_zeros.at[row, col] = actual_matrix.at[current_row, col]
+
+        return matrix_zeros.to_numpy() if data else None
 
     def on_state(
         self, istate: str, axis: int = ROWS_IDX, le: bool = conf.little_endian

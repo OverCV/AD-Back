@@ -1,12 +1,16 @@
-from matplotlib import pyplot as plt
 from api.services.analyze.sia import Sia
+from api.models.matrix import Matrix
+from api.models.structure import Structure
 
-from ctypes import Structure
+import itertools as it
+from matplotlib import pyplot as plt
+import copy
 
 import networkx as nx
 import numpy as np
 from numpy.typing import NDArray
 
+from constants.structure import T0_SYM, T1_SYM
 from utils.consts import INFTY, W_LBL
 from utils.funcs import get_labels
 
@@ -27,14 +31,25 @@ class Branch(Sia):
     ) -> None:
         super().__init__(structure, effect, causes, distrib, dual)
 
-        self.__effect_labels = get_labels(len(effect))
-        self.__cause_labels = get_labels(len(causes))
+        self.__effect_labels: None | list[str] = None
+        self.__causes_labels = None
+
+        self.__net: nx.Graph = nx.Graph()
 
     def analyze(self) -> bool:
         part: None = None
+
+        max_len = max(*self._effect, *self._causes) + 1
+        labels = get_labels(max_len)
+        self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
+        self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._causes]
+        ic(self.__effect_labels, self.__causes_labels)
+
+        self.__net = self.mar_and_pad()
+
+        #
         mip = self.label_mip(part)
         self.min_info_part = mip
-
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
@@ -44,10 +59,36 @@ class Branch(Sia):
                 self.network_id is None,
             ]
         )
+
         return not_std_sln
 
-    def mar_and_pad(self, partition: tuple[str, str]) -> tuple[tuple[tuple[str], tuple[str]]]:
-        pass
+    def mar_and_pad(self) -> nx.Graph:
+        concept_comb = list(it.product(self._causes, self._effect))
+        ic(list(concept_comb))
+
+        all_edges = [
+            (
+                self.__causes_labels[self._causes.index(c)],
+                self.__effect_labels[self._effect.index(e)],
+                -1,
+            )
+            for c, e in concept_comb
+        ]
+        ic(all_edges)
+
+        self.__net.add_weighted_edges_from(all_edges)
+        # self.plot_net(self.__net)
+        """
+        self._effect: [0, 4], self._causes: [0, 2, 4]
+        ic| self.__effect_labels: ['A(t=1)', 'E(t=1)']
+            self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']"""
+        for idx_effect, idx_causes in concept_comb:
+            # Iteramos las aristas ya definidas en el producto causa efecto
+            sub_struct: Structure = copy.deepcopy(self._structure)
+            effect_matrix: Matrix = sub_struct.get_tensor()[idx_effect]
+            ic(effect_matrix.as_dataframe())
+
+        # to_margin = [idx for idx in self.]
 
     def branch_and_bound(self) -> tuple[tuple[tuple[str], tuple[str]]]:
         pass
@@ -59,7 +100,7 @@ class Branch(Sia):
         """This function is used to plot the network."""
         # Separate the nodes into two sets
         future_nodes = [node for node in net.nodes if node in self.__effect_labels]
-        current_nodes = [node for node in net.nodes if node in self.__cause_labels]
+        current_nodes = [node for node in net.nodes if node in self.__causes_labels]
 
         # Create a bipartite layout
         pos = {}
@@ -84,7 +125,7 @@ class Branch(Sia):
         # Show the plot
         plt.show()
 
-    def biplot_net(self, net1: nx.Graph, net2: nx.Graph) -> None:
+    def T(self, net1: nx.Graph, net2: nx.Graph) -> None:
         """This function is used to plot two networks side by side."""
         _, axs = plt.subplots(1, 2, figsize=(12, 6))
 

@@ -14,6 +14,9 @@ DIST: str = 'distribution'
 TIME: str = 'time'
 LOSS: str = 'loss'
 
+T0_SYM: str = '(t=0)'
+T1_SYM: str = '(t=1)'
+
 ISTATE: str = 'istate'
 SUBSYS: str = 'subsystem'
 TENSOR: str = 'tensor'
