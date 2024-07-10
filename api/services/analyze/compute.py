@@ -52,7 +52,13 @@ class Compute:
         Desde este nivel se deifinen las condiciones de bg, las cuales permiten conocer los elementos/ínidces usables para los diferentes subsistemas a generar.
         """
 
-        bgcond_elems = [idx for idx, bg in enumerate(self.__str_bgcond) if bg == STR_ONE]
+        bgcond_elems = [
+            idx
+            for idx, bg in enumerate(
+                self.__str_bgcond,
+            )
+            if (bg == STR_ONE) == (not self.__dual)
+        ]
         for i, e in enumerate(self.__str_effect):
             if i in bgcond_elems:
                 self.__effect[e == STR_ONE].append(i)
