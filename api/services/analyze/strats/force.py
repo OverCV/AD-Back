@@ -39,19 +39,16 @@ class BruteForce(Sia):
         super().__init__(structure, effect, causes, distribution, dual)
 
     def analyze(self) -> bool:
-        ic(self._dual, self._effect, self._causes)
         # Creamos todas las biparticiones posibles
         bipartitions = self.bipartitionate(len(self._effect), len(self._causes))
-        # No usamos la distribución original, es un caso absurdo.
+        # No usamos la primera distribución, es un caso absurdo.
         _: tuple[str, str] = bipartitions.pop(0)
-        # ic(bipartitions)
-        ic()
         part = (
             self.calculate_dists_threaded(bipartitions)
             if conf.threaded
             else self.calculate_dists(bipartitions)
         )
-        ic(self._target_dist)
+        # ic(self._target_dist)
         mip = self.label_mip(part)
 
         self.network_id = -1
@@ -59,7 +56,7 @@ class BruteForce(Sia):
 
         not_std_sln = any(
             [
-                # ! Store the network, get the id and return it to invoque in front ! #
+                # ! Store the network, generate the id and return it as callback in front ! #
                 self.integrated_info == INFTY,
                 self.min_info_part is None,
                 self.sub_distrib is None,
@@ -73,7 +70,7 @@ class BruteForce(Sia):
         self.integrated_info = INFTY
         mip: tuple[str, str] = None
         for partition in bipartitions:
-            ic(partition)
+            # ic(partition)
             sub_struct: Structure = copy.deepcopy(self._structure)
             str_effect: str = partition[EFFECT]
             str_causes: str = partition[CAUSES]
@@ -86,7 +83,7 @@ class BruteForce(Sia):
                 causes[c == STR_ONE].append(i)
             iter_distrib = sub_struct.create_distrib(effect, causes, data=True)
             # Comparar con la distribución original (objetivo)
-            ic(iter_distrib, self._target_dist)
+            # ic(iter_distrib, self._target_dist)
             emd_dist = emd(*iter_distrib, *self._target_dist)
             if emd_dist < self.integrated_info:
                 self.integrated_info = emd_dist
@@ -109,6 +106,7 @@ class BruteForce(Sia):
             for i, c in zip(self._causes, str_causes):
                 causes[c == STR_ONE].append(i)
 
+            # Importante tener en cuenta realizar un producto de distribuciones implica manejar los índices por lo que las compmaraciones entre arreglos requieren seleccionar la serie.
             iter_idx_distrib: tuple[tuple[int, ...], NDArray[np.float64]] = (
                 sub_struct.create_distrib(effect, causes, data=True)
             )

@@ -6,6 +6,7 @@ from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
 
 
+from api.services.analyze.strats.branch import Branch
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
 
@@ -118,7 +119,16 @@ class Compute:
         #     )
 
     def use_branch_and_bound(self) -> bool:
-        pass
+        ic(self.__struct, self.__effect, self.__causes, self.__distribution, self.__dual)
+        sia_branch: Branch = Branch(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__causes[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_branch.calculate_concept()
+        return sia_branch.get_reperoire()
 
     def use_dynamic_programming(self) -> bool:
         pass

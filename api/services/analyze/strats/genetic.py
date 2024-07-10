@@ -1,19 +1,13 @@
-from collections import OrderedDict
 import numpy as np
 from numpy.typing import NDArray
 
-from fastapi import HTTPException
 
 from api.models.genetic.environ import Environ
-from api.models.genetic.individual import Individual
-from api.models.genetic.recorder import Recorder
 from api.models.structure import Structure
 from api.schemas.genetic.control import ControlSchema
 from api.services.analyze.sia import Sia
 
 from icecream import ic
-
-from constants.genetic import DEFAULT_PARAMS
 from utils.consts import INFTY
 
 
