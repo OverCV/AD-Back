@@ -1,6 +1,10 @@
 import math
 import networkx as nx
 
+from utils.consts import W_LBL
+
+from icecream import ic
+
 
 class Nodum:
     """Class Nodum is used in the branch and bound process."""
@@ -44,7 +48,7 @@ class Nodum:
         return self._net
 
     def ignore_new(self, edge: tuple[str, str, int], adjacent: set[str]):
-        # self._ignore.add(edge)
+        ic(edge, adjacent)
         self._ignore[edge] = adjacent
 
     # def get_ignored(self) -> set[tuple[str]]:
@@ -57,10 +61,12 @@ class Nodum:
     def get_ordered_edges(self) -> list[tuple[str, str, float]]:
         return sorted(
             self._net.edges(data=True),
-            key=lambda edge: edge[2]['weight']
-            * math.sqrt(self._net.degree(edge[0]) ** 2 + self._net.degree(edge[1]) ** 2),
+            key=lambda edge: edge[2][W_LBL]
+            * math.sqrt(
+                self._net.degree(edge[0]) ** 2 + self._net.degree(edge[1]) ** 2,
+            ),
         )
 
     def __str__(self) -> str:
-        edges = [(u, v, d['weight']) for u, v, d in self.get_ordered_edges()]
+        edges = [(u, v, d[W_LBL]) for u, v, d in self.get_ordered_edges()]
         return f'⟨ub: {self._ub}, edges: {edges}, ignore: {self._ignore}⟩'

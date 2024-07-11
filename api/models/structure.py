@@ -161,6 +161,8 @@ class Structure:
                 # ic(b, idx, bg_cond)
                 # ic(idx, mat.as_dataframe())
 
+    
+
     def get_distrib(self, dual: bool = False) -> NDArray[np.float64]:
         return (
             self.__dual_dist[StructProps.DIST_ARR]

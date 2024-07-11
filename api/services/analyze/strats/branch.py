@@ -44,7 +44,7 @@ class Branch(Sia):
         labels = get_labels(max_len)
         self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
         self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._causes]
-        ic(self.__causes_labels, self.__effect_labels)
+        # ic(self.__causes_labels, self.__effect_labels)
 
         self.__net = self.margin_n_expand()
 
@@ -70,37 +70,36 @@ class Branch(Sia):
 
         possible_edges: list[tuple[str, str, float]] = []
 
-        # possible_edges = [
-        #     (
-        #         self.__causes_labels[self._causes.index(c)],
-        #         self.__effect_labels[self._effect.index(e)],
-        #         -1,
-        #     )
-        #     for c, e in concept_comb
-        # ]
-
-        # self.__net.add_weighted_edges_from(possible_edges)
-        # self.plot_net(self.__net)
         """
         self._effect: [0, 4], self._causes: [0, 2, 4]
         ic| self.__effect_labels: ['A(t=1)', 'E(t=1)']
             self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']"""
         sub_concepts: list[tuple[int, int]] = []
+        alt_struct = copy.deepcopy(self._structure)
         for idx_causes, idx_effect in concept_comb:
             # Iteramos las aristas ya definidas en el producto causa efecto
             # ! Por qué no re-instanciar la matriz (no la clase)? [#15] ! #
-            sub_struct: Structure = copy.deepcopy(self._structure)
+            sub_struct: Structure = copy.deepcopy(alt_struct)
             sub_mat: Matrix = sub_struct.get_tensor()[idx_effect]
 
             sub_states: list[int] = copy.deepcopy(self._causes)
             sub_states.remove(idx_causes)
 
-            # ic(sub_mat.as_dataframe())
+            print('-' * 30)
+            ic(
+                self._causes,
+                self._effect,
+                idx_causes,
+                idx_effect,
+                self.__causes_labels[self._causes.index(idx_causes)],
+                self.__effect_labels[self._effect.index(idx_effect)],
+            )
 
+            ic(sub_mat.as_dataframe())
             sub_mat.margin(sub_states, data=True)
+            ic(sub_mat.as_dataframe())
             sub_mat.expand(self._causes, data=True)
-
-            # ic(sub_mat.as_dataframe())
+            ic(sub_mat.as_dataframe())
 
             effect = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
             causes = {bin: ([] if self._dual == bin else self._causes) for bin in BOOL_RANGE}
@@ -119,6 +118,7 @@ class Branch(Sia):
             else:
                 # ! Por qué no en vez de poner todas las aristas e irlas quitando hasat encontrar una bipartición, mejor no se añaden las que tengan peso y al final valida si el grafo es conexo? [#16] !
                 sub_concepts.append((idx_effect, idx_causes))
+                alt_struct.get_tensor()[idx_effect] = sub_mat
         # Añadimos los nodos:
         self.__net.add_nodes_from(self.__effect_labels)
         self.__net.add_nodes_from(self.__causes_labels)
@@ -180,7 +180,10 @@ class Branch(Sia):
             for edge in left.get_ordered_edges():
                 if (edge[0], edge[1]) in left.get_ignored().keys():
                     continue
-                left.ignore_new((edge[0], edge[1]), set(edge[1]))
+                left.ignore_new(
+                    (edge[0], edge[1]),
+                    set((edge[0],)),
+                )
                 break
 
             right: Nodum = Nodum(
@@ -199,20 +202,21 @@ class Branch(Sia):
                 break
 
             if nx.is_connected(right.get_net()):
-                pq.heappush(queue, (right.get_ub(), right))
+                pq.heappush(queue, (-right.get_ub(), right))
             elif right.get_ub() < gb:
                 gb = round(right.get_ub(), 4)
                 if right.get_ub() < minimal_loss.get_ub():
                     minimal_loss: Nodum = right
 
             if nx.is_connected(left.get_net()):
-                pq.heappush(queue, (right.get_ub(), right))
+                pq.heappush(queue, (-left.get_ub(), left))
             elif left.get_ub() < gb:
                 gb = round(left.get_ub(), 4)
                 if left.get_ub() < minimal_loss.get_ub():
                     minimal_loss: Nodum = left
+            ic(queue)
 
-            #
+            self.biplot(left.get_net(), right.get_net())
             limit -= 1
             if limit < 0:
                 raise HTTPException(
@@ -261,8 +265,8 @@ class Branch(Sia):
         _, axs = plt.subplots(1, 2, figsize=(12, 6))
 
         def plot_single_net(ax, net):
-            future_nodes = [node for node in net.nodes if node in self._future_labels]
-            current_nodes = [node for node in net.nodes if node in self._current_labels]
+            future_nodes = [node for node in net.nodes if node in self.__effect_labels]
+            current_nodes = [node for node in net.nodes if node in self.__causes_labels]
             pos = {}
             try:
                 pos.update((node, (1, index)) for index, node in enumerate(future_nodes))
