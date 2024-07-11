@@ -1,3 +1,4 @@
+from matplotlib.font_manager import font_family_aliases
 from api.models.bnb.nodum import Nodum
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
@@ -273,13 +274,37 @@ class Branch(Sia):
                 pos.update((node, (0, index)) for index, node in enumerate(current_nodes))
             except KeyError:
                 pass
-            nx.draw(net, pos=pos, with_labels=True, ax=ax)
-            labels = nx.get_edge_attributes(net, W_LBL)
+
+            # Draw the network with custom node and edge colors
+            nx.draw(
+                net,
+                pos=pos,
+                with_labels=True,
+                ax=ax,
+                node_color='skyblue',
+                font_color='black',
+                edge_color='gray',
+            )
+
+            labels = nx.get_edge_attributes(net, 'weight')
             for (u, v), weight in labels.items():
                 offset = np.random.default_rng(seed=1).uniform(-0.2, 0.2)
-                pos_y = (pos[u][1] + pos[v][1]) / 2 + offset
-                pos_x = (pos[u][0] + pos[v][0]) / 2 + offset
-                ax.text(pos_x, pos_y, weight, ha='center', va='center')
+
+                # Calculate the position for the label closer to the destination node
+                pos_y = pos[v][1] + (pos[u][1] - pos[v][1]) * 0.3 + offset
+                pos_x = pos[v][0] + (pos[u][0] - pos[v][0]) * 0.3 + offset
+
+                ax.text(
+                    pos_x,
+                    pos_y,
+                    weight,
+                    ha='center',
+                    va='center',
+                    fontsize=8,  # You can adjust the fontsize as needed
+                    bbox=dict(
+                        facecolor='white', edgecolor='none', alpha=0.2
+                    ),  # Add a background to the text for better visibility
+                )
 
         plot_single_net(axs[0], net1)
         plot_single_net(axs[1], net2)
