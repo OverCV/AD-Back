@@ -14,8 +14,10 @@ DIST: str = 'distribution'
 TIME: str = 'time'
 LOSS: str = 'loss'
 
-T0_SYM: str = '(t=0)'
-T1_SYM: str = '(t=1)'
+# T0_SYM: str = '(t=0)'
+# T1_SYM: str = '(t=1)'
+T0_SYM: str = '.0'
+T1_SYM: str = '.1'
 
 ISTATE: str = 'istate'
 SUBSYS: str = 'subsystem'

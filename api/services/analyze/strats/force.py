@@ -70,6 +70,8 @@ class BruteForce(Sia):
         self.integrated_info = INFTY
         mip: tuple[str, str] = None
         for partition in bipartitions:
+            # ! Podría paralelizarse [#17] ! #
+            # En esta primera parte descubrimos si
             # ic(partition)
             sub_struct: Structure = copy.deepcopy(self._structure)
             str_effect: str = partition[EFFECT]

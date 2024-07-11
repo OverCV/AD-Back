@@ -41,16 +41,14 @@ class Structure:
 
     def create_distrib(
         self, effect: dict[bool, list[int]], causes: dict[bool, list[int]], data: bool = False
-    ) -> NDArray[np.float64] | None:
+    ):
         # ! Here may be a validation of the ec inputs, validate effect.size == tensor.size and for all matrices, the effect of its side=(prim|dual) is 2^n == matriz.rows [#00] ! #
         self.__set_effect(effect)
         self.__set_causes(causes)
         self.__correlate()
         return self.prod_dual_primal(data=data)
 
-    def prod_dual_primal(
-        self, data: bool = False, le: bool = conf.little_endian
-    ) -> NDArray[np.float64] | None:
+    def prod_dual_primal(self, data: bool = False, le: bool = conf.little_endian):
         """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and causes correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
 
         {set_effect 101 - set_causes 01}:
