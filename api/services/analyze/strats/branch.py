@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from api.services.analyze.sia import Sia
 from api.models.matrix import Matrix
 from api.models.structure import Structure
@@ -10,7 +11,7 @@ import networkx as nx
 import numpy as np
 from numpy.typing import NDArray
 
-from constants.structure import T0_SYM, T1_SYM
+from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
 from utils.consts import INFTY, W_LBL
 from utils.funcs import get_labels
 
@@ -82,11 +83,27 @@ class Branch(Sia):
         self._effect: [0, 4], self._causes: [0, 2, 4]
         ic| self.__effect_labels: ['A(t=1)', 'E(t=1)']
             self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']"""
-        for idx_effect, idx_causes in concept_comb:
+        for idx_causes, idx_effect in concept_comb:
             # Iteramos las aristas ya definidas en el producto causa efecto
+            # ! Por qué no re-instanciar la matriz (no la clase)? [#15] ! #
             sub_struct: Structure = copy.deepcopy(self._structure)
-            effect_matrix: Matrix = sub_struct.get_tensor()[idx_effect]
-            ic(effect_matrix.as_dataframe())
+            sub_mat: Matrix = sub_struct.get_tensor()[idx_effect]
+            ic(idx_causes, idx_effect)
+            # ic(sub_mat.as_dataframe())
+
+            sub_states: list[int] = copy.deepcopy(self._causes)
+            sub_states.remove(idx_causes)
+            # prev_causes = sorted(sub_states + [idx_causes])
+
+            sub_mat.margin(sub_states, data=True)
+            sub_mat.expand(self._causes, data=True)
+            ic(sub_mat.as_dataframe())
+
+            effect = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
+            causes = {bin: ([] if self._dual == bin else self._causes) for bin in BOOL_RANGE}
+            # ic(effect, causes)
+            iter_distrib = sub_struct.create_distrib(effect, causes, data=True)
+            ic(iter_distrib)
 
         # to_margin = [idx for idx in self.]
 

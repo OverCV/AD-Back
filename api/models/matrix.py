@@ -12,6 +12,7 @@ from utils.funcs import big_endian, lil_endian
 # from numba import njit
 
 from server import conf
+
 from icecream import ic
 
 
@@ -72,20 +73,21 @@ class Matrix:
                 index=rows,
             )
             for row in dataframe.index:
-                for col in dataframe.columns:
-                    # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
-                    # element is the key, value is the position or index
-                    selected_row = ''.join(
-                        [row[self.__causes.index(k)] for k in states],
-                    )
-                    """
+                # for col in dataframe.columns:
+                # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
+                # element is the key, value is the position or index
+                selected_row = ''.join(
+                    [row[self.__causes.index(k)] for k in states],
+                )
+                """
                     STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]
                     Necesitamos usar el tamaño actual de la matriz usada, como se manja una única matriz, independiente del tamaño del arreglo, 
                     (b)b(bb)b
                     [0->0, 1->1, 2->2, 3->3, 4->4]
                     [0->0, 2->1, 3->2]
                     """
-                    zeros_df.at[selected_row, col] += dataframe.at[row, col]
+                # zeros_df.at[selected_row, col] += dataframe.at[row, col]
+                zeros_df.loc[selected_row] = dataframe.loc[row].values
             margin_df = zeros_df
 
         margin_df /= margined_rows if axis == ROWS_IDX else INT_ONE
@@ -98,41 +100,70 @@ class Matrix:
         )
         return self.__array if data else None
 
-    def paddin(
+    def expand(
         self,
-        margined_matrix: NDArray[np.float64],
         states: list[int],
+        # margined_matrix: NDArray[np.float64] = None,
         axis: int = ROWS_IDX,
-        dual: bool = False,
+        dual: bool = False,  # ! Maybe the duality is unnecesary in both margin and expand [#16] ! #
         le: bool = conf.little_endian,
         data: bool = False,
     ):
-        actual_matrix: pd.DataFrame = self.as_dataframe(margined_matrix)
+        """
+        Se tiene el listado tras perdido el elemento como atributo, a su vez se puede tener la reconstrucción pasando los parámetros eliminados...
+
+        """
+        # prev_states = sorted(states + self.__causes if axis == ROWS_IDX else states + self.__effect)
+
+        if axis == COLS_IDX:
+            self.__array = self.__array.transpose()
+
+        actual_matrix: pd.DataFrame = self.as_dataframe()
         notation: Callable = lil_endian if le else big_endian
-        new_states: list[str] = notation(len(states))
+        prev_states: list[str] = notation(len(states))
 
         #     f'states: {states}, actual_matrix (margined one)\n {actual_matrix}')
 
-        new_data: np.ndarray = np.zeros((len(new_states), actual_matrix.shape[1]))
-        matrix_zeros: pd.DataFrame = pd.DataFrame(
-            new_data, columns=actual_matrix.columns, index=new_states
+        empty_arr: np.ndarray = np.empty((len(prev_states), actual_matrix.shape[1]))
+        zeros_mat: pd.DataFrame = pd.DataFrame(
+            empty_arr, columns=actual_matrix.columns, index=prev_states
         )
 
         # Si es sólo un estado el marginalizado directamente establecer las filas de la matriz como el valor de la fila marginalizada.
         # Básicamente usar la única fila de la matriz marginalizada para llenar la matriz de ceros.
-        if len(states) == INT_ONE:
-            for row in matrix_zeros.index:
-                for col in matrix_zeros.columns:
-                    matrix_zeros.at[row, col] = actual_matrix.at[states, col]
-            return matrix_zeros.to_numpy()
+        if len(prev_states) == INT_ONE:
+            for row in zeros_mat.index:
+                # for col in zeros_mat.columns:
+                # zeros_mat.at[row, col] = actual_matrix.at[prev_states, col]
+                zeros_mat.loc[row] = actual_matrix.loc[prev_states].values
+            return zeros_mat.to_numpy()
 
-        for row in matrix_zeros.index:
-            for col in matrix_zeros.columns:
-                current_row: str = ''.join([row[j] for j, s in enumerate(states) if s == STR_ONE])
-                if current_row in actual_matrix.index:
-                    matrix_zeros.at[row, col] = actual_matrix.at[current_row, col]
+        """
+        Iteramos la matriz grande, esta por cada fila formamos una clave basados en las self.causas, seleccionando la fila en dichas posiciones creamos la clave para seleccionar self.array en dicha posición y ubicarlo en la fila iterada.
+        """
 
-        return matrix_zeros.to_numpy() if data else None
+        # for row in matrix_zeros.index:
+        #     for col in matrix_zeros.columns:
+        #         sub_row: str = ''.join([row[j] for j, s in enumerate(states)])
+        #         if sub_row in actual_matrix.index:
+        #             matrix_zeros.at[row, col] = actual_matrix.at[sub_row, col]
+
+        for row in zeros_mat.index:
+            sub_row = ''.join(
+                [row[states.index(j)] for j in self.__causes],
+            )
+            zeros_mat.loc[row] = actual_matrix.loc[sub_row].values
+            # zeros_mat.loc[row] = actual_matrix.loc[sub_row]
+            # for col in zeros_mat.columns:
+
+        if axis == COLS_IDX:
+            self.__array = zeros_mat.to_numpy().transpose()
+            self.__effect = states
+        else:
+            self.__array = zeros_mat.to_numpy()
+            self.__causes = states
+
+        return zeros_mat.to_numpy() if data else None
 
     def on_state(
         self, istate: str, axis: int = ROWS_IDX, le: bool = conf.little_endian
@@ -143,11 +174,9 @@ class Matrix:
 
         row_istates = ''.join([istate[e] for e in self.__causes])
         col_istates = ''.join([istate[i] for i in self.__effect])
-        # ic('ERROR?', self.__causes, sub_istates)
         concat_digits: str = row_istates if axis == ROWS_IDX else col_istates
         tpm = self.as_dataframe()
         # If the dataframe has only one row(collapsed tpm), return it
-        # ic(concat_digits)
         arr = tpm.values if len(tpm.index) == 1 else tpm.loc[[concat_digits]].values
 
         self.__array = self.__array.transpose() if axis == COLS_IDX else self.__array
@@ -162,7 +191,6 @@ class Matrix:
         axis: int = ROWS_IDX,
         le: bool = conf.little_endian,
     ):
-        # ic(in_states, out_states)
         m: int = len(in_states)
         if axis == COLS_IDX:
             self.__array = self.__array.transpose()
@@ -187,10 +215,8 @@ class Matrix:
                     out_row += s
                 else:
                     in_row += s
-            # ic(row_istate, row, in_row, out_row)
             if in_row == row_istate:
                 zeros_df.loc[out_row] = tpm.loc[row].values
-        # ic(zeros_df)
         if axis == COLS_IDX:
             self.__array = zeros_df.to_numpy().transpose()
             self.__effect = in_states
@@ -253,7 +279,6 @@ class Matrix:
     #     else:
     #         self.__array = zeros_df.to_numpy()
     #         self.__causes = out_states
-    #     ic(zeros_df)
     #     return zeros_df.to_numpy() if data else None
 
     # def filter_rows(
@@ -346,7 +371,6 @@ class Matrix:
 #     le: bool = True,
 # ):
 #     """Select the serie at the given state."""
-#     ic(istate, states, self.__causes)
 #     if axis == COLS_IDX:
 #         self.__array = self.__array.transpose()
 
@@ -360,7 +384,6 @@ class Matrix:
 #         columns=list(range(self.__array.shape[COLS_IDX])),
 #     )
 #     tpm = self.as_dataframe()
-#     ic(tpm)
 #     # Crear un mapeo para las filas de tpm
 #     row_istates_mapping = {
 #         row: ''.join(
@@ -372,14 +395,10 @@ class Matrix:
 #         row: ''.join([row[i] for i in range(len(row)) if i not in states]) for row in tpm.index
 #     }
 
-#     ic(row_istates, row_istates_mapping, out_row_mapping)
 
 #     for row in tpm.index:
-#         ic(row, row_istates_mapping[row], out_row_mapping[row])
 #         if row_istates_mapping[row] == row_istates:
-#             ic('Updating zeros_df at', out_row_mapping[row], 'with tpm at', row)
 #             zeros_df.loc[out_row_mapping[row]] = tpm.loc[row]
-#             ic(zeros_df)
 
 #     self.__array = zeros_df.to_numpy()
 #     if axis == COLS_IDX:

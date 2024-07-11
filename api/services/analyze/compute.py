@@ -97,6 +97,18 @@ class Compute:
         sia_force.calculate_concept()
         return sia_force.get_reperoire()
 
+    def use_branch_and_bound(self) -> bool:
+        ic(self.__struct, self.__effect, self.__causes, self.__distribution, self.__dual)
+        sia_branch: Branch = Branch(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__causes[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_branch.calculate_concept()
+        return sia_branch.get_reperoire()
+
     def use_genetic_algorithm(self, ctrl_params: list[dict[str, int | float]]) -> bool:
         # ! Made for S2P
         sia_genetic: Genetic = Genetic(
@@ -117,18 +129,6 @@ class Compute:
         #         detail=f'Invalid initial state: State {
         #             system.istate} needs to be size {len(subtensor)}.'
         #     )
-
-    def use_branch_and_bound(self) -> bool:
-        ic(self.__struct, self.__effect, self.__causes, self.__distribution, self.__dual)
-        sia_branch: Branch = Branch(
-            self.__struct,
-            self.__effect[not self.__dual],
-            self.__causes[not self.__dual],
-            self.__distribution,
-            self.__dual,
-        )
-        sia_branch.calculate_concept()
-        return sia_branch.get_reperoire()
 
     def use_dynamic_programming(self) -> bool:
         pass
