@@ -67,7 +67,7 @@ class Matrix:
         else:
             notation: Callable = lil_endian if le else big_endian
             rows: list[str] = notation(len(states))
-            zeros_df = pd.DataFrame(
+            zeros_df: pd.DataFrame = pd.DataFrame(
                 np.zeros((len(rows), dataframe.shape[COLS_IDX])),
                 columns=dataframe.columns,
                 index=rows,
@@ -87,7 +87,7 @@ class Matrix:
                     [0->0, 2->1, 3->2]
                     """
                 # zeros_df.at[selected_row, col] += dataframe.at[row, col]
-                zeros_df.loc[selected_row] = dataframe.loc[row].values
+                zeros_df.loc[selected_row] += dataframe.loc[row].values
             margin_df = zeros_df
 
         margin_df /= margined_rows if axis == ROWS_IDX else INT_ONE
