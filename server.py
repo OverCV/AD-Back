@@ -4,7 +4,7 @@ class Server:
     def __init__(self) -> None:
         self.little_endian: bool = True
         self.threaded: bool = False
-        self.directed: bool = False
+        self.directed: bool = True
         self.locale_nosql: bool = False
         self.store_nets: bool = False
 

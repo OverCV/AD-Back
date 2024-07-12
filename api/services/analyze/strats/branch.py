@@ -15,7 +15,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
-from utils.consts import FLOAT_ZERO, INFTY, W_LBL
+from utils.consts import FLOAT_ZERO, INFTY, INT_ZERO, U_IDX, V_IDX, W_IDX, W_LBL
 from utils.funcs import emd, get_labels
 
 import utils.network as net
@@ -70,6 +70,15 @@ class Branch(Sia):
         return not_std_sln
 
     def margin_n_expand(self):
+        # deleted: dict[int, list[tuple[str, str, float]]] = {idx: [] for idx in self._effect}
+        # En deldeted están las aristas eliminadas, tal que si hay una bipartición, pero se tiene un mínimo de infformación, se tenga el trazo.
+        # Cual es el problema, si se genera una pérdida entonces es importante 2 cosas, primero tener las aristas que valen cero o elimiadas hasta elmomento y segundo (lo mismo), tener la arista que al eliminarse se generó una bipartición, a pesar que tenga valor de 0, para entonces guardarla (tenga peso o no) y listo, sería esta arista + eliminadas, en un diccionario en el que la clave es la tupla de la arista
+        # No obstante la comparación eficiente entonces no es si la EMD es 0, sino si hay o no bipartición
+        """
+        self._effect: [0, 4], self._causes: [0, 2, 4]
+            self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']
+        """
+
         concept_comb = list(it.product(self._causes, self._effect))
 
         self.__net.add_nodes_from(self.__effect_labels)
@@ -83,24 +92,17 @@ class Branch(Sia):
                 for j, i in concept_comb
             )
         )
-        # deleted: dict[int, list[tuple[str, str, float]]] = {idx: [] for idx in self._effect}
-        # En deldeted están las aristas eliminadas, tal que si hay una bipartición, pero se tiene un mínimo de infformación, se tenga el trazo.
-        # Cual es el problema, si se genera una pérdida entonces es importante 2 cosas, primero tener las aristas que valen cero o elimiadas hasta elmomento y segundo (lo mismo), tener la arista que al eliminarse se generó una bipartición, a pesar que tenga valor de 0, para entonces guardarla (tenga peso o no) y listo, sería esta arista + eliminadas, en un diccionario en el que la clave es la tupla de la arista
-        # No obstante la comparación eficiente entonces no es si la EMD es 0, sino si hay o no bipartición
+
         deleted: list[tuple[str, str, float]] = []
         mips: dict[str, str] = dict()
-        """
-        self._effect: [0, 4], self._causes: [0, 2, 4]
-            self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']
-        """
-        # sub_concepts: list[tuple[int, int]] = []
+
         alt_struct = copy.deepcopy(self._structure)
-        # self.plot_net(self.__net)
         ic(self.__net.edges(data=True))
-        # ordered_comb = sorted(concept_comb, key=lambda tup: tup[1])
+        ordered_comb = sorted(concept_comb, key=lambda tup: tup[1])
         # ic(ordered_comb)
         self.plot_net(self.__net)
-        for idx_causes, idx_effect in concept_comb:
+        # for idx_causes, idx_effect in concept_comb:
+        for idx_causes, idx_effect in ordered_comb:
             # Iteramos las aristas ya definidas en el producto causa efecto
             # ! Por qué no re-instanciar la matriz (no la clase)? [#15] ! #
             sub_struct: Structure = copy.deepcopy(alt_struct)
@@ -134,6 +136,7 @@ class Branch(Sia):
                 print('Disconnected')
                 mips[(origin, destiny, emd_as_weight)] = deleted
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
+                # ! Maybe return here if emd is 0
 
             elif emd_as_weight > FLOAT_ZERO:
                 # Si es conexo Y hay pérdida entonces restablecemos la arsita.
@@ -152,12 +155,12 @@ class Branch(Sia):
             print()
 
         self.plot_net(self.__net)
-        if len(mips) > 0:
-            min_key = min(mips.keys(), key=lambda x: x[2])
-            ic(min_key)
-            return self.__net
-        else:
-            self.branch_and_bound()
+        # if len(mips) > INT_ZERO:
+        #     min_key = min(mips.keys(), key=lambda x: x[W_IDX])  # order by weight
+        #     ic(min_key)
+        #     return self.__net
+        # else:
+        self.branch_and_bound()
 
     def branch_and_bound(self) -> tuple[tuple[tuple[str], tuple[str]]]:
         edges = [
@@ -193,7 +196,7 @@ class Branch(Sia):
 
         self.plot_net(self.__net)
 
-        while len(queue) > 0:
+        while len(queue) > INT_ZERO:
             _, son = pq.heappop(queue)
             son: Nodum
 
@@ -211,10 +214,18 @@ class Branch(Sia):
             )
             # Ordenamos las aristas para ignorar la primera (mejor)
             for edge in left.get_ordered_edges():
-                if (edge[0], edge[1]) in left.get_ignored().keys():
+                if (edge[U_IDX], edge[V_IDX]) in left.get_ignored().keys():
                     continue
-                left.ignore_new((edge[0], edge[1]), {edge[1]})
-                # set((edge[0],) if edge[1] in self.__effect_labels else (edge[1],),)
+                if conf.directed:
+                    left.ignore_new(
+                        (edge[U_IDX], edge[V_IDX]),
+                        {edge[V_IDX]},
+                    )
+                else:
+                    left.ignore_new(
+                        (edge[U_IDX], edge[V_IDX]),
+                        {edge[U_IDX], edge[V_IDX]},
+                    )
                 break
 
             right: Nodum = Nodum(
@@ -279,7 +290,7 @@ class Branch(Sia):
         # Obtenemos los nodos sobre los que incide la arista
         # nodes: list[tuple[str, str, float]] = get_adj(node.get_net(), destiny)
 
-        return edge[2][W_LBL]
+        return edge[W_IDX][W_LBL]
 
     def plot_net(self, net: nx.Graph) -> None:
         """This function is used to plot the network."""
