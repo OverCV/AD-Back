@@ -1,11 +1,11 @@
-import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from fastapi import HTTPException
-import traceback
-import sys
 
+import traceback
+import logging
+import sys
 
 
 class ExceptionMiddleware(BaseHTTPMiddleware):
@@ -16,7 +16,7 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
         except HTTPException as http_err:
             return JSONResponse(
                 status_code=http_err.status_code,
-                content={'detail': http_err.detail}
+                content={'detail': http_err.detail},
             )
         except Exception as ex:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -31,12 +31,13 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
                 'message': str(ex),
                 'file': fname,
                 'line': line_no,
-                'traceback': last_trace
+                'traceback': last_trace,
             }
             return JSONResponse(
                 status_code=500,
-                content={'detail': detail_error}
+                content={'detail': detail_error},
             )
+
 
 # class ExceptionMiddleware(BaseHTTPMiddleware):
 #     async def dispatch(self, request: Request, call_next):

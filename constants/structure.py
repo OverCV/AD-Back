@@ -25,8 +25,8 @@ TENSOR: str = 'tensor'
 
 BIN_RANGE = range(2)
 BOOL_RANGE: list[bool] = [False, True]
-UNIT_MATRIX: NDArray[np.float64] = np.array([INT_ONE], dtype=np.float64)
-UNIT_PROD: tuple[tuple[int, ...], NDArray[np.float64]] = ((), UNIT_MATRIX)
+UNIT_MAT: NDArray[np.float64] = np.array([INT_ONE], dtype=np.float64)
+UNIT_MUL: tuple[tuple[int, ...], NDArray[np.float64]] = ((), UNIT_MAT)
 
 
 # DEFAULT_TITLE: str = 'System_Title'

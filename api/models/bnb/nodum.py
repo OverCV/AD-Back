@@ -2,7 +2,7 @@ import math
 import networkx as nx
 
 from utils.consts import W_LBL
-
+from server import conf
 from icecream import ic
 
 
@@ -13,7 +13,7 @@ class Nodum:
         self,
         ub: float = 0.0,
         lb: float = 0.0,
-        net: nx.Graph | nx.DiGraph = nx.Graph(),
+        net: nx.Graph | nx.DiGraph = nx.DiGraph() if conf.directed else nx.Graph(),
         ignore: dict[tuple[str, str, float], set[str]] = dict(),
     ) -> None:
         """El nodum es un modelo para almacenar las iteraciones consiguientes a la ramificación y poda.
@@ -49,7 +49,9 @@ class Nodum:
 
     def ignore_new(self, edge: tuple[str, str, int], adjacent: set[str]):
         ic(edge, adjacent)
-        self._ignore[edge] = adjacent
+        if self._ignore[edge] is None:
+            self._ignore[edge] = set()
+        self._ignore[edge].update(adjacent)
 
     # def get_ignored(self) -> set[tuple[str]]:
     def get_ignored(self) -> dict[tuple[str, str, int], set[str]]:
@@ -66,22 +68,6 @@ class Nodum:
                 self._net.degree(edge[0]) ** 2 + self._net.degree(edge[1]) ** 2,
             ),
         )
-
-    def get_adj(self, network: nx.Graph | nx.DiGraph, node: str) -> set[str]:
-        """Obtiene los nodos adyacentes a un nodo dado en un grafo.
-
-        Args:
-            graph (Graph | DiGraph): El grafo del cual se obtendrán los nodos adyacentes.
-            node (str): El nodo del cual se obtendrán los nodos adyacentes.
-
-        Returns:
-            set[str]: Un conjunto de nodos adyacentes al nodo dado.
-        """
-        if isinstance(network, nx.DiGraph):
-            """ Si es dirigido """
-            return {*network._pred[node], *network._succ[node]}
-        """ Si es no dirigido """
-        return set(network._adj[node])
 
     def __str__(self) -> str:
         edges = [(u, v, d[W_LBL]) for u, v, d in self.get_ordered_edges()]

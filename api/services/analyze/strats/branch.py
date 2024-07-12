@@ -1,6 +1,3 @@
-from math import e
-from matplotlib.font_manager import font_family_aliases
-from networkx import is_connected
 from api.models.bnb.nodum import Nodum
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
@@ -20,6 +17,8 @@ from matplotlib import pyplot as plt
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
 from utils.consts import FLOAT_ZERO, INFTY, W_LBL
 from utils.funcs import emd, get_labels
+
+import utils.network as net
 
 from icecream import ic
 
@@ -75,12 +74,11 @@ class Branch(Sia):
 
         self.__net.add_nodes_from(self.__effect_labels)
         self.__net.add_nodes_from(self.__causes_labels)
-        self.__net.add_weighted_edges_from(
+        self.__net.add_edges_from(
             (
                 (
                     self.__causes_labels[self._causes.index(j)],
                     self.__effect_labels[self._effect.index(i)],
-                    -1.0,
                 )
                 for j, i in concept_comb
             )
@@ -95,9 +93,13 @@ class Branch(Sia):
         self._effect: [0, 4], self._causes: [0, 2, 4]
             self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']
         """
-        sub_concepts: list[tuple[int, int]] = []
+        # sub_concepts: list[tuple[int, int]] = []
         alt_struct = copy.deepcopy(self._structure)
         # self.plot_net(self.__net)
+        ic(self.__net.edges(data=True))
+        # ordered_comb = sorted(concept_comb, key=lambda tup: tup[1])
+        # ic(ordered_comb)
+        self.plot_net(self.__net)
         for idx_causes, idx_effect in concept_comb:
             # Iteramos las aristas ya definidas en el producto causa efecto
             # ! Por qué no re-instanciar la matriz (no la clase)? [#15] ! #
@@ -120,35 +122,59 @@ class Branch(Sia):
 
             emd_as_weight = emd(iter_distrib, self._target_dist)
 
-            ic(self.__net.edges(data=True))
-            ic(emd_as_weight, nx.is_connected(self.__net))
+            self.__net.remove_edge(origin, destiny)
+
+            ic(idx_causes, idx_effect)
+            ic(emd_as_weight, net.is_disconnected(self.__net))
             ic(mips)
 
-            self.__net.remove_edge(origin, destiny)
-            if not nx.is_connected(self.__net):
+            # net.precalculate_adjacencies(self.__net)
+            if net.is_disconnected(self.__net):
                 # Si es disconexo no reestablecemos la arista, la guardamos como logro independiente de si tuvo peso o no.
-                print('No conexo')
+                print('Disconnected')
                 mips[(origin, destiny, emd_as_weight)] = deleted
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
 
             elif emd_as_weight > FLOAT_ZERO:
                 # Si es conexo Y hay pérdida entonces restablecemos la arsita.
-                print('Recuperar arista')
+                print('Connected and loss')
+                ic((origin, destiny, emd_as_weight))
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
 
             else:
+                print('Connected no loss')
                 # Si es conexo y no hay pérdida entonces guardamos la arista. A sy vez guardamos estas aristas en 0 para la reconstrucción.
+                ic((origin, destiny, emd_as_weight))
                 deleted.append((origin, destiny, emd_as_weight))
                 alt_struct.set_matrix(idx_effect, sub_mat)
+                ic(deleted)
 
+            print()
+
+        self.plot_net(self.__net)
         if len(mips) > 0:
-            info_loss = min(mips.keys(), key=lambda x: x[2])
-            ic(info_loss)
-            self.plot_net(self.__net)
+            min_key = min(mips.keys(), key=lambda x: x[2])
+            ic(min_key)
+            return self.__net
         else:
             self.branch_and_bound()
 
     def branch_and_bound(self) -> tuple[tuple[tuple[str], tuple[str]]]:
+        edges = [
+            ('A(0)', 'A(1)', 0.5),
+            ('B(0)', 'A(1)', 0.9),
+            ('C(0)', 'A(1)', 0.4),
+            ('A(0)', 'B(1)', 0.3),
+            ('B(0)', 'B(1)', 0.8),
+            ('C(0)', 'B(1)', 0.45),
+            ('A(0)', 'C(1)', 0.6),
+            ('B(0)', 'C(1)', 0.7),
+            ('C(0)', 'C(1)', 0.2),
+        ]
+        test_net = nx.DiGraph() if conf.directed else nx.Graph()
+        test_net.add_weighted_edges_from(edges)
+        self.__net = test_net
+
         origin: Nodum = Nodum(ub=0.0, net=self.__net.copy())
 
         # We create a priority queue to store the nodes
@@ -163,6 +189,9 @@ class Branch(Sia):
         m: int = len(self._effect)
         n: int = len(self._causes)
         limit: int = 2 ** (m + n - 1)
+        ic(limit)
+
+        self.plot_net(self.__net)
 
         while len(queue) > 0:
             _, son = pq.heappop(queue)
@@ -180,7 +209,7 @@ class Branch(Sia):
                 net=son.get_net().copy(),
                 ignore=son.get_ignored().copy(),
             )
-            # Ordenamos las aristas para ignorar la primera
+            # Ordenamos las aristas para ignorar la primera (mejor)
             for edge in left.get_ordered_edges():
                 if (edge[0], edge[1]) in left.get_ignored().keys():
                     continue
@@ -203,21 +232,21 @@ class Branch(Sia):
                 r_net.remove_edge(edge[0], edge[1])
                 break
 
-            if nx.is_connected(right.get_net()):
+            if net.is_disconnected(right.get_net()):
                 pq.heappush(queue, (-right.get_ub(), right))
             elif right.get_ub() < gb:
                 gb = round(right.get_ub(), 4)
                 if right.get_ub() < minimal_loss.get_ub():
                     minimal_loss: Nodum = right
 
-            if nx.is_connected(left.get_net()):
+            if net.is_disconnected(left.get_net()):
                 pq.heappush(queue, (-left.get_ub(), left))
             elif left.get_ub() < gb:
                 gb = round(left.get_ub(), 4)
                 if left.get_ub() < minimal_loss.get_ub():
                     minimal_loss: Nodum = left
 
-            self.biplot(left.get_net(), right.get_net())
+            # self.biplot(left.get_net(), right.get_net())
             limit -= 1
             if limit < 0:
                 raise HTTPException(
@@ -229,6 +258,27 @@ class Branch(Sia):
         return minimal_loss.get_net()
 
     def calculate_ub(self, right: Nodum, edge: tuple[str, str, float]) -> float:
+        # Ocurre que una arista incide a un nodo (supóngase unidireccionalidad). En ese sentido si la arista eliminada hace destino a un nodo cual haga parte de otras arista que incidan al mismo nodo, el peso nuevo será máximo el peso de las aristas incidentes al nodo y mínimo lo que ya se lleve acumulado en el nodo.
+        # ? Intentar que sean las aristas que no incidan al nodo las que sumen la base. Esto puesto si la arista eliminada no incide al nodo, el peso total será la suma de lo que se lleve más la nueva arista.
+
+        # Si los nodos ya están ignorados sacamos el peso de las aristas que están asociadas incidentemente al mismo.
+        # Se suma el resto de aristas que no estén asociadas al nodo.
+
+        # Se tiene un peso acumulado según el criterio que manejamos, por ende es importante que la nueva arista a tomar como peso realmente adicionará un valor que varía según si incide en un nodo con aristas previamente incidentes o no. Como mínimo tomará el máximo de las aristas incidentes, como máximo la suma de su peso.
+
+        # Para sacar el peso debemos tomar un promedio entre la mayor arista y la suma de las demás aristas incidentes al nodo .
+
+        # actual_w: float = node.get_ub()
+        # Obtenemos el grafo
+        # network: nx.Graph | nx.DiGraph = node.get_net()
+
+        # tenemos la arista a eliminar
+
+        # destiny: str = edge[1]
+
+        # Obtenemos los nodos sobre los que incide la arista
+        # nodes: list[tuple[str, str, float]] = get_adj(node.get_net(), destiny)
+
         return edge[2][W_LBL]
 
     def plot_net(self, net: nx.Graph) -> None:
@@ -245,17 +295,36 @@ class Branch(Sia):
         except KeyError:
             pass
 
-        # Draw the bipartite graph
-        nx.draw(net, pos=pos, with_labels=True)
+        # Draw the bipartite graph with custom node and edge colors
+        nx.draw(
+            net,
+            pos=pos,
+            with_labels=True,
+            node_color='skyblue',
+            font_color='black',
+            edge_color='gray',
+        )
 
-        # Add edge labels
-        labels = nx.get_edge_attributes(net, W_LBL)
-        # Displace the labels horizontally
+        # Add edge labels with better visibility and consistent styles
+        labels = nx.get_edge_attributes(net, 'weight')
         for (u, v), weight in labels.items():
             offset = np.random.default_rng(seed=1).uniform(-0.2, 0.2)
-            pos_y = (pos[u][1] + pos[v][1]) / 2 + offset
-            pos_x = (pos[u][0] + pos[v][0]) / 2 + offset
-            plt.text(pos_x, pos_y, weight, ha='center', va='center')
+
+            # Calculate the position for the label closer to the destination node
+            pos_y = pos[v][1] + (pos[u][1] - pos[v][1]) * 0.3 + offset
+            pos_x = pos[v][0] + (pos[u][0] - pos[v][0]) * 0.3 + offset
+
+            plt.text(
+                pos_x,
+                pos_y,
+                weight,
+                ha='center',
+                va='center',
+                fontsize=8,  # You can adjust the fontsize as needed
+                bbox=dict(
+                    facecolor='white', edgecolor='none', alpha=0.2
+                ),  # Add a background to the text for better visibility
+            )
 
         # Show the plot
         plt.show()
@@ -309,3 +378,31 @@ class Branch(Sia):
         plot_single_net(axs[1], net2)
 
         plt.show()
+
+    # def test_deletion(self):
+    #     concept_comb = list(it.product(self._causes, self._effect))
+
+    #     self.__net.add_nodes_from(self.__effect_labels)
+    #     self.__net.add_nodes_from(self.__causes_labels)
+    #     self.__net.add_edges_from(
+    #         (
+    #             (
+    #                 self.__causes_labels[self._causes.index(j)],
+    #                 self.__effect_labels[self._effect.index(i)],
+    #             )
+    #             for j, i in concept_comb
+    #         )
+    #     )
+    #     ic(self.__net.edges(data=True))
+
+    #     self.__net.remove_edge('A(0)', 'B(1)')
+    #     # self.plot_net(self.__net)
+    #     ic(net.is_disconnected(self.__net))
+
+    #     self.__net.remove_edge('B(0)', 'B(1)')
+    #     # self.plot_net(self.__net)
+    #     ic(net.is_disconnected(self.__net))
+
+    #     self.__net.remove_edge('C(0)', 'B(1)')
+    #     # self.plot_net(self.__net)
+    #     ic(net.is_disconnected(self.__net))

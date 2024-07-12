@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     filename=ExecConfig.LOGGER_DIR.value,
     encoding=ExecConfig.LOGGER_ENCODING.value,
+    level=logging.ERROR,
 )
-# level=logging.WARNING
 
 if __name__ == ExecConfig.__MAIN__:
     uvicorn.run(

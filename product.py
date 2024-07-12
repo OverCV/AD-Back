@@ -3,7 +3,7 @@ from functools import reduce
 import numpy as np
 from numpy.typing import NDArray
 import pandas as pd
-from constants.structure import UNIT_MATRIX
+from constants.structure import UNIT_MAT
 from utils.consts import ROWS_IDX
 from utils.funcs import big_endian, lil_endian
 
