@@ -67,6 +67,22 @@ class Nodum:
             ),
         )
 
+    def get_adj(self, network: nx.Graph | nx.DiGraph, node: str) -> set[str]:
+        """Obtiene los nodos adyacentes a un nodo dado en un grafo.
+
+        Args:
+            graph (Graph | DiGraph): El grafo del cual se obtendrán los nodos adyacentes.
+            node (str): El nodo del cual se obtendrán los nodos adyacentes.
+
+        Returns:
+            set[str]: Un conjunto de nodos adyacentes al nodo dado.
+        """
+        if isinstance(network, nx.DiGraph):
+            """ Si es dirigido """
+            return {*network._pred[node], *network._succ[node]}
+        """ Si es no dirigido """
+        return set(network._adj[node])
+
     def __str__(self) -> str:
         edges = [(u, v, d[W_LBL]) for u, v, d in self.get_ordered_edges()]
         return f'⟨ub: {self._ub}, edges: {edges}, ignore: {self._ignore}⟩'

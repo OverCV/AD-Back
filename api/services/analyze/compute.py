@@ -69,18 +69,16 @@ class Compute:
         for i, e in enumerate(self.__str_bgcond):
             self.__bgcond[e == STR_ONE].append(i)
 
-        ic(self.__effect, self.__causes, bgcond_elems, self.__bgcond)
 
         # Preservamos la superestructura para trabajar con una nueva
         self.__struct: Structure = copy.deepcopy(self.__sup_struct)
         # self.__struct.create_distrib(self.__effect, self.__causes)
         self.__struct.set_bg_cond(self.__bgcond)
 
-        ic(str(self.__struct))
         # raise HTTPException(status_code=305, detail='Stop here')
         self.__struct.create_distrib(self.__effect, self.__causes)
         self.__distribution = self.__struct.get_distrib(self.__dual)
-        ic(self.__distribution)
+        ic(self.__bgcond, self.__effect, self.__causes, self.__distribution)
         return self.__distribution is not None
 
     # def use_pyphi(self) -> bool:
@@ -98,7 +96,6 @@ class Compute:
         return sia_force.get_reperoire()
 
     def use_branch_and_bound(self) -> bool:
-        ic(self.__struct, self.__effect, self.__causes, self.__distribution, self.__dual)
         sia_branch: Branch = Branch(
             self.__struct,
             self.__effect[not self.__dual],

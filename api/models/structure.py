@@ -161,7 +161,8 @@ class Structure:
                 # ic(b, idx, bg_cond)
                 # ic(idx, mat.as_dataframe())
 
-    
+    def set_matrix(self, index: int, mat: Matrix) -> None:
+        self.__tensor[index] = mat
 
     def get_distrib(self, dual: bool = False) -> NDArray[np.float64]:
         return (
@@ -178,6 +179,9 @@ class Structure:
 
     def get_causes(self) -> str:
         return self.__causes
+
+    def get_matrix(self, idx: int) -> Matrix:
+        return self.__tensor[idx]
 
     def get_tensor(self) -> OrderedDict[int, Matrix]:
         return self.__tensor

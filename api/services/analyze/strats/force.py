@@ -109,11 +109,11 @@ class BruteForce(Sia):
                 causes[c == STR_ONE].append(i)
 
             # Importante tener en cuenta realizar un producto de distribuciones implica manejar los índices por lo que las compmaraciones entre arreglos requieren seleccionar la serie.
-            iter_idx_distrib: tuple[tuple[int, ...], NDArray[np.float64]] = (
+            indexed_distrib: tuple[tuple[int, ...], NDArray[np.float64]] = (
                 sub_struct.create_distrib(effect, causes, data=True)
             )
-            iter_dist = iter_idx_distrib[StructProps.DIST_ARR]
-            ic(*iter_dist, self._target_dist)
+            iter_dist = indexed_distrib[StructProps.DIST_ARR]
+            # ic(*iter_dist, self._target_dist)
 
             emd_dist = emd(*iter_dist, *self._target_dist)
             return emd_dist, iter_dist, (str_effect, str_causes)

@@ -1,4 +1,6 @@
+from math import e
 from matplotlib.font_manager import font_family_aliases
+from networkx import is_connected
 from api.models.bnb.nodum import Nodum
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
@@ -21,6 +23,8 @@ from utils.funcs import emd, get_labels
 
 from icecream import ic
 
+from server import conf
+
 
 class Branch(Sia):
     """Class Branch is used to solve the mip problem using Branch&Bound strategy."""
@@ -36,16 +40,16 @@ class Branch(Sia):
         super().__init__(structure, effect, causes, distrib, dual)
 
         self.__effect_labels: None | list[str] = None
-        self.__causes_labels = None
+        self.__causes_labels: None | list[str] = None
 
-        self.__net: nx.Graph = nx.Graph()
+        self.__net: nx.DiGraph | nx.Graph = nx.DiGraph() if conf.directed else nx.Graph()
 
     def analyze(self) -> bool:
+        ic(self._effect, self._causes, self._target_dist)
         max_len = max(*self._effect, *self._causes) + 1
         labels = get_labels(max_len)
         self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
         self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._causes]
-        # ic(self.__causes_labels, self.__effect_labels)
 
         self.__net = self.margin_n_expand()
 
@@ -66,83 +70,83 @@ class Branch(Sia):
 
         return not_std_sln
 
-    def margin_n_expand(self) -> nx.Graph:
+    def margin_n_expand(self):
         concept_comb = list(it.product(self._causes, self._effect))
 
-        possible_edges: list[tuple[str, str, float]] = []
-
+        self.__net.add_nodes_from(self.__effect_labels)
+        self.__net.add_nodes_from(self.__causes_labels)
+        self.__net.add_weighted_edges_from(
+            (
+                (
+                    self.__causes_labels[self._causes.index(j)],
+                    self.__effect_labels[self._effect.index(i)],
+                    -1.0,
+                )
+                for j, i in concept_comb
+            )
+        )
+        # deleted: dict[int, list[tuple[str, str, float]]] = {idx: [] for idx in self._effect}
+        # En deldeted están las aristas eliminadas, tal que si hay una bipartición, pero se tiene un mínimo de infformación, se tenga el trazo.
+        # Cual es el problema, si se genera una pérdida entonces es importante 2 cosas, primero tener las aristas que valen cero o elimiadas hasta elmomento y segundo (lo mismo), tener la arista que al eliminarse se generó una bipartición, a pesar que tenga valor de 0, para entonces guardarla (tenga peso o no) y listo, sería esta arista + eliminadas, en un diccionario en el que la clave es la tupla de la arista
+        # No obstante la comparación eficiente entonces no es si la EMD es 0, sino si hay o no bipartición
+        deleted: list[tuple[str, str, float]] = []
+        mips: dict[str, str] = dict()
         """
         self._effect: [0, 4], self._causes: [0, 2, 4]
-        ic| self.__effect_labels: ['A(t=1)', 'E(t=1)']
-            self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']"""
+            self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']
+        """
         sub_concepts: list[tuple[int, int]] = []
         alt_struct = copy.deepcopy(self._structure)
+        # self.plot_net(self.__net)
         for idx_causes, idx_effect in concept_comb:
             # Iteramos las aristas ya definidas en el producto causa efecto
             # ! Por qué no re-instanciar la matriz (no la clase)? [#15] ! #
             sub_struct: Structure = copy.deepcopy(alt_struct)
-            sub_mat: Matrix = sub_struct.get_tensor()[idx_effect]
+            sub_mat: Matrix = sub_struct.get_matrix(idx_effect)
 
             sub_states: list[int] = copy.deepcopy(self._causes)
             sub_states.remove(idx_causes)
 
-            print('-' * 30)
-            ic(
-                self._causes,
-                self._effect,
-                idx_causes,
-                idx_effect,
-                self.__causes_labels[self._causes.index(idx_causes)],
-                self.__effect_labels[self._effect.index(idx_effect)],
-            )
-
-            ic(sub_mat.as_dataframe())
-            sub_mat.margin(sub_states, data=True)
-            ic(sub_mat.as_dataframe())
-            sub_mat.expand(self._causes, data=True)
-            ic(sub_mat.as_dataframe())
+            sub_mat.margin(sub_states)
+            sub_mat.expand(self._causes)
 
             effect = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
             causes = {bin: ([] if self._dual == bin else self._causes) for bin in BOOL_RANGE}
             iter_distrib = sub_struct.create_distrib(effect, causes, data=True)[
                 StructProps.DIST_ARR
             ]
-            # ic(self.__causes_labels, self.__effect_labels)
             origin = self.__causes_labels[self._causes.index(idx_causes)]
             destiny = self.__effect_labels[self._effect.index(idx_effect)]
 
-            edge_emd = emd(iter_distrib, self._target_dist)
-            if edge_emd > FLOAT_ZERO:
-                # ic(origin, destiny, edge_emd)
-                # ! Maybe doesn't have order because the edge is undirected, so the order doesn't matter [#17] ! #
-                possible_edges.append((origin, destiny, edge_emd))
+            emd_as_weight = emd(iter_distrib, self._target_dist)
+
+            ic(self.__net.edges(data=True))
+            ic(emd_as_weight, nx.is_connected(self.__net))
+            ic(mips)
+
+            self.__net.remove_edge(origin, destiny)
+            if not nx.is_connected(self.__net):
+                # Si es disconexo no reestablecemos la arista, la guardamos como logro independiente de si tuvo peso o no.
+                print('No conexo')
+                mips[(origin, destiny, emd_as_weight)] = deleted
+                self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
+
+            elif emd_as_weight > FLOAT_ZERO:
+                # Si es conexo Y hay pérdida entonces restablecemos la arsita.
+                print('Recuperar arista')
+                self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
+
             else:
-                # ! Por qué no en vez de poner todas las aristas e irlas quitando hasat encontrar una bipartición, mejor no se añaden las que tengan peso y al final valida si el grafo es conexo? [#16] !
-                sub_concepts.append((idx_effect, idx_causes))
-                alt_struct.get_tensor()[idx_effect] = sub_mat
-        # Añadimos los nodos:
-        self.__net.add_nodes_from(self.__effect_labels)
-        self.__net.add_nodes_from(self.__causes_labels)
+                # Si es conexo y no hay pérdida entonces guardamos la arista. A sy vez guardamos estas aristas en 0 para la reconstrucción.
+                deleted.append((origin, destiny, emd_as_weight))
+                alt_struct.set_matrix(idx_effect, sub_mat)
 
-        # Añadimos las aristas:
-        self.__net.add_weighted_edges_from(possible_edges)
-        # self.plot_net(self.__net)
-        ic(possible_edges)
-        ic(self.__net.edges(data=True))
-        # self.plot_net(self.__net)
-
-        if nx.is_connected(self.__net):
-            ic('Es conexo')
-            self.branch_and_bound()
+        if len(mips) > 0:
+            info_loss = min(mips.keys(), key=lambda x: x[2])
+            ic(info_loss)
+            self.plot_net(self.__net)
         else:
-            ic('No es conexo')
-        ic(self._effect, self._causes, sub_concepts)
-        # [self.__causes_labels[self._causes.index(idx_causes)]]
-        # [self.__effect_labels[self._effect.index(idx_effect)]]
-        # [W_LBL] = edge_emd
-        # possible_edges
-
-        # to_margin = [idx for idx in self.]
+            self.branch_and_bound()
 
     def branch_and_bound(self) -> tuple[tuple[tuple[str], tuple[str]]]:
         origin: Nodum = Nodum(ub=0.0, net=self.__net.copy())
@@ -154,7 +158,7 @@ class Branch(Sia):
         gb: float = INFTY
         minimal_loss: Nodum = Nodum(ub=INFTY, net=self.__net.copy())
 
-        origin_net = origin.get_net()
+        # origin_net = origin.get_net()
 
         m: int = len(self._effect)
         n: int = len(self._causes)
@@ -163,7 +167,6 @@ class Branch(Sia):
         while len(queue) > 0:
             _, son = pq.heappop(queue)
             son: Nodum
-            ic(str(son))
 
             if any(
                 (
@@ -181,10 +184,8 @@ class Branch(Sia):
             for edge in left.get_ordered_edges():
                 if (edge[0], edge[1]) in left.get_ignored().keys():
                     continue
-                left.ignore_new(
-                    (edge[0], edge[1]),
-                    set((edge[0],)),
-                )
+                left.ignore_new((edge[0], edge[1]), {edge[1]})
+                # set((edge[0],) if edge[1] in self.__effect_labels else (edge[1],),)
                 break
 
             right: Nodum = Nodum(
@@ -215,7 +216,6 @@ class Branch(Sia):
                 gb = round(left.get_ub(), 4)
                 if left.get_ub() < minimal_loss.get_ub():
                     minimal_loss: Nodum = left
-            ic(queue)
 
             self.biplot(left.get_net(), right.get_net())
             limit -= 1
@@ -225,9 +225,8 @@ class Branch(Sia):
                     status_code=status.HTTP_508_LOOP_DETECTED,
                     detail='Maximal limit has been reached.',
                 )
-
-        ic()
-        ic(minimal_loss.get_ub(), minimal_loss.get_net())
+        self.integrated_info = minimal_loss.get_ub()
+        return minimal_loss.get_net()
 
     def calculate_ub(self, right: Nodum, edge: tuple[str, str, float]) -> float:
         return edge[2][W_LBL]
