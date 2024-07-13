@@ -29,7 +29,6 @@ def emd_hamming(
     u = np.asarray(u, dtype=np.float64).flatten()
     v = np.asarray(v, dtype=np.float64).flatten()
 
-    ic(u, v)
     if len(u) != len(v):
         raise ValueError('Both distributions must have the same size')
 
