@@ -5,7 +5,7 @@ import networkx as nx
 from api.models.props.sia import SiaType
 from api.models.structure import Structure
 from constants.structure import VOID
-from utils.consts import CAUSES, DIST, EFFECT, INFTY, INT_ZERO, SUB_DIST, NET_ID, MIP, SMALL_PHI
+from utils.consts import CAUSES, DIST, EFFECT, INFTY_POS, INT_ZERO, SUB_DIST, NET_ID, MIP, SMALL_PHI
 from numpy.typing import NDArray
 
 from icecream import ic

@@ -8,7 +8,7 @@ from api.models.genetic.population import Population
 from api.models.structure import Structure
 
 from icecream import ic
-from utils.consts import CAUSES, EFFECT, INFTY, ROWS_IDX
+from utils.consts import CAUSES, EFFECT, INFTY_POS, ROWS_IDX
 from utils.funcs import emd
 
 from server import conf
@@ -93,7 +93,7 @@ class Environ:
         if record_gens >= self.__ctrl_params[MAX_GENS]:
             return True
 
-        min_fitness: float = INFTY
+        min_fitness: float = INFTY_POS
         best_ind: Individual = None
 
         for ind in self.__population.get_individuals():

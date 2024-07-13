@@ -4,7 +4,8 @@ TO_SECONDS: float = 1000
 
 """ General """
 
-INFTY: float = float('inf')
+INFTY_POS: float = float('inf')
+INFTY_NEG: float = float('-inf')
 FLOAT_ZERO: float = float(0)
 FLOAT_ONE: float = float(1)
 
@@ -37,10 +38,10 @@ SUB_DIST: str = 'sub_distribution'
 DIST: str = 'distribution'
 
 """ Network """
-
+FIRST: int = INT_ZERO
 U_IDX: int = 0
 V_IDX: int = 1
-W_IDX: int = 2
+DATA_IDX: int = 2
 W_LBL: str = 'weight'
 
 # NODE_DATA_OPTIONS: list[str] = ['color', 'label', 'value']

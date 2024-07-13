@@ -14,7 +14,7 @@ from constants.structure import BOOL_RANGE
 from utils.consts import (
     CAUSES,
     EFFECT,
-    INFTY,
+    INFTY_POS,
     STR_ONE,
 )
 from utils.funcs import dec2bin, emd
@@ -57,7 +57,7 @@ class BruteForce(Sia):
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
-                self.integrated_info == INFTY,
+                self.integrated_info == INFTY_POS,
                 self.min_info_part is None,
                 self.sub_distrib is None,
                 self.network_id is None,
@@ -67,7 +67,7 @@ class BruteForce(Sia):
 
     # Non-Threaded version:
     def calculate_dists(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
-        self.integrated_info = INFTY
+        self.integrated_info = INFTY_POS
         mip: tuple[str, str] = None
         for partition in bipartitions:
             # ! Podría paralelizarse [#17] ! #
@@ -94,7 +94,7 @@ class BruteForce(Sia):
         return mip
 
     def calculate_dists_threaded(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
-        self.integrated_info = INFTY
+        self.integrated_info = INFTY_POS
         mip = None
 
         def process_partition(partition):

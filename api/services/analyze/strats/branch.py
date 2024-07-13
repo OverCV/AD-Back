@@ -15,7 +15,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
-from utils.consts import FLOAT_ZERO, INFTY, INT_ZERO, U_IDX, V_IDX, W_IDX, W_LBL
+from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, W_LBL
 from utils.funcs import emd, get_labels
 
 import utils.network as net
@@ -44,7 +44,7 @@ class Branch(Sia):
         self.__net: nx.DiGraph | nx.Graph = nx.DiGraph() if conf.directed else nx.Graph()
 
     def analyze(self) -> bool:
-        ic(self._effect, self._causes, self._target_dist)
+        # ic(self._effect, self._causes, self._target_dist)
         max_len = max(*self._effect, *self._causes) + 1
         labels = get_labels(max_len)
         self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
@@ -60,7 +60,7 @@ class Branch(Sia):
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
-                self.integrated_info == INFTY,
+                self.integrated_info == INFTY_POS,
                 self.min_info_part is None,
                 self.sub_distrib is None,
                 self.network_id is None,
@@ -97,10 +97,10 @@ class Branch(Sia):
         mips: dict[str, str] = dict()
 
         alt_struct = copy.deepcopy(self._structure)
-        ic(self.__net.edges(data=True))
+        # ic(self.__net.edges(data=True))
         ordered_comb = sorted(concept_comb, key=lambda tup: tup[1])
         # ic(ordered_comb)
-        self.plot_net(self.__net)
+        # self.plot_net(self.__net)
         # for idx_causes, idx_effect in concept_comb:
         for idx_causes, idx_effect in ordered_comb:
             # Iteramos las aristas ya definidas en el producto causa efecto
@@ -126,9 +126,9 @@ class Branch(Sia):
 
             self.__net.remove_edge(origin, destiny)
 
-            ic(idx_causes, idx_effect)
-            ic(emd_as_weight, net.is_disconnected(self.__net))
-            ic(mips)
+            # ic(idx_causes, idx_effect)
+            # ic(emd_as_weight, net.is_disconnected(self.__net))
+            # ic(mips)
 
             # net.precalculate_adjacencies(self.__net)
             if net.is_disconnected(self.__net):
@@ -141,68 +141,83 @@ class Branch(Sia):
             elif emd_as_weight > FLOAT_ZERO:
                 # Si es conexo Y hay pérdida entonces restablecemos la arsita.
                 print('Connected and loss')
-                ic((origin, destiny, emd_as_weight))
+                # ic((origin, destiny, emd_as_weight))
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
 
             else:
                 print('Connected no loss')
                 # Si es conexo y no hay pérdida entonces guardamos la arista. A sy vez guardamos estas aristas en 0 para la reconstrucción.
-                ic((origin, destiny, emd_as_weight))
+                # ic((origin, destiny, emd_as_weight))
                 deleted.append((origin, destiny, emd_as_weight))
                 alt_struct.set_matrix(idx_effect, sub_mat)
-                ic(deleted)
+                # ic(deleted)
 
             print()
 
-        self.plot_net(self.__net)
-        # if len(mips) > INT_ZERO:
-        #     min_key = min(mips.keys(), key=lambda x: x[W_IDX])  # order by weight
-        #     ic(min_key)
-        #     return self.__net
-        # else:
-        self.branch_and_bound()
+        # self.plot_net(self.__net)
 
-    def branch_and_bound(self) -> tuple[tuple[tuple[str], tuple[str]]]:
-        edges = [
-            ('A(0)', 'A(1)', 0.5),
-            ('B(0)', 'A(1)', 0.9),
-            ('C(0)', 'A(1)', 0.4),
-            ('A(0)', 'B(1)', 0.3),
-            ('B(0)', 'B(1)', 0.8),
-            ('C(0)', 'B(1)', 0.45),
-            ('A(0)', 'C(1)', 0.6),
-            ('B(0)', 'C(1)', 0.7),
-            ('C(0)', 'C(1)', 0.2),
-        ]
-        test_net = nx.DiGraph() if conf.directed else nx.Graph()
-        test_net.add_weighted_edges_from(edges)
-        self.__net = test_net
+        if len(mips) > INT_ZERO:
+            min_key = min(mips.keys(), key=lambda x: x[DATA_IDX])  # x=(u,v,w)
+            ic(min_key)
+            return self.__net
+        else:
+            self.branch_and_bound()
 
-        origin: Nodum = Nodum(ub=0.0, net=self.__net.copy())
+    """
+    ! ¡
+    """
+
+    def branch_and_bound(self):
+        # ! -> tuple[tuple[tuple[str], tuple[str]]]
+        # edges = [
+        #     ('A(0)', 'A(1)', 0.5),
+        #     ('B(0)', 'A(1)', 0.9),
+        #     ('C(0)', 'A(1)', 0.4),
+        #     ('A(0)', 'B(1)', 0.3),
+        #     ('B(0)', 'B(1)', 0.8),
+        #     ('C(0)', 'B(1)', 0.45),
+        #     # ('A(0)', 'C(1)', 0.6),
+        #     # ('B(0)', 'C(1)', 0.7),
+        #     # ('C(0)', 'C(1)', 0.2),
+        # ]
+        # test_net = nx.DiGraph() if conf.directed else nx.Graph()
+        # test_net.add_weighted_edges_from(edges)
+        # self.__net = test_net
+
+        origin: Nodum = Nodum(ub=FLOAT_ZERO, net=self.__net.copy())
 
         # We create a priority queue to store the nodes
-        queue: list[Nodum] = []
+        queue: list[tuple[float, Nodum]] = []
         pq.heappush(queue, (FLOAT_ZERO, origin))
+        ic(queue)
 
-        gb: float = INFTY
-        minimal_loss: Nodum = Nodum(ub=INFTY, net=self.__net.copy())
+        gb: float = INFTY_POS
+        minimal_loss: Nodum = Nodum(ub=INFTY_POS, net=self.__net.copy())
 
         # origin_net = origin.get_net()
 
         m: int = len(self._effect)
         n: int = len(self._causes)
         limit: int = 2 ** (m + n - 1)
+        all_nodes = set()
+
+        ic(self.__net.edges(data=True))
         ic(limit)
 
         self.plot_net(self.__net)
 
         while len(queue) > INT_ZERO:
+            # ? Obtenemos el hijo de la cola de prioridad hasta que esté vacía.
+            print()
+            ic(queue)
             _, son = pq.heappop(queue)
-            son: Nodum
+            all_nodes.add(son)
+
+            print(son)
 
             if any(
                 (
-                    len(son.get_ignored().keys()) == len(son.get_ordered_edges()),
+                    len(son.get_ignored().keys()) == len(son.get_net().edges()),
                     son.get_ub() >= gb,
                 )
             ):
@@ -212,61 +227,91 @@ class Branch(Sia):
                 net=son.get_net().copy(),
                 ignore=son.get_ignored().copy(),
             )
-            # Ordenamos las aristas para ignorar la primera (mejor)
-            for edge in left.get_ordered_edges():
-                if (edge[U_IDX], edge[V_IDX]) in left.get_ignored().keys():
+            print(left)
+            # ? Ordenamos las aristas para ignorar la primera (mejor)
+
+            for ledge in left.sorted_edges():
+                # Al momento de ignorar es importante iterar las aristas puesto no vale tomar la mejor, esto porque es necesario ignorar todas las que vayan siendo requeridas, de forma que cuando ya se haya tomado la mejor, se continuará para la segunda, tercera, etc... hasta que se toma sale del ciclo.
+                if (ledge[U_IDX], ledge[V_IDX]) in left.get_ignored().keys():
+                    print('lmin skip', (ledge[U_IDX], ledge[V_IDX]))
                     continue
-                if conf.directed:
-                    left.ignore_new(
-                        (edge[U_IDX], edge[V_IDX]),
-                        {edge[V_IDX]},
-                    )
-                else:
-                    left.ignore_new(
-                        (edge[U_IDX], edge[V_IDX]),
-                        {edge[U_IDX], edge[V_IDX]},
-                    )
+                left.ignore_new(
+                    (ledge[U_IDX], ledge[V_IDX]),
+                    {ledge[V_IDX]},
+                )
                 break
 
-            right: Nodum = Nodum(
-                ub=son.get_ub(),
-                net=son.get_net().copy(),
-                ignore=son.get_ignored().copy(),
-            )
-            for edge in right.get_ordered_edges():
-                if (edge[0], edge[1]) in right.get_ignored().keys():
-                    continue
-                r_net: nx.Graph = right.get_net()
-
-                right._ub += self.calculate_ub(right, edge)
-
-                r_net.remove_edge(edge[0], edge[1])
-                break
-
-            if net.is_disconnected(right.get_net()):
-                pq.heappush(queue, (-right.get_ub(), right))
-            elif right.get_ub() < gb:
-                gb = round(right.get_ub(), 4)
-                if right.get_ub() < minimal_loss.get_ub():
-                    minimal_loss: Nodum = right
-
-            if net.is_disconnected(left.get_net()):
+            if not net.is_disconnected(left.get_net()):
                 pq.heappush(queue, (-left.get_ub(), left))
             elif left.get_ub() < gb:
                 gb = round(left.get_ub(), 4)
                 if left.get_ub() < minimal_loss.get_ub():
                     minimal_loss: Nodum = left
 
+            # ? Ordenamos las aristas para tener la de menor pérdida graduada. Esta será la que vayamos a eliminar.
+
+            right: Nodum = Nodum(
+                ub=son.get_ub(),
+                net=son.get_net().copy(),
+                ignore=son.get_ignored().copy(),
+            )
+
+            # rmin_edge: tuple[str, str, dict[float]] = right.sorted_edges()[FIRST]
+            for redge in right.sorted_edges():
+                # Iteramos de forma ordenada las aristas puesto hemos de validar dos condiciones, si la arista debe ser ignorada entonces continuamos a la siguiente iteración para tomar la siguiente mejor arista, sea el caso entonces rompemos el ciclo para tras tomarla no seguir tomando.
+                if (redge[U_IDX], redge[V_IDX]) in right.get_ignored().keys():
+                    print('rmin skip', (redge[U_IDX], redge[V_IDX]))
+                    continue
+                r_net: nx.DiGraph | nx.Graph = right.get_net()
+                right.inc_ub(self.calculate_ub(right, redge))
+                right.add_deletion((redge[U_IDX], redge[V_IDX], redge[DATA_IDX]))
+                r_net.remove_edge(redge[U_IDX], redge[V_IDX])
+                break
+
+            if not net.is_disconnected(right.get_net()):
+                pq.heappush(queue, (-right.get_ub(), right))
+            elif right.get_ub() < gb:
+                gb = round(right.get_ub(), 4)
+                if right.get_ub() < minimal_loss.get_ub():
+                    minimal_loss: Nodum = right
+
+            # ? Graficar o limitar
+
             # self.biplot(left.get_net(), right.get_net())
             limit -= 1
             if limit < 0:
                 raise HTTPException(
-                    # status_code=status.HTTP_406_NOT_ACCEPTABLE,
                     status_code=status.HTTP_508_LOOP_DETECTED,
                     detail='Maximal limit has been reached.',
                 )
+            print('-' * 37)
+        ic(str(minimal_loss))
+        # ic()
+        edges_deleted = minimal_loss.get_deletions()
+        ic(edges_deleted)
+        self.plot_net(minimal_loss.get_net())
         self.integrated_info = minimal_loss.get_ub()
         return minimal_loss.get_net()
+
+        # for edge in left.order_edges():
+        #     if (edge[U_IDX], edge[V_IDX]) in left.get_ignored().keys():
+        #         continue
+        #     if conf.directed:
+        #         left.ignore_new(
+        #             (edge[U_IDX], edge[V_IDX]),
+        #             {edge[V_IDX]},
+        #         )
+        #     else:
+        #         left.ignore_new(
+        #             (edge[U_IDX], edge[V_IDX]),
+        #             {edge[U_IDX], edge[V_IDX]},
+        #         )
+        #     break
+        # else:
+        #     left.ignore_new(
+        #         (edge[U_IDX], edge[V_IDX]),
+        #         {edge[U_IDX], edge[V_IDX]},
+        #     )
 
     def calculate_ub(self, right: Nodum, edge: tuple[str, str, float]) -> float:
         # Ocurre que una arista incide a un nodo (supóngase unidireccionalidad). En ese sentido si la arista eliminada hace destino a un nodo cual haga parte de otras arista que incidan al mismo nodo, el peso nuevo será máximo el peso de las aristas incidentes al nodo y mínimo lo que ya se lleve acumulado en el nodo.
@@ -290,7 +335,8 @@ class Branch(Sia):
         # Obtenemos los nodos sobre los que incide la arista
         # nodes: list[tuple[str, str, float]] = get_adj(node.get_net(), destiny)
 
-        return edge[W_IDX][W_LBL]
+        ic(edge[DATA_IDX][W_LBL])
+        return edge[DATA_IDX][W_LBL]
 
     def plot_net(self, net: nx.Graph) -> None:
         """This function is used to plot the network."""

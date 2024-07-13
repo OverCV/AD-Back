@@ -8,7 +8,7 @@ from api.schemas.genetic.control import ControlSchema
 from api.services.analyze.sia import Sia
 
 from icecream import ic
-from utils.consts import INFTY
+from utils.consts import INFTY_POS
 
 
 class Genetic(Sia):
@@ -72,7 +72,7 @@ class Genetic(Sia):
         not_std_sln = any(
             [
                 # ! Store the network, get the id and return it to invoque in front ! #
-                self.integrated_info == INFTY,
+                self.integrated_info == INFTY_POS,
                 self.min_info_part is None,
                 self.sub_distrib is None,
                 self.network_id is None,
