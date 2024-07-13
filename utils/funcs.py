@@ -21,12 +21,15 @@ up_sep: str = '︵' * 16
 dn_sep: str = '︶' * 16
 
 
-def emd(u: NDArray[np.float64], v: NDArray[np.float64], le: bool = conf.little_endian) -> float:
+def emd_hamming(
+    u: NDArray[np.float64], v: NDArray[np.float64], le: bool = conf.little_endian
+) -> float:
     """Returns the Earth Mover's Distance between two distributions."""
     # return wasserstein_distance(u, v)
     u = np.asarray(u, dtype=np.float64).flatten()
     v = np.asarray(v, dtype=np.float64).flatten()
 
+    ic(u, v)
     if len(u) != len(v):
         raise ValueError('Both distributions must have the same size')
 

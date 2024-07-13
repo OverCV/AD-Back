@@ -17,7 +17,7 @@ from utils.consts import (
     INFTY_POS,
     STR_ONE,
 )
-from utils.funcs import dec2bin, emd
+from utils.funcs import dec2bin, emd_hamming
 import concurrent.futures
 
 from server import conf
@@ -83,13 +83,14 @@ class BruteForce(Sia):
             causes = {bin: [] for bin in BOOL_RANGE}
             for i, c in zip(self._causes, str_causes):
                 causes[c == STR_ONE].append(i)
-            iter_distrib = sub_struct.create_distrib(effect, causes, data=True)
+            indexed_distrib = sub_struct.create_distrib(effect, causes, data=True)
+            iter_distrib = indexed_distrib[StructProps.DIST_ARR]
             # Comparar con la distribución original (objetivo)
             # ic(iter_distrib, self._target_dist)
-            emd_dist = emd(*iter_distrib, *self._target_dist)
+            emd_dist = emd_hamming(*iter_distrib, *self._target_dist)
             if emd_dist < self.integrated_info:
                 self.integrated_info = emd_dist
-                self.sub_distrib = iter_distrib
+                self.sub_distrib = indexed_distrib
                 mip = partition
         return mip
 
@@ -115,7 +116,10 @@ class BruteForce(Sia):
             iter_dist = indexed_distrib[StructProps.DIST_ARR]
             # ic(*iter_dist, self._target_dist)
 
-            emd_dist = emd(*iter_dist, *self._target_dist)
+            # ic(iter_dist, self._target_dist)
+            # print(iter_dist)
+
+            emd_dist = emd_hamming(*iter_dist, *self._target_dist)
             return emd_dist, iter_dist, (str_effect, str_causes)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:

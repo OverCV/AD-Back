@@ -6,9 +6,9 @@ pydantic
 pymongo
 motor
 
-numpy
+numpy<2.0
 pandas
-numba
+# numba
 scipy
 
 networkx
@@ -16,6 +16,8 @@ networkx
 matplotlib
 # seaborn
 openpyxl
+pyemd
+pyphi
 
 python-dotenv
 icecream
