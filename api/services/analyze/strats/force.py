@@ -90,7 +90,7 @@ class BruteForce(Sia):
             emd_dist = emd_hamming(*iter_distrib, *self._target_dist)
             if emd_dist < self.integrated_info:
                 self.integrated_info = emd_dist
-                self.sub_distrib = indexed_distrib
+                self.sub_distrib = iter_distrib
                 mip = partition
         return mip
 

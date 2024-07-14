@@ -23,8 +23,6 @@ from api.services.structure.base import (
 )
 
 from api.services.network import reconstruct_network
-import pyphi
-
 from icecream import ic
 
 from utils.consts import MIP
@@ -50,61 +48,20 @@ async def pyphi_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
-    # struct_response: StructureResponse = get_structure_by_title(title, db_sql)
-    # subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    # av.has_valid_inputs(istate, effect, causes, bgcond, len(subtensor))
-    # computing: Compute = Compute(struct_response, istate, effect, causes, bgcond, subtensor, dual)
-    # if not computing.init_concept():
-    #     raise HTTPException(
-    #         status_code=500,
-    #         detail='One or more of the SIA properties are not calculated',
-    #     )
-    # results = computing.use_pyphi()
+    struct_response: StructureResponse = get_structure_by_title(title, db_sql)
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
+    av.has_valid_inputs(istate, effect, causes, bgcond, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, causes, bgcond, subtensor, dual)
+    if not computing.init_concept():
+        raise HTTPException(
+            status_code=500,
+            detail='One or more of the SIA properties are not calculated',
+        )
+    results = computing.use_pyphi()
 
     # reconstruct_network(results[MIP], db_nosql)
-    # ic(results)
-    # return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
-    tpm = np.array(
-        [
-            (1, 0, 0),
-            (0, 1, 0),
-            (0, 1, 1),
-            (0, 0, 1),
-            (0, 0, 0),
-            (1, 1, 1),
-            (1, 0, 1),
-            (1, 1, 0),
-        ]
-    )
-
-    cm = np.array(
-        [
-            (1, 1, 1),
-            (1, 1, 1),
-            (1, 1, 1),
-        ]
-    )
-
-    labels = ('A', 'B', 'C')
-
-    network = pyphi.Network(tpm, cm=cm, node_labels=labels)
-
-    state = (1, 0, 0)
-    node_indices = (0, 1, 2)
-    subsystem_cause = pyphi.Subsystem(
-        network,
-        state,
-        nodes=node_indices,
-    )
-    subsystem_effect = pyphi.Subsystem(
-        network,
-        state,
-        nodes=node_indices,
-    )
-
-    sia = pyphi.compute.sia(subsystem_cause)
-    print(sia)
-    ...
+    ic(results)
+    return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
 
 
 @router.get(

@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
+import pyphi.partition
 
 from api.models.props.sia import SiaType
 from api.models.structure import Structure
@@ -10,6 +11,8 @@ from api.services.analyze.strats.branch import Branch
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
 
+import pyphi
+import pyphi.compute
 
 import copy
 from constants.structure import BOOL_RANGE
@@ -54,11 +57,7 @@ class Compute:
         """
 
         bgcond_elems = [
-            idx
-            for idx, bg in enumerate(
-                self.__str_bgcond,
-            )
-            if (bg == STR_ONE) == (not self.__dual)
+            idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
         ]
         for i, e in enumerate(self.__str_effect):
             if i in bgcond_elems:
@@ -68,7 +67,6 @@ class Compute:
                 self.__causes[c == STR_ONE].append(j)
         for i, e in enumerate(self.__str_bgcond):
             self.__bgcond[e == STR_ONE].append(i)
-
 
         # Preservamos la superestructura para trabajar con una nueva
         self.__struct: Structure = copy.deepcopy(self.__sup_struct)
@@ -81,8 +79,45 @@ class Compute:
         ic(self.__bgcond, self.__effect, self.__causes, self.__distribution)
         return self.__distribution is not None
 
-    # def use_pyphi(self) -> bool:
-    #     pass
+    def use_pyphi(self):
+        # Definir la matriz de transición de probabilidades (TPM)
+        tpm = np.array(
+            [
+                (1, 0, 0),
+                (0, 1, 0),
+                (0, 1, 1),
+                (0, 0, 1),
+                (0, 0, 0),
+                (1, 1, 1),
+                (1, 0, 1),
+                (1, 1, 0),
+            ]
+        )
+
+        labels = ('A', 'B', 'C')
+        node_indices = (0, 1, 2)
+
+        # Crear la red
+        network = pyphi.Network(tpm, node_labels=labels)
+
+        # Estado actual del sistema
+        state = (1, 0, 0)
+
+        # Crear el subsistema
+        subsystem = pyphi.Subsystem(
+            network,
+            state,
+            nodes=node_indices,
+        )
+
+        # Definir el mecanismo y purview
+        mechanism = (0,)  # Nodo A
+        purview = (1, 2)  # Nodos B y C
+
+        # Calcular la MIP
+        partitions = pyphi.partition.mip_bipartitions(subsystem, mechanism, purview)
+        for bipart in list(partitions):
+            print(repr(bipart))
 
     def use_brute_force(self) -> SiaType:
         sia_force: BruteForce = BruteForce(
