@@ -22,7 +22,8 @@ from pyphi.compute.subsystem import SystemIrreducibilityAnalysisConceptStyle
 
 import copy
 from constants.structure import BOOL_RANGE
-from utils.consts import COLS_IDX, STR_ONE
+from product import C
+from utils.consts import COLS_IDX, INFTY_POS, SMALL_PHI, STR_ONE
 
 from icecream import ic
 
@@ -94,114 +95,98 @@ class Compute:
         return self.__distribution is not None
 
     def use_pyphi(self):
-        tensor: OrderedDict = self.__sup_struct.get_tensor()
+        tensor: OrderedDict = self.__struct.get_tensor()
         matrices: list[Matrix] = tensor.values()
-        num_nodes: int = len(matrices)
-
-        tpm = np.array(
-            [mat.get_arr()[:, COLS_IDX] for mat in matrices],
+        submatrices: list[Matrix] = [
+            mat
+            for mat, bg in zip(matrices, self.__str_bgcond)
+            if (bg == STR_ONE) == (not self.__dual)
+        ]
+        tpms = np.array(
+            [mat.get_arr()[:, COLS_IDX] for mat in submatrices],
         )
+        tpm_state_node: NDArray[np.float64] = np.column_stack(tpms)
 
-        tpm_state_node: NDArray[np.float64] = np.column_stack(tpm)
+        num_nodes: int = len(matrices)
         labels = get_labels(num_nodes)
         indices = tuple(range(num_nodes))
 
-        node_labels = pyphi.labels.NodeLabels(labels, indices)
-        network = pyphi.Network(tpm_state_node, node_labels=node_labels)
-
-        mechanism = tuple(range(num_nodes))
-        purview = tuple(range(num_nodes))
-
-        state = (1, 0, 0)
-        subsystem = pyphi.Subsystem(
-            network,
-            state,
-            nodes=indices,
+        sub_labels = [
+            labels[i]
+            for i, bg in enumerate(self.__str_bgcond)
+            if (bg == STR_ONE) == (not self.__dual)
+        ]
+        sub_indices = [
+            indices[i]
+            for i, bg in enumerate(self.__str_bgcond)
+            if (bg == STR_ONE) == (not self.__dual)
+        ]
+        node_labels = pyphi.labels.NodeLabels(sub_labels, sub_indices)
+        network = pyphi.Network(
+            tpm=tpm_state_node,
+            node_labels=node_labels,
         )
 
-        ic(tpm_state_node.shape)
-        ic(labels)
-        ic(indices)
-        ic(node_labels)
-        ic(network)
-        ic(mechanism)
-        ic(purview)
+        istate = self.__struct.get_istate()
+        sub_istate = [
+            int(istate[i], 2)
+            for i, bg in enumerate(self.__str_bgcond)
+            if (bg == STR_ONE) == (not self.__dual)
+        ]
 
-        # small_phi = pyphi.compute.sia_concept_style(subs
-        return
+        ic(sub_labels, sub_indices, sub_istate)
 
-        network = pyphi.examples.fig4()
-        state = (1, 0, 0)
-        subsystem = pyphi.Subsystem(network, state)
-        A, B, C = subsystem.node_indices
-
-        ic(
-            network,
-            state,
-            subsystem,
-            A,
-            B,
-            C,
-        )
-        ic(subsystem.cause_repertoire((A,), (A, B, C)))
-        ic(subsystem.effect_repertoire((A,), (A, B, C)))
-        ic(subsystem.unconstrained_cause_repertoire((A, B, C)))
-        ic(subsystem.unconstrained_effect_repertoire((A, B, C)))
-        ic(subsystem.cause_info((A,), (A, B, C)))
-        ic(subsystem.effect_info((A,), (A, B, C)))
-
-        # ic(tpm_state2node)
-        # [ic(type(t)) for t in tpm]
-
-        # tpm = np.array(
-        #     [
-        #         (1, 0, 0),
-        #         (0, 1, 0),
-        #         (0, 1, 1),
-        #         (0, 0, 1),
-        #         (0, 0, 0),
-        #         (1, 1, 1),
-        #         (1, 0, 1),
-        #         (1, 1, 0),
-        #     ]
-        # )
-
-        # return
-
-        num = ('A', 'B', 'C', 'D', 'E')
-        node_indices = (0, 1, 2)
-
-        node_labels = pyphi.labels.NodeLabels(num, node_indices)
-
-        # Crear la red de Markov
-        network = pyphi.Network(tpm, node_labels=node_labels)
-
-        # Estado actual del sistema
-        state = (1, 0, 0)
-
-        # Crear el subsistema
-        subsystem = pyphi.Subsystem(
-            network,
-            state,
-            nodes=node_indices,
+        ic(network, sub_istate)
+        sub_system = pyphi.Subsystem(
+            network=network,
+            state=sub_istate,
         )
 
-        # Definir el mecanismo y purview
-        mechanism = (0, 1, 2)  # Nodo A
-        purview = (1, 2)  # Nodos B y C
+        parts = pyphi.partition.bipartitions(sub_system.node_indices)
+        integrated_info: float = INFTY_POS
+        min_concept: tuple[int] = tuple()
+        for part in parts:
+            # ! mechanism: tuple[int] = part[0]
+            # ! purview: tuple[int] = part[1]
+            for concept in part:
+                if len(concept) == 0:
+                    continue
+                s_phi = sub_system.effect_info(
+                    concept,
+                    sub_system.node_indices,
+                )
+                if s_phi < integrated_info:
+                    integrated_info = s_phi
+                    min_concept = concept
+        ic(min_concept, integrated_info)
+        # return minimal
+        return {
+            SMALL_PHI: integrated_info,
+            # MIP: self.min_info_part,
+            # SUB_DIST: self.sub_distrib.tolist(),
+            # DIST: self._target_dist.tolist(),
+            # NET_ID: self.network_id,
+        }
 
-        # Calcular la MIP
-        partitions = pyphi.partition.mip_bipartitions(mechanism, purview, purview)
-        for bipart in list(partitions):
-            print(repr(bipart))
+        # bipartitions = pyphi.partition.mip_bipartitions(mechanism, purview, sub_system.node_indices)
+
+        # ic(len(list(bipartitions)))
+        # for bipart in list(bipartitions):
+        #     print(bipart)
+
+        # X1, X2, X3 = sub_system.node_indices
+        # ic(sub_system.cause_repertoire((X1,), (X1, X2, X3)))
+        # ic(sub_system.effect_repertoire((X1,), (X1, X2, X3)))
+        # ic(sub_system.unconstrained_cause_repertoire((X1, X2, X3)))
+        # ic(sub_system.unconstrained_effect_repertoire((X1, X2, X3)))
+        # ic(sub_system.cause_info((X1,), (X1, X2, X3)))
+        # ic(sub_system.effect_info(((X1,)), (X1, X2, X3)))
 
         # max_info_loss = pyphi.compute.phi(subsystem)
-        min_info_loss: SystemIrreducibilityAnalysisConceptStyle = pyphi.compute.sia_concept_style(
-            subsystem
-        )
 
-        # ic(max_info_loss)
-        ic(min_info_loss)
+        # min_info_loss: SystemIrreducibilityAnalysisConceptStyle = pyphi.compute.sia_concept_style(
+        #     subsystem
+        # )
 
     def use_brute_force(self) -> SiaType:
         sia_force: BruteForce = BruteForce(
