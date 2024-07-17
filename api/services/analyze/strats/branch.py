@@ -17,7 +17,7 @@ from matplotlib import pyplot as plt
 
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
 from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, W_LBL
-from utils.funcs import emd_hamming, get_labels
+from utils.funcs import emd, get_labels
 
 import utils.network as net
 
@@ -126,7 +126,7 @@ class Branch(Sia):
             origin = self.__causes_labels[self._causes.index(idx_causes)]
             destiny = self.__effect_labels[self._effect.index(idx_effect)]
 
-            emd_as_weight = emd_hamming(iter_distrib, self._target_dist)
+            emd_as_weight = emd(iter_distrib, self._target_dist)
 
             self.__net.remove_edge(origin, destiny)
 

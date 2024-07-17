@@ -9,7 +9,7 @@ from api.models.structure import Structure
 
 from icecream import ic
 from utils.consts import ACTUAL, EFFECT, INFTY_POS, ROWS_IDX
-from utils.funcs import emd_hamming
+from utils.funcs import emd
 
 from server import conf
 from api.models.genetic.recorder import rec
@@ -230,7 +230,7 @@ class Environ:
         return winner_parents
 
     def compute_fitness(self, distribution: NDArray[np.float64]) -> float:
-        return emd_hamming(
+        return emd(
             distribution,
             self.__distrib,
             le=conf.little_endian,

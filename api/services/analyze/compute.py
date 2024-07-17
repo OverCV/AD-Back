@@ -165,14 +165,11 @@ class Compute:
         part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
 
         min_info_part: Bipartition = er.partition
-        # slots = min_info_part.__slots__['parts']
 
         dual: Part = min_info_part.parts[not self.__dual]
         prim: Part = min_info_part.parts[self.__dual]
         dual_mech, dual_purv = dual.mechanism, dual.purview
         prim_mech, prim_purv = prim.mechanism, prim.purview
-
-        print()
 
         # print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
 

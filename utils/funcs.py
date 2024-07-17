@@ -10,6 +10,7 @@ import pandas as pd
 # from scipy.stats import wasserstein_distance
 
 
+from constants.format import HAMMING_DIST
 from utils.consts import BASE_2, FLOAT_ZERO, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE
 
 from server import conf
@@ -23,20 +24,22 @@ up_sep: str = '︵' * 16
 dn_sep: str = '︶' * 16
 
 
-def emd_hamming(
-    u: NDArray[np.float64], v: NDArray[np.float64], le: bool = conf.little_endian
+def emd(
+    u: NDArray[np.float64],
+    v: NDArray[np.float64],
+    le: bool = conf.little_endian,
 ) -> float:
     """Returns the Earth Mover's Distance between two distributions."""
     # return wasserstein_distance(u, v)
-    u = np.asarray(u, dtype=np.float64).flatten()
-    v = np.asarray(v, dtype=np.float64).flatten()
+    u: NDArray[np.float64] = np.asarray(u, dtype=np.float64).flatten()
+    v: NDArray[np.float64] = np.asarray(v, dtype=np.float64).flatten()
 
     if len(u) != len(v):
         raise ValueError('Both distributions must have the same size')
 
-    max_len = int(math.log2(len(u)))
-    end_keys = lil_endian(max_len) if le else big_endian(max_len)
-    earth_moved = FLOAT_ZERO
+    max_len: int = int(math.log2(len(u)))
+    endian_keys: list[str] = lil_endian(max_len) if le else big_endian(max_len)
+    earth_moved: float = FLOAT_ZERO
 
     while not np.allclose(u, ROWS_IDX):
         u_sorter = np.argsort(-u)
@@ -45,16 +48,42 @@ def emd_hamming(
         u_idx = u_sorter[ROWS_IDX]
         v_idx = v_sorter[ROWS_IDX]
 
-        end_u_key = int(end_keys[u_idx], BASE_2)
-        end_v_key = int(end_keys[v_idx], BASE_2)
+        end_u_key = int(endian_keys[u_idx], BASE_2)
+        end_v_key = int(endian_keys[v_idx], BASE_2)
 
-        restar = min(u[u_idx], v[v_idx])
-        u[u_idx] -= restar
-        v[v_idx] -= restar
+        remainder: float = min(u[u_idx], v[v_idx])
+        u[u_idx] -= remainder
+        v[v_idx] -= remainder
 
-        distance = hamming_distance(end_u_key, end_v_key)
-        earth_moved += restar * distance
+        distance: int
+        valid_distances: dict[str, Callable] = {
+            HAMMING_DIST: hamming_distance,
+        }
+        metric_distance: Callable = valid_distances.get(conf.metric_distance)
+
+        distance = metric_distance(end_u_key, end_v_key)
+        earth_moved += remainder * distance
     return earth_moved
+
+
+def hamming_distance(a: int, b: int) -> int:
+    return bin(a ^ b).count(STR_ONE)
+
+
+@cache
+def lil_endian(n: int) -> list[str]:
+    """Generate a list of strings representing the numbers in
+    little-endian for indices in ``range(2**n)``.
+    """
+    return [bin(i)[2:].zfill(n)[::-1] for i in range(2**n)]
+
+
+@cache
+def big_endian(n: int) -> list[str]:
+    """Generate a list of strings representing the numbers in
+    big-endian for indices in ``range(2**n)``.
+    """
+    return [bin(i)[2:].zfill(n) for i in range(2**n)]
 
 
 def product(
@@ -79,27 +108,19 @@ def bin_prod(
     """Returns the binary product of two arrays."""
     u_idx, u = idx_dist_u
     v_idx, v = idx_dist_v
-    # Flatten arrays if they're 2D with only one row
     u = u.flatten()
     v = v.flatten()
     d_len = len(u_idx) + len(v_idx)
     result = np.zeros(2**d_len, dtype=np.float64)
     endian_keys = lil_endian(d_len) if le else big_endian(d_len)
     df_result = pd.DataFrame([result], columns=endian_keys)
-    # Create the union of indices and sort
     combined_idx = tuple(sorted(set(u_idx) | set(v_idx)))
-    # print(combined_idx)
     for key in endian_keys:
         u_key = ''.join(key[combined_idx.index(i)] for i in u_idx)
         v_key = ''.join(key[combined_idx.index(i)] for i in v_idx)
         u_val = u[int(u_key[::-1], 2)]
         v_val = v[int(v_key[::-1], 2)]
-        # print(f'u_val <- (u[{u_key}] = {u_val})')
-        # print(f'v_val <- (v[{v_key}] = {v_val})')
-        # print(f'{key} <- ({u_val} * {v_val} = {u_val * v_val})')
         df_result.at[ROWS_IDX, key] = u_val * v_val
-    # print(df_result)
-    # print()
     return combined_idx, df_result.values
 
 
@@ -111,10 +132,6 @@ def be_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
 def le_prod(arrays: list[NDArray[np.float64]]) -> NDArray:
     """Returns the tensor product of a list of arrays."""
     return reduce(lambda x, y: np.kron(y, x), arrays)
-
-
-def hamming_distance(a: int, b: int) -> int:
-    return bin(a ^ b).count(STR_ONE)
 
 
 @cache
@@ -135,22 +152,6 @@ def all_states(n, lil_endian=conf.little_endian):
 
     for state in it.product((INT_ZERO, INT_ONE), repeat=n):
         yield state if lil_endian else state[::-1]
-
-
-@cache
-def lil_endian(n: int) -> list[str]:
-    """Generate a list of strings representing the numbers in
-    little-endian for indices in ``range(2**n)``.
-    """
-    return [bin(i)[2:].zfill(n)[::-1] for i in range(2**n)]
-
-
-@cache
-def big_endian(n: int) -> list[str]:
-    """Generate a list of strings representing the numbers in
-    big-endian for indices in ``range(2**n)``.
-    """
-    return [bin(i)[2:].zfill(n) for i in range(2**n)]
 
 
 @cache

@@ -3,6 +3,7 @@ class Server:
 
     def __init__(self) -> None:
         self.little_endian: bool = True
+        self.metric_distance: str = 'hamming'
         self.threaded: bool = False
         self.directed: bool = True
         self.locale_nosql: bool = False
