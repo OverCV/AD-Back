@@ -8,7 +8,7 @@ from api.models.genetic.population import Population
 from api.models.structure import Structure
 
 from icecream import ic
-from utils.consts import CAUSES, EFFECT, INFTY_POS, ROWS_IDX
+from utils.consts import ACTUAL, EFFECT, INFTY_POS, ROWS_IDX
 from utils.funcs import emd_hamming
 
 from server import conf
@@ -85,7 +85,7 @@ class Environ:
     def test_population(self) -> bool:
         """Cuando se cumple la condición de terminación, se retorna True y se termina la búsqueda. Se pone a prueba la población actual."""
         m: int = len(self.__population.get_concept()[EFFECT])
-        n: int = len(self.__population.get_concept()[CAUSES])
+        n: int = len(self.__population.get_concept()[ACTUAL])
 
         # Si ha alcanzado el tamaño del espacio de búsqueda, debe terminar #
         # max_generations = 2**(m+n-1)-1

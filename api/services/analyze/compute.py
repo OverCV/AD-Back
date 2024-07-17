@@ -7,7 +7,7 @@ import pyphi.tpm
 
 from api.models.matrix import Matrix
 from api.models.props.sia import SiaType
-from api.models.props.structure import StructProps
+
 from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
 
@@ -18,18 +18,19 @@ from api.services.analyze.strats.force import BruteForce
 
 import pyphi
 import pyphi.compute
+from pyphi.models.cuts import Bipartition, Part
 
 # from pyphi.compute.subsystem import SystemIrreducibilityAnalysisConceptStyle
 from pyphi.models import RepertoireIrreducibilityAnalysis
 
 import copy
-from constants.structure import BOOL_RANGE
+from constants.structure import BOOL_RANGE, DIST, VOID
 from product import C
-from utils.consts import COLS_IDX, INFTY_POS, SMALL_PHI, STR_ONE
+from utils.consts import ACTUAL, COLS_IDX, INFTY_POS, MIP, SMALL_PHI, STR_ONE, SUB_DIST
 
 from icecream import ic
 
-from utils.funcs import get_labels
+from utils.funcs import get_labels, lil_endian_int
 
 
 # pyphi.config.load_file('pyphi_config_3.0.yml')
@@ -136,78 +137,68 @@ class Compute:
             if (bg == STR_ONE) == (not self.__dual)
         ]
 
-        ic(sub_labels, sub_indices, sub_istate)
+        # ic(sub_labels, sub_indices, sub_istate)
 
-        ic(network, sub_istate)
+        # ic(network, sub_istate)
         sub_system = pyphi.Subsystem(
             network=network,
             state=sub_istate,
         )
 
-        # parts = pyphi.partition.bipartitions(sub_system.node_indices)
-        # parts = pyphi.partition.bipartition_indices(num_nodes)
-
-        # ic(parts)
-
-        integrated_info: float = INFTY_POS
-        min_concept: tuple[int] = tuple()
-        # ic(list(parts))
-        # return
-        cr = sub_system.cause_mip(
-            sub_system.node_indices,
-            sub_system.node_indices,
-        )
-        ic(cr)
-        return
-
         er: RepertoireIrreducibilityAnalysis = sub_system.effect_mip(
             sub_system.node_indices,
             sub_system.node_indices,
         )
-        # for part in parts:
-        #     # ! mechanism: tuple[int] = part[0]
-        #     # ! purview: tuple[int] = part[1]
-        #     for concept in part:
-        #         if len(concept) == 0:
-        #             continue
         ic(er)
-        ic(er.phi)
-        ic(er.partition)
-        ic(er.repertoire)
-        ic(er.partitioned_repertoire)
-        # if s_phi < integrated_info:
-        #     integrated_info = s_phi
-        #     min_concept = concept
-        ic(min_concept, integrated_info)
-        # return minimal
-        return
+        integrated_info: float = er.phi
+
+        repertoire = er.repertoire
+        repertoire = repertoire.squeeze()
+
+        part_reper = er.partitioned_repertoire
+        part_reper = part_reper.squeeze()
+
+        sub_states = list(lil_endian_int(repertoire.ndim))
+
+        distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
+        part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
+
+        min_info_part: Bipartition = er.partition
+        # slots = min_info_part.__slots__['parts']
+
+        dual: Part = min_info_part.parts[not self.__dual]
+        prim: Part = min_info_part.parts[self.__dual]
+        dual_mech, dual_pur = dual.mechanism, dual.purview
+        prim_mech, prim_pur = prim.mechanism, prim.purview
+
+        print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
+
+        min_info_part = [
+            [
+                [labels[i] for i in dual_pur] if dual_pur else [VOID],
+                [labels[i] for i in dual_mech] if dual_mech else [VOID],
+            ],
+            [
+                [labels[i] for i in prim_pur] if prim_pur else [VOID],
+                [labels[i] for i in prim_mech] if prim_mech else [VOID],
+            ],
+        ]
+        # mip = label_mip
+
+        # ic(fmt_distribution)
+        # ic(part_distrib)
+
+        # ic(
+        #
+        # )
+
         return {
             SMALL_PHI: integrated_info,
-            # MIP: self.min_info_part,
-            # SUB_DIST: self.sub_distrib.tolist(),
-            # DIST: self._target_dist.tolist(),
-            # NET_ID: self.network_id,
+            MIP: min_info_part,
+            DIST: distribution,
+            SUB_DIST: part_distrib,
+            # NET_ID: self.network_id
         }
-
-        # bipartitions = pyphi.partition.mip_bipartitions(mechanism, purview, sub_system.node_indices)
-
-        # ic(len(list(bipartitions)))
-        # for bipart in list(bipartitions):
-        #     print(bipart)
-
-        # X1, X2, X3 = sub_system.node_indices
-        # ic(sub_system.cause_repertoire((X1,), (X1, X2, X3)))
-        # ic(sub_system.effect_repertoire((X1,), (X1, X2, X3)))
-        # ic(sub_system.unconstrained_cause_repertoire((X1, X2, X3)))
-        # ic(sub_system.unconstrained_effect_repertoire((X1, X2, X3)))
-        # ic(sub_system.cause_info((X1,), (X1, X2, X3)))
-        # ic(sub_system.effect_info(((X1,)), (X1, X2, X3)))
-
-        # max_info_loss = pyphi.compute.phi(subsystem)
-
-        # min_info_loss: SystemIrreducibilityAnalysisConceptStyle = pyphi.compute.sia_concept_style(
-        #     subsystem
-        # )
 
     def use_brute_force(self) -> SiaType:
         sia_force: BruteForce = BruteForce(

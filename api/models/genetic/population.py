@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from api.models.genetic.individual import Individual
 from api.models.structure import Structure
 from constants.structure import BOOL_RANGE
-from utils.consts import CAUSES, EFFECT, STR_ONE
+from utils.consts import ACTUAL, EFFECT, STR_ONE
 
 from server import conf
 from icecream import ic
@@ -23,7 +23,7 @@ class Population:
         self.__indivis: list[Individual] = []
         self.__struct: Structure = structure
         self.__effect: list[int] = concept[EFFECT]
-        self.__causes: list[int] = concept[CAUSES]
+        self.__causes: list[int] = concept[ACTUAL]
         # self.__distrib: NDArray[np.float64] = distribution
 
     def get_size(self) -> int:

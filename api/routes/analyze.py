@@ -58,10 +58,9 @@ async def pyphi_strategy(
             detail='One or more of the SIA properties are not calculated',
         )
     results = computing.use_pyphi()
-
-    # reconstruct_network(results[MIP], db_nosql)
-    # ic(results)
+    ic(results)
     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
+    return
 
 
 @router.get(

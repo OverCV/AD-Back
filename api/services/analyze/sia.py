@@ -5,7 +5,7 @@ import networkx as nx
 from api.models.props.sia import SiaType
 from api.models.structure import Structure
 from constants.structure import VOID
-from utils.consts import CAUSES, DIST, EFFECT, INFTY_POS, INT_ZERO, SUB_DIST, NET_ID, MIP, SMALL_PHI
+from utils.consts import ACTUAL, DIST, EFFECT, INFTY_POS, INT_ZERO, SUB_DIST, NET_ID, MIP, SMALL_PHI
 from numpy.typing import NDArray
 
 from icecream import ic
@@ -68,7 +68,7 @@ class Sia(ABC):
         for con in mip[EFFECT]:
             if len(con) == INT_ZERO:
                 con.append(VOID)
-        for con in mip[CAUSES]:
+        for con in mip[ACTUAL]:
             if len(con) == INT_ZERO:
                 con.append(VOID)
 

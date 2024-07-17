@@ -154,11 +154,13 @@ def big_endian(n: int) -> list[str]:
 
 
 @cache
-def lil_endian_int(n: int) -> list[int]:
+def lil_endian_int(n: int):
     """Generate a list of integers representing the numbers in
     little-endian for indices in ``range(2**n)``.
     """
-    return [int(bin(i)[2:].zfill(n)[::-1], BASE_2) for i in range(2**n)]
+    # return [int(bin(i)[2:].zfill(n)[::-1], BASE_2) for i in range(2**n)]
+    for state in it.product((0, 1), repeat=n):
+        yield state[::-1]
 
 
 @cache

@@ -12,7 +12,7 @@ from numpy.typing import NDArray
 
 from constants.structure import BOOL_RANGE
 from utils.consts import (
-    CAUSES,
+    ACTUAL,
     EFFECT,
     INFTY_POS,
     STR_ONE,
@@ -49,6 +49,7 @@ class BruteForce(Sia):
             else self.calculate_dists(bipartitions)
         )
         # ic(self._target_dist)
+        print(f'{part=}')
         mip = self.label_mip(part)
 
         self.network_id = -1
@@ -75,7 +76,7 @@ class BruteForce(Sia):
             # ic(partition)
             sub_struct: Structure = copy.deepcopy(self._structure)
             str_effect: str = partition[EFFECT]
-            str_causes: str = partition[CAUSES]
+            str_causes: str = partition[ACTUAL]
 
             effect = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self._effect, str_effect):
@@ -101,7 +102,7 @@ class BruteForce(Sia):
         def process_partition(partition):
             sub_struct = copy.deepcopy(self._structure)
             str_effect = partition[EFFECT]
-            str_causes = partition[CAUSES]
+            str_causes = partition[ACTUAL]
             effect = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self._effect, str_effect):
                 effect[e == STR_ONE].append(j)
