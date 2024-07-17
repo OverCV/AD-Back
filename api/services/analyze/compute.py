@@ -159,6 +159,7 @@ class Compute:
         part_reper = part_reper.squeeze()
 
         sub_states = list(lil_endian_int(repertoire.ndim))
+        print(f'{len(sub_states)=}')
 
         distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
         part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
@@ -171,16 +172,18 @@ class Compute:
         dual_mech, dual_purv = dual.mechanism, dual.purview
         prim_mech, prim_purv = prim.mechanism, prim.purview
 
+        print()
+
         # print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
 
         min_info_part = [
             [
-                [labels[i] for i in dual_mech] if dual_mech else [VOID],
-                [labels[i] for i in dual_purv] if dual_purv else [VOID],
+                [sub_labels[i] for i in dual_mech] if dual_mech else [VOID],
+                [sub_labels[i] for i in dual_purv] if dual_purv else [VOID],
             ],
             [
-                [labels[i] for i in prim_mech] if prim_mech else [VOID],
-                [labels[i] for i in prim_purv] if prim_purv else [VOID],
+                [sub_labels[i] for i in prim_mech] if prim_mech else [VOID],
+                [sub_labels[i] for i in prim_purv] if prim_purv else [VOID],
             ],
         ]
 
