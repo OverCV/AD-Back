@@ -60,7 +60,7 @@ async def pyphi_strategy(
     results = computing.use_pyphi()
 
     # reconstruct_network(results[MIP], db_nosql)
-    ic(results)
+    # ic(results)
     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
 
 

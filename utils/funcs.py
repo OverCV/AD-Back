@@ -1,6 +1,8 @@
 from functools import cache, reduce
 import itertools as it
 import math
+import time
+from typing import Callable
 
 from numpy.typing import NDArray
 import numpy as np
@@ -80,8 +82,6 @@ def bin_prod(
     # Flatten arrays if they're 2D with only one row
     u = u.flatten()
     v = v.flatten()
-    # print(u_idx, v_idx)
-    # print(u, v)
     d_len = len(u_idx) + len(v_idx)
     result = np.zeros(2**d_len, dtype=np.float64)
     endian_keys = lil_endian(d_len) if le else big_endian(d_len)
@@ -235,3 +235,29 @@ def combs(a, r):
     data_type = a.dtype if r == 0 else np.dtype([('', a.dtype)] * r)
     b = np.fromiter(it.combinations(a, r), data_type)
     return b.view(a.dtype).reshape(-1, r)
+
+
+def timer(func: Callable):
+    def wrapper(*args, **kwargs):
+        t_start = time.time()
+        result = func(*args, **kwargs)
+        t_total = time.time()
+        print(f'{func.__name__} took {t_total - t_start} seconds')
+        return result
+
+    return wrapper
+
+
+def memoize(func):
+    # Store the results in a dictionary that maps arguments to results
+    cache = {}
+
+    # Define the wrapper function to return.
+    def wrapper(*args, **kwargs):
+        # If these arguments haven't been seen before;
+        if (args, kwargs) not in cache:
+            # Call cache and store the result
+            cache[(args, kwargs)] = func(*args, **kwargs)
+        return cache[(args, kwargs)]
+
+    return wrapper

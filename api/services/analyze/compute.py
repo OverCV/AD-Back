@@ -1,8 +1,13 @@
+from typing import OrderedDict
 import numpy as np
 from numpy.typing import NDArray
+import pyphi.labels
 import pyphi.partition
+import pyphi.tpm
 
+from api.models.matrix import Matrix
 from api.models.props.sia import SiaType
+from api.models.props.structure import StructProps
 from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
 
@@ -13,12 +18,21 @@ from api.services.analyze.strats.force import BruteForce
 
 import pyphi
 import pyphi.compute
+from pyphi.compute.subsystem import SystemIrreducibilityAnalysisConceptStyle
 
 import copy
 from constants.structure import BOOL_RANGE
-from utils.consts import STR_ONE
+from utils.consts import COLS_IDX, STR_ONE
 
 from icecream import ic
+
+from utils.funcs import get_labels
+
+
+# pyphi.config.load_file('pyphi_config_3.0.yml')
+pyphi.config.PARALLEL_CONCEPT_EVALUATION = False
+pyphi.config.PARALLEL_CUT_EVALUATION = False
+pyphi.config.PARALLEL_COMPLEX_EVALUATION = False
 
 
 class Compute:
@@ -80,25 +94,87 @@ class Compute:
         return self.__distribution is not None
 
     def use_pyphi(self):
-        # Definir la matriz de transición de probabilidades (TPM)
+        tensor: OrderedDict = self.__sup_struct.get_tensor()
+        matrices: list[Matrix] = tensor.values()
+        num_nodes: int = len(matrices)
+
         tpm = np.array(
-            [
-                (1, 0, 0),
-                (0, 1, 0),
-                (0, 1, 1),
-                (0, 0, 1),
-                (0, 0, 0),
-                (1, 1, 1),
-                (1, 0, 1),
-                (1, 1, 0),
-            ]
+            [mat.get_arr()[:, COLS_IDX] for mat in matrices],
         )
 
-        labels = ('A', 'B', 'C')
+        tpm_state_node: NDArray[np.float64] = np.column_stack(tpm)
+        labels = get_labels(num_nodes)
+        indices = tuple(range(num_nodes))
+
+        node_labels = pyphi.labels.NodeLabels(labels, indices)
+        network = pyphi.Network(tpm_state_node, node_labels=node_labels)
+
+        mechanism = tuple(range(num_nodes))
+        purview = tuple(range(num_nodes))
+
+        state = (1, 0, 0)
+        subsystem = pyphi.Subsystem(
+            network,
+            state,
+            nodes=indices,
+        )
+
+        ic(tpm_state_node.shape)
+        ic(labels)
+        ic(indices)
+        ic(node_labels)
+        ic(network)
+        ic(mechanism)
+        ic(purview)
+
+        # small_phi = pyphi.compute.sia_concept_style(subs
+        return
+
+        network = pyphi.examples.fig4()
+        state = (1, 0, 0)
+        subsystem = pyphi.Subsystem(network, state)
+        A, B, C = subsystem.node_indices
+
+        ic(
+            network,
+            state,
+            subsystem,
+            A,
+            B,
+            C,
+        )
+        ic(subsystem.cause_repertoire((A,), (A, B, C)))
+        ic(subsystem.effect_repertoire((A,), (A, B, C)))
+        ic(subsystem.unconstrained_cause_repertoire((A, B, C)))
+        ic(subsystem.unconstrained_effect_repertoire((A, B, C)))
+        ic(subsystem.cause_info((A,), (A, B, C)))
+        ic(subsystem.effect_info((A,), (A, B, C)))
+
+        # ic(tpm_state2node)
+        # [ic(type(t)) for t in tpm]
+
+        # tpm = np.array(
+        #     [
+        #         (1, 0, 0),
+        #         (0, 1, 0),
+        #         (0, 1, 1),
+        #         (0, 0, 1),
+        #         (0, 0, 0),
+        #         (1, 1, 1),
+        #         (1, 0, 1),
+        #         (1, 1, 0),
+        #     ]
+        # )
+
+        # return
+
+        num = ('A', 'B', 'C', 'D', 'E')
         node_indices = (0, 1, 2)
 
-        # Crear la red
-        network = pyphi.Network(tpm, node_labels=labels)
+        node_labels = pyphi.labels.NodeLabels(num, node_indices)
+
+        # Crear la red de Markov
+        network = pyphi.Network(tpm, node_labels=node_labels)
 
         # Estado actual del sistema
         state = (1, 0, 0)
@@ -111,13 +187,21 @@ class Compute:
         )
 
         # Definir el mecanismo y purview
-        mechanism = (0,)  # Nodo A
+        mechanism = (0, 1, 2)  # Nodo A
         purview = (1, 2)  # Nodos B y C
 
         # Calcular la MIP
-        partitions = pyphi.partition.mip_bipartitions(subsystem, mechanism, purview)
+        partitions = pyphi.partition.mip_bipartitions(mechanism, purview, purview)
         for bipart in list(partitions):
             print(repr(bipart))
+
+        # max_info_loss = pyphi.compute.phi(subsystem)
+        min_info_loss: SystemIrreducibilityAnalysisConceptStyle = pyphi.compute.sia_concept_style(
+            subsystem
+        )
+
+        # ic(max_info_loss)
+        ic(min_info_loss)
 
     def use_brute_force(self) -> SiaType:
         sia_force: BruteForce = BruteForce(
