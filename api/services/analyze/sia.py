@@ -31,10 +31,11 @@ class Sia(ABC):
 
     def calculate_concept(self) -> None:
         # Analyze method returns a boolean that indicates if there's NOT a standard parameter solution
+        # Obliga a que se deben de asignar los resultados dentro del método analyze, caso contrario se activa la excepción puesto se detecta hay un parámetro sin calcular (faltante).
         if self.analyze():
             raise HTTPException(
                 status_code=500,
-                detail=f'One or more of the SIA properties are not calculated: {self.integrated_info}, {self.min_info_part}, {self.sub_distrib}, {self.network_id}',
+                detail=f'One or more of the SIA properties are not calculated: {self.integrated_info=}, {self.min_info_part=}, {self.sub_distrib=}, {self.network_id=}',
             )
 
     def get_reperoire(self) -> dict:

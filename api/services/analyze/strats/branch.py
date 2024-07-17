@@ -1,3 +1,4 @@
+from math import e
 from api.models.bnb.nodum import Nodum
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
@@ -50,13 +51,17 @@ class Branch(Sia):
         self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
         self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._causes]
 
+        # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         self.__net = self.margin_n_expand()
 
+        edges = self.__net.edges(data=True)
+        self.integrated_info = min([edge[DATA_IDX][W_LBL] for edge in edges])
+
         #
-        raise NotImplementedError
-        part: None = None
-        mip = self.label_mip(part)
-        self.min_info_part = mip
+        # raise NotImplementedError
+        # part: None = None
+        # mip = self.label_mip(part)
+        # self.min_info_part = mip
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
