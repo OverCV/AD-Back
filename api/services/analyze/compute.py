@@ -168,29 +168,21 @@ class Compute:
 
         dual: Part = min_info_part.parts[not self.__dual]
         prim: Part = min_info_part.parts[self.__dual]
-        dual_mech, dual_pur = dual.mechanism, dual.purview
-        prim_mech, prim_pur = prim.mechanism, prim.purview
+        dual_mech, dual_purv = dual.mechanism, dual.purview
+        prim_mech, prim_purv = prim.mechanism, prim.purview
 
-        print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
+        # print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
 
         min_info_part = [
             [
-                [labels[i] for i in dual_pur] if dual_pur else [VOID],
                 [labels[i] for i in dual_mech] if dual_mech else [VOID],
+                [labels[i] for i in dual_purv] if dual_purv else [VOID],
             ],
             [
-                [labels[i] for i in prim_pur] if prim_pur else [VOID],
                 [labels[i] for i in prim_mech] if prim_mech else [VOID],
+                [labels[i] for i in prim_purv] if prim_purv else [VOID],
             ],
         ]
-        # mip = label_mip
-
-        # ic(fmt_distribution)
-        # ic(part_distrib)
-
-        # ic(
-        #
-        # )
 
         return {
             SMALL_PHI: integrated_info,
