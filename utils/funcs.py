@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 # from scipy.stats import wasserstein_distance
 
-from icecream import ic
+
 from utils.consts import BASE_2, FLOAT_ZERO, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE
 
 from server import conf

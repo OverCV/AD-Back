@@ -47,6 +47,7 @@ app.include_router(network.router, tags=['Networks'], prefix='/network')
 app.include_router(structure.router, tags=['Structures'], prefix='/structure')
 app.include_router(analyze.router, tags=['Analyze'], prefix='/analyze')
 
+
 """ Default routes """
 
 

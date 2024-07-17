@@ -56,7 +56,6 @@ class Branch(Sia):
 
         edges = self.__net.edges(data=True)
         self.integrated_info = min([edge[DATA_IDX][W_LBL] for edge in edges])
-
         #
         # raise NotImplementedError
         # part: None = None

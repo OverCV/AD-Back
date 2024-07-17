@@ -41,17 +41,17 @@ fmt: Format = Format()
 async def pyphi_strategy(
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    bgcond: str = STRUCTURES[R5A][StructProps.BGCOND],
+    subsys: str = STRUCTURES[R5A][StructProps.BGCOND],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    causes: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
     struct_response: StructureResponse = get_structure_by_title(title, db_sql)
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    av.has_valid_inputs(istate, effect, causes, bgcond, len(subtensor))
-    computing: Compute = Compute(struct_response, istate, effect, causes, bgcond, subtensor, dual)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
     if not computing.init_concept():
         raise HTTPException(
             status_code=500,
@@ -75,9 +75,9 @@ async def force_strategy(
     id: Optional[int] = None,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    bgcond: str = STRUCTURES[R5A][StructProps.BGCOND],
+    subsys: str = STRUCTURES[R5A][StructProps.BGCOND],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    causes: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -86,8 +86,8 @@ async def force_strategy(
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    av.has_valid_inputs(istate, effect, causes, bgcond, len(subtensor))
-    computing: Compute = Compute(struct_response, istate, effect, causes, bgcond, subtensor, dual)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
     # ! Change to init bg conditions
     # if not computing.init_concept():
     if not computing.init_concept():
@@ -113,9 +113,9 @@ async def branch_strategy(
     id: Optional[int] = None,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    bgcond: str = STRUCTURES[R5A][StructProps.BGCOND],
+    subsys: str = STRUCTURES[R5A][StructProps.BGCOND],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    causes: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -125,8 +125,8 @@ async def branch_strategy(
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    av.has_valid_inputs(istate, effect, causes, bgcond, len(subtensor))
-    computing: Compute = Compute(struct_response, istate, effect, causes, bgcond, subtensor, dual)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
     if not computing.init_concept():
         raise HTTPException(
             status_code=500,
@@ -149,8 +149,9 @@ async def genetic_strategy(
     ctrl_params: ControlSchema,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
+    subsys: str = STRUCTURES[R5A][StructProps.ISTATE],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    causes: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -159,9 +160,9 @@ async def genetic_strategy(
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    av.has_valid_inputs(istate, effect, causes, len(subtensor))
+    av.has_valid_inputs(istate, effect, actual, len(subtensor))
     ic(title)
-    computing: Compute = Compute(struct_response, istate, effect, causes, subtensor, dual)
+    computing: Compute = Compute(struct_response, istate, effect, actual, subtensor, dual)
     if not computing.init_concept():
         raise HTTPException(
             status_code=500,

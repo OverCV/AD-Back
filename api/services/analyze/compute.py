@@ -18,7 +18,9 @@ from api.services.analyze.strats.force import BruteForce
 
 import pyphi
 import pyphi.compute
-from pyphi.compute.subsystem import SystemIrreducibilityAnalysisConceptStyle
+
+# from pyphi.compute.subsystem import SystemIrreducibilityAnalysisConceptStyle
+from pyphi.models import RepertoireIrreducibilityAnalysis
 
 import copy
 from constants.structure import BOOL_RANGE
@@ -142,24 +144,43 @@ class Compute:
             state=sub_istate,
         )
 
-        parts = pyphi.partition.bipartitions(sub_system.node_indices)
+        # parts = pyphi.partition.bipartitions(sub_system.node_indices)
+        # parts = pyphi.partition.bipartition_indices(num_nodes)
+
+        # ic(parts)
+
         integrated_info: float = INFTY_POS
         min_concept: tuple[int] = tuple()
-        for part in parts:
-            # ! mechanism: tuple[int] = part[0]
-            # ! purview: tuple[int] = part[1]
-            for concept in part:
-                if len(concept) == 0:
-                    continue
-                s_phi = sub_system.effect_info(
-                    concept,
-                    sub_system.node_indices,
-                )
-                if s_phi < integrated_info:
-                    integrated_info = s_phi
-                    min_concept = concept
+        # ic(list(parts))
+        # return
+        cr = sub_system.cause_mip(
+            sub_system.node_indices,
+            sub_system.node_indices,
+        )
+        ic(cr)
+        return
+
+        er: RepertoireIrreducibilityAnalysis = sub_system.effect_mip(
+            sub_system.node_indices,
+            sub_system.node_indices,
+        )
+        # for part in parts:
+        #     # ! mechanism: tuple[int] = part[0]
+        #     # ! purview: tuple[int] = part[1]
+        #     for concept in part:
+        #         if len(concept) == 0:
+        #             continue
+        ic(er)
+        ic(er.phi)
+        ic(er.partition)
+        ic(er.repertoire)
+        ic(er.partitioned_repertoire)
+        # if s_phi < integrated_info:
+        #     integrated_info = s_phi
+        #     min_concept = concept
         ic(min_concept, integrated_info)
         # return minimal
+        return
         return {
             SMALL_PHI: integrated_info,
             # MIP: self.min_info_part,
