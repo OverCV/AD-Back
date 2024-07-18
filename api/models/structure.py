@@ -40,11 +40,11 @@ class Structure:
         self.__dual_dist: tuple[tuple[int, ...], NDArray[np.float64]] = None
 
     def create_distrib(
-        self, effect: dict[bool, list[int]], causes: dict[bool, list[int]], data: bool = False
+        self, effect: dict[bool, list[int]], actual: dict[bool, list[int]], data: bool = False
     ):
         # ! Here may be a validation of the ec inputs, validate effect.size == tensor.size and for all matrices, the effect of its side=(prim|dual) is 2^n == matriz.rows [#00] ! #
         self.__set_effect(effect)
-        self.__set_causes(causes)
+        self.__set_causes(actual)
         self.__correlate()
         return self.prod_dual_primal(data=data)
 

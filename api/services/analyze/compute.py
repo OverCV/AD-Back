@@ -26,7 +26,7 @@ from pyphi.models import RepertoireIrreducibilityAnalysis
 import copy
 from constants.structure import BOOL_RANGE, DIST, VOID
 from product import C
-from utils.consts import ACTUAL, COLS_IDX, INFTY_POS, MIP, SMALL_PHI, STR_ONE, SUB_DIST
+from utils.consts import ACTUAL, COLS_IDX, INFTY_POS, MIP, NET_ID, SMALL_PHI, STR_ONE, SUB_DIST
 
 from icecream import ic
 
@@ -189,7 +189,9 @@ class Compute:
             MIP: min_info_part,
             DIST: distribution,
             SUB_DIST: part_distrib,
-            # NET_ID: self.network_id
+            # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
+            # ! Falta el tiempo de ejecución ! #
+            # NET_ID: network_id if conf.store_network else net_id,
         }
 
     def use_brute_force(self) -> SiaType:

@@ -28,6 +28,7 @@ def emd(
     u: NDArray[np.float64],
     v: NDArray[np.float64],
     le: bool = conf.little_endian,
+    md: str = conf.metric_distance,
 ) -> float:
     """Returns the Earth Mover's Distance between two distributions."""
     # return wasserstein_distance(u, v)
@@ -42,14 +43,14 @@ def emd(
     earth_moved: float = FLOAT_ZERO
 
     while not np.allclose(u, ROWS_IDX):
-        u_sorter = np.argsort(-u)
-        v_sorter = np.argsort(-v)
+        u_sorter: NDArray[np.intp] = np.argsort(-u)
+        v_sorter: NDArray[np.intp] = np.argsort(-v)
 
-        u_idx = u_sorter[ROWS_IDX]
-        v_idx = v_sorter[ROWS_IDX]
+        u_idx: int = u_sorter[ROWS_IDX]
+        v_idx: int = v_sorter[ROWS_IDX]
 
-        end_u_key = int(endian_keys[u_idx], BASE_2)
-        end_v_key = int(endian_keys[v_idx], BASE_2)
+        end_u_key: int = int(endian_keys[u_idx], BASE_2)
+        end_v_key: int = int(endian_keys[v_idx], BASE_2)
 
         remainder: float = min(u[u_idx], v[v_idx])
         u[u_idx] -= remainder
@@ -59,13 +60,14 @@ def emd(
         valid_distances: dict[str, Callable] = {
             HAMMING_DIST: hamming_distance,
         }
-        metric_distance: Callable = valid_distances.get(conf.metric_distance)
+        metric_distance: Callable = valid_distances.get(md)
 
-        distance = metric_distance(end_u_key, end_v_key)
+        distance: int = metric_distance(end_u_key, end_v_key)
         earth_moved += remainder * distance
     return earth_moved
 
 
+@cache
 def hamming_distance(a: int, b: int) -> int:
     return bin(a ^ b).count(STR_ONE)
 
