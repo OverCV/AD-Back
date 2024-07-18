@@ -174,7 +174,7 @@ def big_endian_int(n: int) -> list[int]:
     return [int(bin(i)[2:].zfill(n), BASE_2) for i in range(2**n)]
 
 
-@cache
+# @cache
 def get_labels(n: int) -> tuple[str]:
     def get_excel_column(n: int) -> str:
         if n <= 0:

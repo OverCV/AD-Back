@@ -25,7 +25,7 @@ from api.services.structure.base import (
 from api.services.network import reconstruct_network
 from icecream import ic
 
-from utils.consts import MIP
+from utils.consts import DATA, MIP
 
 
 router: APIRouter = APIRouter()
@@ -41,9 +41,9 @@ fmt: Format = Format()
 async def pyphi_strategy(
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.BGCOND],
+    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -59,7 +59,7 @@ async def pyphi_strategy(
         )
     results = computing.use_pyphi()
     ic(results)
-    return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
     return
 
 
@@ -74,9 +74,9 @@ async def force_strategy(
     id: Optional[int] = None,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.BGCOND],
+    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -98,7 +98,7 @@ async def force_strategy(
 
     reconstruct_network(results[MIP], db_nosql)
     ic(results)
-    return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
 @router.get(
@@ -112,9 +112,9 @@ async def branch_strategy(
     id: Optional[int] = None,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.BGCOND],
+    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -135,7 +135,7 @@ async def branch_strategy(
 
     reconstruct_network(results[MIP], db_nosql)
     ic(results)
-    return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
 @router.post(
@@ -150,7 +150,7 @@ async def genetic_strategy(
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
     subsys: str = STRUCTURES[R5A][StructProps.ISTATE],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.CAUSES],
+    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -170,7 +170,7 @@ async def genetic_strategy(
     results = computing.use_genetic_algorithm([ctrl_params.model_dump()])
     ic(results)
     reconstruct_network(results[MIP], db_nosql)
-    return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
 # struct_res: StructureResponse = get_structure_by_title(title, db)

@@ -158,8 +158,7 @@ class Compute:
         part_reper = er.partitioned_repertoire
         part_reper = part_reper.squeeze()
 
-        sub_states = list(lil_endian_int(repertoire.ndim))
-        print(f'{len(sub_states)=}')
+        sub_states = copy.copy(list(lil_endian_int(repertoire.ndim)))
 
         distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
         part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
