@@ -61,11 +61,9 @@ class Sia(ABC):
         mip = [[[], []], [[], []]]
 
         for k, (part, con) in enumerate(zip(partition, concepts)):
-            ic(k, part, con)
             for b, lbl_idx in zip(part, con):
-                mip[1 - int(b)][k].append(labels[lbl_idx])
-
-        print(mip)
+                print(b, k, lbl_idx, labels[lbl_idx])
+                mip[int(b)][1 - k].append(labels[lbl_idx])
 
         for con in mip[EFFECT]:
             if len(con) == INT_ZERO:
