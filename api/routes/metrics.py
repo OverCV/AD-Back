@@ -81,10 +81,21 @@ async def all_strats(
     ic(loss_report_df, time_report_df)
 
     # Llamar a los otros endpoints y obtener los resultados
-    common_params = (id, title, istate, subsys, effect, actual, dual)
+    # common_params = (id, title, istate, subsys, effect, actual, dual)
+    common_params = {
+        'id': id,
+        'title': title,
+        'istate': istate,
+        'subsys': subsys,
+        'effect': effect,
+        'actual': actual,
+        'dual': dual,
+        'db_sql': db_sql,
+        'db_nosql': db_nosql,
+    }
 
     try:
-        pyphi_response = await pyphi_strategy(*common_params, db_sql=db_sql, db_nosql=db_nosql)
+        pyphi_response = await pyphi_strategy(**common_params)
         pyphi_results = pyphi_response.body.decode(UTF8_FORMAT)
         pyphi_data = json.loads(pyphi_results)[DATA]
 
@@ -101,7 +112,7 @@ async def all_strats(
         print('PyPhi failed', e)
 
     try:
-        force_response = await force_strategy(*common_params, db_sql=db_sql, db_nosql=db_nosql)
+        force_response = await force_strategy(**common_params)
         force_results = force_response.body.decode(UTF8_FORMAT)
         force_data = json.loads(force_results)[DATA]
 
@@ -113,7 +124,7 @@ async def all_strats(
         print('Force failed', e)
 
     try:
-        branch_response = await branch_strategy(*common_params, db_sql=db_sql, db_nosql=db_nosql)
+        branch_response = await branch_strategy(**common_params)
         branch_results = branch_response.body.decode(UTF8_FORMAT)
         branch_data = json.loads(branch_results)[DATA]
 
@@ -126,26 +137,12 @@ async def all_strats(
         print('Branch failed', e)
 
     try:
-        # genetic_params = {
-        #     'ctrl_params': ctrl_parameters,
-        #     **common_params,
-        #     'db_sql': db_sql,
-        #     'db_nosql': db_nosql,
-        # }
-        genetic_response = await genetic_strategy(
-            ctrl_params=ctrl_parameters,
-            #
-            id=id,
-            title=title,
-            istate=istate,
-            subsys=subsys,
-            effect=effect,
-            actual=actual,
-            dual=dual,
-            #
-            db_sql=db_sql,
-            db_nosql=db_nosql,
-        )
+        # ! Mejorar la forma de pasar los parámetros para luego volver función ! #
+        genetic_params = {
+            'ctrl_params': ctrl_parameters,
+            **common_params,
+        }
+        genetic_response = await genetic_strategy(**genetic_params)
         genetic_results = genetic_response.body.decode(UTF8_FORMAT)
         genetic_data = json.loads(genetic_results)[DATA]
 

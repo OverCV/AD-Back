@@ -141,7 +141,7 @@ class Compute:
             if (bg == STR_ONE) == (not self.__dual)
         ]
 
-        ic(network, sub_istate)
+        # ic(network, sub_istate)
         sub_system = pyphi.Subsystem(
             network=network,
             state=sub_istate,
