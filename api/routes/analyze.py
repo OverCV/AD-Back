@@ -51,7 +51,9 @@ async def pyphi_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
-    struct_response: StructureResponse = get_structure_by_title(title, db_sql)
+    struct_response: StructureResponse = (
+        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
+    )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
@@ -86,12 +88,7 @@ async def force_strategy(
     db_nosql: Session = Depends(get_mongo),
 ):
     struct_response: StructureResponse = (
-        get_structure_by_title(title, db_sql)
-        if id is None
-        else get_structure(
-            id,
-            db_sql,
-        )
+        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
@@ -166,7 +163,7 @@ async def genetic_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
-    ic(id, title)
+    ic(ctrl_params, id, title)
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
