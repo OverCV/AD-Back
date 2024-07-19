@@ -26,12 +26,14 @@ from api.services.network import reconstruct_network
 from icecream import ic
 
 from utils.consts import DATA, MIP
+from utils.funcs import temporizer
 
 
 router: APIRouter = APIRouter()
 fmt: Format = Format()
 
 
+@temporizer
 @router.get(
     '/sia-pyphi/',
     response_description='Hallar la partición con menor pérdida de información, acercamiento mediante PyPhi.',
@@ -39,6 +41,7 @@ fmt: Format = Format()
     response_model_by_alias=False,
 )
 async def pyphi_strategy(
+    id: Optional[int] = None,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
     subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
@@ -58,11 +61,12 @@ async def pyphi_strategy(
             detail='One or more of the SIA properties are not calculated',
         )
     results = computing.use_pyphi()
-    ic(results)
+    # ic(results)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
     return
 
 
+@temporizer
 @router.get(
     '/sia-force/',
     response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
@@ -82,7 +86,12 @@ async def force_strategy(
     db_nosql: Session = Depends(get_mongo),
 ):
     struct_response: StructureResponse = (
-        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
+        get_structure_by_title(title, db_sql)
+        if id is None
+        else get_structure(
+            id,
+            db_sql,
+        )
     )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
@@ -96,11 +105,12 @@ async def force_strategy(
         )
     results = computing.use_brute_force()
 
-    reconstruct_network(results[MIP], db_nosql)
-    ic(results)
+    # reconstruct_network(results[MIP], db_nosql)
+    # ic(results)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
+@temporizer
 @router.get(
     '/sia-branch/',
     response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
@@ -134,10 +144,10 @@ async def branch_strategy(
     results = computing.use_branch_and_bound()
 
     reconstruct_network(results[MIP], db_nosql)
-    ic(results)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
+@temporizer
 @router.post(
     '/sia-genetic/',
     response_description='Hallar la partición con menor pérdida de información, acercamiento mediante un Algoritmo Genético.',

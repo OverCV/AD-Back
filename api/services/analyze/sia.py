@@ -39,7 +39,7 @@ class Sia(ABC):
             )
 
     def get_reperoire(self) -> dict:
-        ic(self.integrated_info, self.min_info_part, self.sub_distrib, self.network_id)
+        # ic(self.integrated_info, self.min_info_part, self.sub_distrib, self.network_id)
         concept: SiaType = {
             SMALL_PHI: self.integrated_info,
             MIP: self.min_info_part,
@@ -54,15 +54,20 @@ class Sia(ABC):
         pass
 
     def label_mip(self, partition: tuple[str, str]) -> tuple[tuple[tuple[str], tuple[str]]]:
+        """
+            # ! Mejorar
+        Dar una tupla ['101', '010'] y ['A', 'B', 'C'] y regresar una tupla de tuplas de tuplas de strings
+        """
         # Incrementamos uno puesto son índices de arreglo
         max_len = max(*self._effect, *self._causes) + 1
         labels = get_labels(max_len)
         concepts = [self._effect, self._causes]
         mip = [[[], []], [[], []]]
 
+        # Negate b -> Reorder partitions. Negate k -> Invert fraction (concepts) #
         for k, (part, con) in enumerate(zip(partition, concepts)):
             for b, lbl_idx in zip(part, con):
-                mip[int(b)][1 - k].append(labels[lbl_idx])
+                mip[1 - int(b)][1 - k].append(labels[lbl_idx])
 
         for con in mip[EFFECT]:
             if len(con) == INT_ZERO:

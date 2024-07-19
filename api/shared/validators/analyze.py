@@ -6,7 +6,7 @@ from icecream import ic
 
 def has_valid_inputs(istate: str, effect: str, causes: str, bgconds: str, tensor_len: int) -> bool:
     # Check with a reg exp if is a binary string
-    ic(istate, effect, causes, tensor_len)
+    # ic(istate, effect, causes, tensor_len)
     binary_pattern = r'^[01]+$'
     if not all(
         [
@@ -17,9 +17,9 @@ def has_valid_inputs(istate: str, effect: str, causes: str, bgconds: str, tensor
     ):
         raise HTTPException('Initial state should be a binary string')
 
-    # ! Validate the bg-condition
+    # ! Validate the bg-condition ! #
 
-    # ! Validate the no-sense of giving empty the future or the causes [#10] ! #
+    # ! Validate the non-sense of giving an empty future or the causes [#10] ! #
 
     if len(effect) != len(causes):
         raise HTTPException('Effect and Causes should have the same length')

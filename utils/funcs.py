@@ -1,4 +1,4 @@
-from functools import cache, reduce
+from functools import cache, reduce, wraps
 import itertools as it
 import math
 import time
@@ -156,7 +156,7 @@ def all_states(n, lil_endian=conf.little_endian):
         yield state if lil_endian else state[::-1]
 
 
-@cache
+# @cache
 def lil_endian_int(n: int):
     """Generate a list of integers representing the numbers in
     little-endian for indices in ``range(2**n)``.
@@ -174,7 +174,7 @@ def big_endian_int(n: int) -> list[int]:
     return [int(bin(i)[2:].zfill(n), BASE_2) for i in range(2**n)]
 
 
-# @cache
+@cache
 def get_labels(n: int) -> tuple[str]:
     def get_excel_column(n: int) -> str:
         if n <= 0:
@@ -266,3 +266,23 @@ def memoize(func):
         return cache[(args, kwargs)]
 
     return wrapper
+
+
+def temporizer(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        start_time = time.time()  # Iniciar temporizador
+        result = await func(*args, **kwargs)  # Llamar a la función original
+        end_time = time.time()  # Detener temporizador
+
+        # Calcular el tiempo de ejecución
+        delay = end_time - start_time
+
+        # Almacenar el tiempo en el diccionario
+        conf.execution_times[func.__name__] = delay
+
+        return result  # Retornar el resultado de la función original
+
+    return wrapper
+
+

@@ -1,4 +1,3 @@
-from math import e
 from api.models.bnb.nodum import Nodum
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
@@ -15,6 +14,7 @@ from numpy.typing import NDArray
 import networkx as nx
 from matplotlib import pyplot as plt
 
+from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, MIN_INFO_PARTITION
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
 from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, W_LBL
 from utils.funcs import emd, get_labels
@@ -61,6 +61,15 @@ class Branch(Sia):
         # part: None = None
         # mip = self.label_mip(part)
         # self.min_info_part = mip
+        # ic(
+        #     self.integrated_info,
+        #     self.min_info_part,
+        #     self.sub_distrib,
+        #     self.network_id,
+        # )
+        self.network_id = DUMMY_NET_INT_ID
+        self.sub_distrib = DUMMY_SUBDIST
+        self.min_info_part = MIN_INFO_PARTITION
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #

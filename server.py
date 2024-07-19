@@ -8,6 +8,7 @@ class Server:
         self.directed: bool = True
         self.locale_nosql: bool = False
         self.store_nets: bool = False
+        self.execution_times: dict[str, float] = dict()
 
     def use_le(self) -> None:
         self.little_endian = True

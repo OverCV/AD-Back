@@ -25,7 +25,6 @@ from pyphi.models import RepertoireIrreducibilityAnalysis
 
 import copy
 from constants.structure import BOOL_RANGE, DIST, VOID
-from product import C
 from utils.consts import ACTUAL, COLS_IDX, INFTY_POS, MIP, NET_ID, SMALL_PHI, STR_ONE, SUB_DIST
 
 from icecream import ic
@@ -94,7 +93,7 @@ class Compute:
         # raise HTTPException(status_code=305, detail='Stop here')
         self.__struct.create_distrib(self.__effect, self.__causes)
         self.__distribution = self.__struct.get_distrib(self.__dual)
-        ic(self.__bgcond, self.__effect, self.__causes, self.__distribution)
+        # ic(self.__bgcond, self.__effect, self.__causes, self.__distribution)
         return self.__distribution is not None
 
     def use_pyphi(self):
@@ -105,6 +104,11 @@ class Compute:
             for mat, bg in zip(matrices, self.__str_bgcond)
             if (bg == STR_ONE) == (not self.__dual)
         ]
+        # [
+        #     ic(mat.as_dataframe())
+        #     for mat in submatrices
+        # ]
+        # return
         tpms = np.array(
             [mat.get_arr()[:, COLS_IDX] for mat in submatrices],
         )
@@ -125,6 +129,8 @@ class Compute:
             if (bg == STR_ONE) == (not self.__dual)
         ]
         node_labels = pyphi.labels.NodeLabels(sub_labels, sub_indices)
+        print(tpm_state_node)
+        # return
         network = pyphi.Network(
             tpm=tpm_state_node,
             node_labels=node_labels,
@@ -139,7 +145,7 @@ class Compute:
 
         # ic(sub_labels, sub_indices, sub_istate)
 
-        # ic(network, sub_istate)
+        ic(network, sub_istate)
         sub_system = pyphi.Subsystem(
             network=network,
             state=sub_istate,
@@ -149,7 +155,7 @@ class Compute:
             sub_system.node_indices,
             sub_system.node_indices,
         )
-        ic(er)
+        # ic(er)
         integrated_info: float = er.phi
 
         repertoire = er.repertoire
@@ -158,7 +164,7 @@ class Compute:
         part_reper = er.partitioned_repertoire
         part_reper = part_reper.squeeze()
 
-        sub_states = copy.copy(list(lil_endian_int(repertoire.ndim)))
+        sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
 
         distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
         part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
@@ -174,12 +180,12 @@ class Compute:
 
         min_info_part = [
             [
-                [sub_labels[i] for i in dual_mech] if dual_mech else [VOID],
-                [sub_labels[i] for i in dual_purv] if dual_purv else [VOID],
-            ],
-            [
                 [sub_labels[i] for i in prim_mech] if prim_mech else [VOID],
                 [sub_labels[i] for i in prim_purv] if prim_purv else [VOID],
+            ],
+            [
+                [sub_labels[i] for i in dual_mech] if dual_mech else [VOID],
+                [sub_labels[i] for i in dual_purv] if dual_purv else [VOID],
             ],
         ]
 
