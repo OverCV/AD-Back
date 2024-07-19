@@ -1,40 +1,46 @@
 # from fastapi import Body
 from pydantic import BaseModel, ConfigDict, Field
 
+from api.models.props.structure import StructProps
 from api.schemas.genetic.control import ControlSchema
+from constants.structure import (
+    CONTROL_PARAMETERS,
+    IS_DUAL,
+    N5,
+    N7,
+    SA,
+    SAMPLES,
+    SHEET_NAME,
+)
 from utils.consts import EX_STR
 
 
 class SampleRequest(BaseModel):
-    ctrl_params: ControlSchema = Field(...)
-    sheet: str = Field(...)
-    id: int = Field(None)
-    title: str = Field(...)
-    istate: str = Field(...)
-    subsys: str = Field(...)
-    effect: str = Field(...)
-    actual: str = Field(...)
-    dual: bool = Field(False)
-    # db_sql: Session = Depends(get_sqlite),
-    # db_nosql: Session = Depends(get_mongo),
+    ctrl_params: ControlSchema
+    sheet: str = Field(SAMPLES[N5][SA][N7][SHEET_NAME], alias=SHEET_NAME)
+    id: int | None = None
+    title: str = ...
+    istate: str = ...
+    subsys: str = ...
+    effect: str = ...
+    actual: str = ...
+    dual: bool = Field(False, alias=IS_DUAL)
 
-    model_config = ConfigDict(
-        populate_by_name=True,
-        arbitrary_types_allowed=True,
-        json_schema_extra={
+    class Config:
+        schema_extra = {
             EX_STR: {
-                ctrl_params: ControlSchema,
-                sheet: 'Red 5 Nodos',
-                id: None,
-                title: 'System_Title',
-                istate: '10001',
-                subsys: '11100',
-                effect: '11111',
-                actual: '11111',
-                dual: False,
-            },
-        },
-    )
+                CONTROL_PARAMETERS: {
+                    SHEET_NAME: SAMPLES[N5][SA][N7][SHEET_NAME],
+                    StructProps.ID: SAMPLES[N5][SA][N7][StructProps.ID],
+                    StructProps.TITLE: SAMPLES[N5][SA][N7][StructProps.TITLE],
+                    StructProps.ISTATE: SAMPLES[N5][SA][N7][StructProps.ISTATE],
+                    StructProps.SUBSYS: SAMPLES[N5][SA][N7][StructProps.SUBSYS],
+                    StructProps.EFFECT: SAMPLES[N5][SA][N7][StructProps.EFFECT],
+                    StructProps.ACTUAL: SAMPLES[N5][SA][N7][StructProps.ACTUAL],
+                    IS_DUAL: SAMPLES[N5][SA][N7][IS_DUAL],
+                }
+            }
+        }
 
 
 # class StructureResponse(SampleRequest):

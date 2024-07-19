@@ -14,6 +14,7 @@ from api.routes.analyze import (
     genetic_strategy,
     pyphi_strategy,
 )
+from api.schemas.sample import SampleRequest
 from data.motors import get_mongo, get_sqlite
 
 
@@ -220,7 +221,7 @@ async def all_strats(
     response_model_by_alias=False,
 )
 def mutlple_metric(
-    # samples: list[SampleRequest],
+    samples: list[SampleRequest],
     sql_db: Session = Depends(get_sqlite),
     nosql_db: Session = Depends(get_mongo),
 ):

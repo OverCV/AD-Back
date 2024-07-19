@@ -2,6 +2,7 @@ from typing import TypedDict
 
 
 class StructProps:
+    ID: str = 'id'
     TITLE: str = 'title'
     ISTATE: str = 'istate'
     EFFECT: str = 'effect'
