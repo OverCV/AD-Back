@@ -137,12 +137,10 @@ async def all_strats(
             'genetic_strategy'
         ]
     except Exception as e:
-        print('Genetic failed', e)
+        print('\nGenetic failed', e, '\n')
 
-    # ic(pyphi_object)
-
-    ic(loss_report_df)
-    ic(time_report_df)
+    # ic(loss_report_df)
+    # ic(time_report_df)
 
     separator = pd.DataFrame(
         [{col: '- - -' for col in loss_report_df.columns}],

@@ -32,15 +32,15 @@ class BruteForce(Sia):
         self,
         structure: Structure,
         effect: list[int],
-        causes: list[int],
+        actual: list[int],
         distribution: NDArray[np.float64],
         dual: bool,
     ) -> None:
-        super().__init__(structure, effect, causes, distribution, dual)
+        super().__init__(structure, effect, actual, distribution, dual)
 
     def analyze(self) -> bool:
         # Creamos todas las biparticiones posibles
-        bipartitions = self.bipartitionate(len(self._effect), len(self._causes))
+        bipartitions = self.bipartitionate(len(self._effect), len(self._actual))
         # No usamos la primera distribución, es un caso absurdo.
         _: tuple[str, str] = bipartitions.pop(0)
         part = (
@@ -82,7 +82,7 @@ class BruteForce(Sia):
             for j, e in zip(self._effect, str_effect):
                 effect[e == STR_ONE].append(j)
             actual = {bin: [] for bin in BOOL_RANGE}
-            for i, c in zip(self._causes, str_causes):
+            for i, c in zip(self._actual, str_causes):
                 actual[c == STR_ONE].append(i)
             indexed_distrib = sub_struct.create_distrib(effect, actual, data=True)
             iter_distrib = indexed_distrib[StructProps.DIST_ARR]
@@ -106,13 +106,13 @@ class BruteForce(Sia):
             effect = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self._effect, str_effect):
                 effect[e == STR_ONE].append(j)
-            causes = {bin: [] for bin in BOOL_RANGE}
-            for i, c in zip(self._causes, str_causes):
-                causes[c == STR_ONE].append(i)
+            actual = {bin: [] for bin in BOOL_RANGE}
+            for i, c in zip(self._actual, str_causes):
+                actual[c == STR_ONE].append(i)
 
             # Importante tener en cuenta realizar un producto de distribuciones implica manejar los índices por lo que las compmaraciones entre arreglos requieren seleccionar la serie.
             indexed_distrib: tuple[tuple[int, ...], NDArray[np.float64]] = (
-                sub_struct.create_distrib(effect, causes, data=True)
+                sub_struct.create_distrib(effect, actual, data=True)
             )
             iter_dist = indexed_distrib[StructProps.DIST_ARR]
             # ic(*iter_dist, self._target_dist)

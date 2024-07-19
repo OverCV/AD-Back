@@ -5,7 +5,7 @@ class StructProps:
     TITLE: str = 'title'
     ISTATE: str = 'istate'
     EFFECT: str = 'effect'
-    ACTUAL: str = 'causes'
+    ACTUAL: str = 'actual'
     SUBSYS: str = 'bgcond'
     FORMAT: str = 'format'
     TENSOR: str = 'tensor'

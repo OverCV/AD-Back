@@ -33,11 +33,11 @@ class Branch(Sia):
         self,
         structure: Structure,
         effect: list[int],
-        causes: list[int],
+        actual: list[int],
         distrib: NDArray[np.float64],
         dual: bool,
     ) -> None:
-        super().__init__(structure, effect, causes, distrib, dual)
+        super().__init__(structure, effect, actual, distrib, dual)
 
         self.__effect_labels: None | list[str] = None
         self.__causes_labels: None | list[str] = None
@@ -46,10 +46,10 @@ class Branch(Sia):
 
     def analyze(self) -> bool:
         # ic(self._effect, self._causes, self._target_dist)
-        max_len = max(*self._effect, *self._causes) + 1
+        max_len = max(*self._effect, *self._actual) + 1
         labels = get_labels(max_len)
         self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
-        self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._causes]
+        self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._actual]
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         self.__net = self.margin_n_expand()
@@ -92,14 +92,14 @@ class Branch(Sia):
             self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']
         """
 
-        concept_comb = list(it.product(self._causes, self._effect))
+        concept_comb = list(it.product(self._actual, self._effect))
 
         self.__net.add_nodes_from(self.__effect_labels)
         self.__net.add_nodes_from(self.__causes_labels)
         self.__net.add_edges_from(
             (
                 (
-                    self.__causes_labels[self._causes.index(j)],
+                    self.__causes_labels[self._actual.index(j)],
                     self.__effect_labels[self._effect.index(i)],
                 )
                 for j, i in concept_comb
@@ -121,18 +121,18 @@ class Branch(Sia):
             sub_struct: Structure = copy.deepcopy(alt_struct)
             sub_mat: Matrix = sub_struct.get_matrix(idx_effect)
 
-            sub_states: list[int] = copy.deepcopy(self._causes)
+            sub_states: list[int] = copy.deepcopy(self._actual)
             sub_states.remove(idx_causes)
 
             sub_mat.margin(sub_states)
-            sub_mat.expand(self._causes)
+            sub_mat.expand(self._actual)
 
             effect = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
-            causes = {bin: ([] if self._dual == bin else self._causes) for bin in BOOL_RANGE}
-            iter_distrib = sub_struct.create_distrib(effect, causes, data=True)[
+            actual = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
+            iter_distrib = sub_struct.create_distrib(effect, actual, data=True)[
                 StructProps.DIST_ARR
             ]
-            origin = self.__causes_labels[self._causes.index(idx_causes)]
+            origin = self.__causes_labels[self._actual.index(idx_causes)]
             destiny = self.__effect_labels[self._effect.index(idx_effect)]
 
             emd_as_weight = emd(iter_distrib, self._target_dist)
@@ -210,7 +210,7 @@ class Branch(Sia):
         # origin_net = origin.get_net()
 
         m: int = len(self._effect)
-        n: int = len(self._causes)
+        n: int = len(self._actual)
         limit: int = 2 ** (m + n - 1)
         all_nodes = set()
 

@@ -60,7 +60,7 @@ class MechaInt(TypedDict):
     title: str
     istate: str
     effect: str
-    causes: str
+    actual: str
     format: str
 
 

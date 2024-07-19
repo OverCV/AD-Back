@@ -45,9 +45,9 @@ class Matrix:
         Marginalize the matrix over the given states. The states to marginalize are the states to drop if dual is disabled, else the given states are the states to preserve.
 
         Args:
-            states (list[int]): Represents the states to marginalize if dual is disabled, these states must be a subset of the causes because are the states to drop or preserve.
+            states (list[int]): Represents the states to marginalize if dual is disabled, these states must be a subset of the actual because are the states to drop or preserve.
             axis (int, optional): _description_. Defaults to ROWS_IDX. This determine if we're marginalizing rows (0) or columns (1).
-            dual (bool, optional): The actual matrix has a set of causes, on whichever the incoming state is, is marginalized if dual is disabled, else the given states are the states to preserve. Defaults to False.
+            dual (bool, optional): The actual matrix has a set of actual, on whichever the incoming state is, is marginalized if dual is disabled, else the given states are the states to preserve. Defaults to False.
             le (bool, optional): _description_. Defaults to conf.little_endian. Indicates if the generated states are in little or big endian notation.
         """
         self.__array = self.__array.transpose() if axis == COLS_IDX else self.__array
@@ -286,7 +286,7 @@ class Matrix:
     #     tpm_values: NDArray[np.float64],
     #     states,
     #     istate,
-    #     causes,
+    #     actual,
     # ):
     #     mask = np.ones(tpm_values.shape[0], dtype=np.bool_)
     #     for i, state in enumerate(states):
@@ -294,15 +294,15 @@ class Matrix:
     #     return mask
 
     # def at_states(self, istate: str, states: list[int]):
-    #     causes = self.__causes
+    #     actual = self.__causes
     #     tpm = self.as_dataframe()
 
-    #     # Convert states and causes to numpy arrays for faster indexing
+    #     # Convert states and actual to numpy arrays for faster indexing
     #     states = np.array(states)
-    #     causes = np.array(causes)
+    #     actual = np.array(actual)
 
     #     # Find indices not in states
-    #     excluded_indices = np.setdiff1d(causes, states)
+    #     excluded_indices = np.setdiff1d(actual, states)
 
     #     # Create the key for filtering
     #     key = ''.join(istate[i] for i in states)
@@ -311,7 +311,7 @@ class Matrix:
     #     tpm_values = tpm.index.to_frame().values
 
     #     # Use numba-accelerated function to filter rows
-    #     mask = self.filter_rows(tpm_values, states, key, causes)
+    #     mask = self.filter_rows(tpm_values, states, key, actual)
     #     filtered_tpm = tpm[mask]
 
     #     # Create the result DataFrame

@@ -32,7 +32,7 @@ class Environ:
         self.__distrib: NDArray[np.float64] = distribution
 
         # self.__effect: list[int] = concept[EFFECT]
-        # self.__causes: list[int] = concept[CAUSES]
+        # self.__causes: list[int] = concept[ACTUAL]
 
         self.__population: Population = Population(distribution, concept, structure)
         # self.__target_dist: NDArray[np.float64] = None

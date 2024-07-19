@@ -46,7 +46,7 @@ class Compute:
         struct: StructureResponse,
         istate: str,
         str_effect: str,
-        str_causes: str,
+        str_actual: str,
         str_bgcond: str,
         subtensor: NDArray[np.float64],
         dual: bool = False,
@@ -58,7 +58,7 @@ class Compute:
             tensor=subtensor,
         )
         self.__str_effect: str = str_effect
-        self.__str_causes: str = str_causes
+        self.__str_causes: str = str_actual
         self.__str_bgcond: str = str_bgcond
         self.__dual: bool = dual
 
@@ -73,6 +73,8 @@ class Compute:
         Desde este nivel se deifinen las condiciones de bg, las cuales permiten conocer los elementos/ínidces usables para los diferentes subsistemas a generar.
         """
 
+        ic(self.__str_bgcond, STR_ONE, self.__dual)
+
         bgcond_elems = [
             idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
         ]
@@ -82,18 +84,15 @@ class Compute:
         for j, c in enumerate(self.__str_causes):
             if j in bgcond_elems:
                 self.__causes[c == STR_ONE].append(j)
-        for i, e in enumerate(self.__str_bgcond):
-            self.__bgcond[e == STR_ONE].append(i)
+        for i, bg in enumerate(self.__str_bgcond):
+            self.__bgcond[bg == STR_ONE].append(i)
 
         # Preservamos la superestructura para trabajar con una nueva
         self.__struct: Structure = copy.deepcopy(self.__sup_struct)
-        # self.__struct.create_distrib(self.__effect, self.__causes)
         self.__struct.set_bg_cond(self.__bgcond)
-
-        # raise HTTPException(status_code=305, detail='Stop here')
         self.__struct.create_distrib(self.__effect, self.__causes)
         self.__distribution = self.__struct.get_distrib(self.__dual)
-        # ic(self.__bgcond, self.__effect, self.__causes, self.__distribution)
+
         return self.__distribution is not None
 
     def use_pyphi(self):
@@ -108,7 +107,6 @@ class Compute:
         #     ic(mat.as_dataframe())
         #     for mat in submatrices
         # ]
-        # return
         tpms = np.array(
             [mat.get_arr()[:, COLS_IDX] for mat in submatrices],
         )
@@ -129,8 +127,8 @@ class Compute:
             if (bg == STR_ONE) == (not self.__dual)
         ]
         node_labels = pyphi.labels.NodeLabels(sub_labels, sub_indices)
-        print(tpm_state_node)
-        # return
+        # print(tpm_state_node)
+
         network = pyphi.Network(
             tpm=tpm_state_node,
             node_labels=node_labels,
@@ -142,8 +140,6 @@ class Compute:
             for i, bg in enumerate(self.__str_bgcond)
             if (bg == STR_ONE) == (not self.__dual)
         ]
-
-        # ic(sub_labels, sub_indices, sub_istate)
 
         ic(network, sub_istate)
         sub_system = pyphi.Subsystem(

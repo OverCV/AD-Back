@@ -18,12 +18,12 @@ class Genetic(Sia):
         self,
         structure: Structure,
         effect: list[int],
-        causes: list[int],
+        actual: list[int],
         distrib: NDArray[np.float64],
         dual: bool,
         ctrl_params: list[list[dict[str, int | float]]],
     ) -> None:
-        super().__init__(structure, effect, causes, distrib, dual)
+        super().__init__(structure, effect, actual, distrib, dual)
         # There's an environment for each control parameter
         self.__control_params: list[ControlSchema] = ctrl_params
         #! Use all envs required by ctrl params
@@ -43,7 +43,7 @@ class Genetic(Sia):
                 param,
                 self._structure,
                 self._target_dist,
-                (self._effect, self._causes),
+                (self._effect, self._actual),
                 self._dual,
             )
             best = env.evolve()

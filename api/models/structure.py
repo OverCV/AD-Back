@@ -29,7 +29,7 @@ class Structure:
         self.__istate: str = istate
         # Effect & Causes implies the actual working bipartition
         self.__effect: dict[bool, list[int]] | None = None
-        self.__causes: dict[bool, list[int]] | None = None
+        self.__actual: dict[bool, list[int]] | None = None
         # Tensor composed by primal and dual matrices #
         self.__tensor: dict[int, Matrix] = (
             OrderedDict((idx, Matrix(arr)) for idx, arr in enumerate(tensor))
@@ -49,10 +49,10 @@ class Structure:
         return self.prod_dual_primal(data=data)
 
     def prod_dual_primal(self, data: bool = False, le: bool = conf.little_endian):
-        """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and causes correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
+        """Calculates the serie distribution of the system. Precondition is that the system has to be set it's effect and actual correctly depending on the size of the tensor. Then, those matrices are used for the purpose of obtaining the full distribution composed by the primal and dual distributions.
 
         {set_effect 101 - set_causes 01}:
-            effect = {T:[0,1,4], F:[]} causes = {T: [2,4], F: []}
+            effect = {T:[0,1,4], F:[]} actual = {T: [2,4], F: []}
 
         Args:
             data (bool, optional): When set to true, returns the probability distribution, by default is set as a calculated attribute. Defaults to False.
@@ -62,10 +62,10 @@ class Structure:
             None: If the data is set to False, else returns the distribution of the system.
         """
 
-        # if len(effect) != len(causes) and len(effect) != len(self.__tensor):
+        # if len(effect) != len(actual) and len(effect) != len(self.__tensor):
         #     raise HTTPException(
         #         status_code=400,
-        #         detail='Effect and causes must have the same length. Also the tensor
+        #         detail='Effect and actual must have the same length. Also the tensor
 
         # Accedemos al primal y dual del sistema
         prim_effect = self.__effect[True]
@@ -115,9 +115,9 @@ class Structure:
         return dist if data else None
 
     def __correlate(self) -> None:
-        """Sets the tensor matrices to it's primal and dual marginalization. The effect and causes must be setted before calling this function. The effect and causes are used to select the matrices that are going to be marginalized. The marginalization is done by the effect and causes, the effect is used to select the matrices that are going to be marginalized by the causes. The causes are used to select the states that are going to be marginalized."""
-        if self.__effect is None or self.__causes is None:
-            raise HTTPException(status_code=400, detail='Effect and causes must be setted.')
+        """Sets the tensor matrices to it's primal and dual marginalization. The effect and actual must be setted before calling this function. The effect and actual are used to select the matrices that are going to be marginalized. The marginalization is done by the effect and actual, the effect is used to select the matrices that are going to be marginalized by the actual. The actual are used to select the states that are going to be marginalized."""
+        if self.__effect is None or self.__actual is None:
+            raise HTTPException(status_code=400, detail='Effect and actual must be setted.')
 
         if conf.threaded:
             # Threaded version
@@ -125,7 +125,7 @@ class Structure:
                 for idx in self.__effect[b]:
                     # ic(b, idx)
                     mat: Matrix = self.__tensor[idx]
-                    mat.margin(self.__causes[b])
+                    mat.margin(self.__actual[b])
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [executor.submit(process_matrices, b) for b in BOOL_RANGE]
@@ -137,13 +137,13 @@ class Structure:
                 for idx in self.__effect[b]:
                     # ic(b, idx)
                     mat: Matrix = self.__tensor[idx]
-                    mat.margin(self.__causes[b])
+                    mat.margin(self.__actual[b])
 
     def __set_effect(self, effect: dict[bool, list[int]]) -> None:
         self.__effect = effect
 
-    def __set_causes(self, causes: dict[bool, list[int]]) -> None:
-        self.__causes = causes
+    def __set_causes(self, actual: dict[bool, list[int]]) -> None:
+        self.__actual = actual
 
     def set_bg_cond(self, bg_cond: dict[bool, list[int]]) -> None:
         """
@@ -178,7 +178,7 @@ class Structure:
         return self.__effect
 
     def get_causes(self) -> str:
-        return self.__causes
+        return self.__actual
 
     def get_matrix(self, idx: int) -> Matrix:
         return self.__tensor[idx]
@@ -193,12 +193,12 @@ class Structure:
         return self.__title
 
     def __str__(self) -> str:
-        return f'{self.__title} : {self.__istate}, {self.__effect}, {self.__causes}'
+        return f'{self.__title} : {self.__istate}, {self.__effect}, {self.__actual}'
 
     """
 
     effect 10110
-    causes 10110
+    actual 10110
     dual False
 
     struct.tensor = {0: (0,1,2,3,4), 1: (0,1,2,3,4), 2: (0,1,2,3,4), 3: (0,1,2,3,4), 4: (0,1,2,3,4)}
@@ -215,15 +215,15 @@ class Structure:
     # Reemplazamos primero el tensor según indique el efecto
     # effect = effect[not dual]
     # Vamos a tomar las condiciones de bg, nos interesa conocer estos estados causales.
-    # causes = causes[dual]
+    # actual = actual[dual]
 
     # self.__tensor = OrderedDict((idx, self.__tensor[idx]) for idx in effect)
-    # self.__tensor = OrderedDict((idx, self.__tensor[idx].at_states(causes)) for idx in effect)
+    # self.__tensor = OrderedDict((idx, self.__tensor[idx].at_states(actual)) for idx in effect)
     # new_tensor = OrderedDict()
     # Seteamos las condiciones de backgroun para tanto el primal como el dual
 
-    # self.__tensor[idx].at_states(self.__istate, causes)
-    # new_tensor[idx] = self.__tensor[idx].at_states(self.__istate, causes)
+    # self.__tensor[idx].at_states(self.__istate, actual)
+    # new_tensor[idx] = self.__tensor[idx].at_states(self.__istate, actual)
     # self.__tensor = new_tensor
     # Subseleccionamos por cada matriz del tensor así mismo las filas donde se indique debe mantenerse la causa, de forma que si originalmente tenemos las combinaciones d  el [000, 100, 010, 110, ..., 111] pero el dual indica sólo seleccionar los elementos de forma 101 con dual off.
     # La entrada es 1 o 0, 1si dual=False entonces 1 ses primal y por ende vamos a seleccionar en dichos elementos, si está en 0 no lo seleccionamos, el valor estará delimitado por el istate, el estado inicial determina las secciones a tomar e ignorar
@@ -235,7 +235,7 @@ class Structure:
     #         self.__tensor.pop(elem)
 
     # # def subsystem(self, dual: bool = False) -> None:
-    # #     # Given the effect and causes, this function takes the primal selection for the tensor and returns the subsystem.
+    # #     # Given the effect and actual, this function takes the primal selection for the tensor and returns the subsystem.
     # #     subtensor = dict()
 
     # #     for idx in self.__effect[dual]:
@@ -263,7 +263,7 @@ class Structure:
 
     # originamos de la cadena 10110, idx []
     # self.__causes = {True: list(), False: list()}
-    # for idx in causes:
+    # for idx in actual:
     #     self.__causes[b == STR_ONE].append(idx)
-    # for i, b in enumerate(causes):
+    # for i, b in enumerate(actual):
     #     self.__causes[b == STR_ONE].append(i)

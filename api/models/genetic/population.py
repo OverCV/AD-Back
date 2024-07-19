@@ -23,14 +23,14 @@ class Population:
         self.__indivis: list[Individual] = []
         self.__struct: Structure = structure
         self.__effect: list[int] = concept[EFFECT]
-        self.__causes: list[int] = concept[ACTUAL]
+        self.__actual: list[int] = concept[ACTUAL]
         # self.__distrib: NDArray[np.float64] = distribution
 
     def get_size(self) -> int:
         return len(self.__indivis)
 
     def get_concept(self) -> tuple[list[int], list[int]]:
-        return (deepcopy(self.__effect), deepcopy(self.__causes))
+        return (deepcopy(self.__effect), deepcopy(self.__actual))
 
     def get_individuals(self) -> list[Individual]:
         return deepcopy(self.__indivis)
@@ -51,7 +51,7 @@ class Population:
         chromosomes: NDArray[np.float64] = (
             self.generate_random
             if pop_size == 0
-            else self.generate_k_cms(len(self.__effect), len(self.__causes), pop_size)
+            else self.generate_k_cms(len(self.__effect), len(self.__actual), pop_size)
         )
         validated_cms = self.validate_cms(chromosomes)
         sub_dists = self.update_distribution(validated_cms)
@@ -70,15 +70,15 @@ class Population:
         separator: int = len(self.__effect)
         for chromosome in cms:
             effect = {bin: [] for bin in BOOL_RANGE}
-            causes = {bin: [] for bin in BOOL_RANGE}
+            actual = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self.__effect, chromosome[:separator]):
                 effect[e].append(j)
-            for i, c in zip(self.__causes, chromosome[separator:]):
-                causes[c].append(i)
+            for i, c in zip(self.__actual, chromosome[separator:]):
+                actual[c].append(i)
             sub_distrib.append(
                 deepcopy(self.__struct).create_distrib(
                     effect,
-                    causes,
+                    actual,
                     data=True,
                 )
             )

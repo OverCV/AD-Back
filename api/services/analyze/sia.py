@@ -16,10 +16,10 @@ from utils.funcs import get_labels
 class Sia(ABC):
     """Class Sia is used as parent class to use it's props in the used strategies."""
 
-    def __init__(self, structure, effect, causes, distribution, dual) -> None:
+    def __init__(self, structure, effect, actual, distribution, dual) -> None:
         self._structure: Structure = structure
         self._effect: list[int] = effect
-        self._causes: list[int] = causes
+        self._actual: list[int] = actual
         self._target_dist: NDArray[np.float64] = distribution
         self._dual: bool = dual
 
@@ -59,9 +59,9 @@ class Sia(ABC):
         Dar una tupla ['101', '010'] y ['A', 'B', 'C'] y regresar una tupla de tuplas de tuplas de strings
         """
         # Incrementamos uno puesto son índices de arreglo
-        max_len = max(*self._effect, *self._causes) + 1
+        max_len = max(*self._effect, *self._actual) + 1
         labels = get_labels(max_len)
-        concepts = [self._effect, self._causes]
+        concepts = [self._effect, self._actual]
         mip = [[[], []], [[], []]]
 
         # Negate b -> Reorder partitions. Negate k -> Invert fraction (concepts) #

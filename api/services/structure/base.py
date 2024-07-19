@@ -80,13 +80,13 @@ def get_db_structure(id: int, db: Session) -> StructureTable:
     if not sv.exist_structure_id(id, db):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Structure with id {id} not found.',
+            detail=f'Structure from db with id {id} not found.',
         )
     db_structure: StructureTable = db.query(StructureTable).filter(StructureTable.id == id).first()
     if db_structure is None:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail=f'Structure with id {id} do not exists.',
+            detail=f'Structure in query with id {id} do not exists.',
         )
     return db_structure
 

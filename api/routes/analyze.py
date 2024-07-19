@@ -156,22 +156,23 @@ async def branch_strategy(
 )
 async def genetic_strategy(
     ctrl_params: ControlSchema,
+    id: Optional[int] = None,
     title: str = STRUCTURES[R5A][StructProps.TITLE],
     istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.ISTATE],
+    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
     effect: str = STRUCTURES[R5A][StructProps.EFFECT],
     actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
+    ic(id, title)
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    av.has_valid_inputs(istate, effect, actual, len(subtensor))
-    ic(title)
-    computing: Compute = Compute(struct_response, istate, effect, actual, subtensor, dual)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
     if not computing.init_concept():
         raise HTTPException(
             status_code=500,
@@ -185,9 +186,9 @@ async def genetic_strategy(
 
 # struct_res: StructureResponse = get_structure_by_title(title, db)
 # subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_res.tensor)
-# av.has_valid_inputs(istate, effect, causes, len(subtensor))
+# av.has_valid_inputs(istate, effect, actual, len(subtensor))
 # # ic(type(subtensor))
-# computing: Compute = Compute(struct_res, istate, effect, causes, subtensor, dual)
+# computing: Compute = Compute(struct_res, istate, effect, actual, subtensor, dual)
 # results = computing.use_genetic_algorithm()
 # return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
 
@@ -202,7 +203,7 @@ async def genetic_strategy(
 #     title:  str = SYSTEMS[R10A][SysProps.TITLE],
 #     istate: str = SYSTEMS[R10A][SysProps.ISTATE],
 #     effect: str = SYSTEMS[R10A][SysProps.EFFECT],
-#     causes: str = SYSTEMS[R10A][SysProps.CAUSES],
+#     actual: str = SYSTEMS[R10A][SysProps.CAUSES],
 #     # ! Should be a GLOBAL configuration
 #     store_network: bool = False,
 #     db=Depends(get_sqlite)
@@ -211,6 +212,6 @@ async def genetic_strategy(
 #     form: Format = Format()
 #     subtensor = form.deserialize_tensor(db_system.tensor)
 
-#     computing: Compute = Compute(db_system, istate, effect, causes, subtensor)
+#     computing: Compute = Compute(db_system, istate, effect, actual, subtensor)
 #     results = computing.use_pyphi()
 #     return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)

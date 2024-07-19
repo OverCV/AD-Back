@@ -86,5 +86,5 @@ async def delete_structure_by_id(id: int, db: Session = Depends(get_sqlite)):
         return JSONResponse(status_code=status.HTTP_200_OK, content={'data': True})
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=f'Structure with id {id} not found.',
+        detail=f'Structure with id {id} not found to delete.',
     )
