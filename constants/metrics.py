@@ -18,3 +18,5 @@ MEASUREMENTS = {
         'actual': ['100'],
     }
 }
+
+STORAGE_URL: str = 'data/reports/reporte_metricas.xlsx'

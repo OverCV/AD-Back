@@ -1,22 +1,32 @@
-from collections import OrderedDict
-from typing import Any
-from fastapi import HTTPException, status, APIRouter, Depends
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
-
+import pandas as pd
 import json
 
-import pandas as pd
 from sqlalchemy.orm import Session
+from fastapi import APIRouter, status, Depends
 
 from api.models.props.structure import StructProps
-from api.routes.analyze import branch_strategy, force_strategy, genetic_strategy, pyphi_strategy
 from api.schemas.genetic.control import ControlSchema
-from constants.metrics import FORCE_ST, UTF8_FORMAT, PYPHI_ST, BRANCH_ST, GENETIC_ST, SERVER_URL
-from constants.structure import R5A, STRUCTURES
+
+# from api.schemas.sample import SampleRequest
+from api.routes.analyze import (
+    branch_strategy,
+    force_strategy,
+    genetic_strategy,
+    pyphi_strategy,
+)
 from data.motors import get_mongo, get_sqlite
 
 
+from constants.metrics import (
+    FORCE_ST,
+    STORAGE_URL,
+    UTF8_FORMAT,
+    PYPHI_ST,
+    BRANCH_ST,
+    GENETIC_ST,
+    SERVER_URL,
+)
+from constants.structure import R5A, STRUCTURES
 from utils.consts import DATA, SMALL_PHI
 
 from server import conf
@@ -105,9 +115,6 @@ async def all_strats(
         time_report_df.at[TIME_ROW_PYPHI, f'{subsys}=({effect}|{actual})'] = conf.execution_times[
             'pyphi_strategy'
         ]
-
-        # ic(brutal_data[SMALL_PHI], brutal_data)
-        # force_response = await force_strategy(*tuple_parameters, db_sql=db_sql, db_nosql=db_nosql)
     except Exception as e:
         print('PyPhi failed', e)
 
@@ -137,12 +144,12 @@ async def all_strats(
         print('Branch failed', e)
 
     try:
-        # ! Mejorar la forma de pasar los parámetros para luego volver función ! #
-        genetic_params = {
-            'ctrl_params': ctrl_parameters,
+        # ! Mejorar la forma de pasar parámetros, luego volver función ! #
+
+        genetic_response = await genetic_strategy(
+            ctrl_params=ctrl_parameters,
             **common_params,
-        }
-        genetic_response = await genetic_strategy(**genetic_params)
+        )
         genetic_results = genetic_response.body.decode(UTF8_FORMAT)
         genetic_data = json.loads(genetic_results)[DATA]
 
@@ -165,14 +172,12 @@ async def all_strats(
             loss_report_df,
             separator,
             time_report_df,
-        ],
+            separator,
+        ]
     )
 
     ic(combined_df)
-    combined_df.to_excel(
-        'data/reports/reporte_metricas.xlsx',
-        sheet_name=sheet,
-    )
+    combined_df.to_excel(STORAGE_URL, sheet_name=sheet)
 
     return {'message': 'Reporte generado exitosamente'}
 
@@ -214,7 +219,11 @@ async def all_strats(
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
-def mutlple_metric():
+def mutlple_metric(
+    # samples: list[SampleRequest],
+    sql_db: Session = Depends(get_sqlite),
+    nosql_db: Session = Depends(get_mongo),
+):
     # ! pasar como lista de objetos! Las estructuras de las redes ya guardadas!
     pass
 
