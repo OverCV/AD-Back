@@ -3,11 +3,13 @@ from numpy.typing import NDArray
 
 
 from api.models.genetic.environ import Environ
+from api.models.props.structure import StructProps
 from api.models.structure import Structure
 from api.schemas.genetic.control import ControlSchema
 from api.services.analyze.sia import Sia
 
 from icecream import ic
+from constants.dummy import DUMMY_MIN_INFO_PARTITION, DUMMY_NET_INT_ID, DUMMY_SUBDIST
 from utils.consts import INFTY_POS
 
 
@@ -65,8 +67,10 @@ class Genetic(Sia):
         # 000 100 010 110 001 101 011 111
         # emd_dist = emd(*iter_distrib, *self._target_dist)
 
-        self.network_id = -1
-        self.min_info_part = ((('?',), ('¿',)), (('¿',), ('?',)))
+        self.integrated_info = best.get_fitness()
+        self.network_id = DUMMY_NET_INT_ID
+        self.min_info_part = DUMMY_MIN_INFO_PARTITION
+        self.sub_distrib = best.get_dist()[StructProps.DIST_ARRAY]
 
         # ic(emd_dist)
         not_std_sln = any(

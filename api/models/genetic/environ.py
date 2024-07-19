@@ -2,6 +2,7 @@ import random
 import numpy as np
 from numpy.typing import NDArray
 
+from api.models.props.structure import StructProps
 from constants.genetic import CROSS_RATE, DECAY, INIT_POP_SIZE, MAX_GENS, MAX_STREAK, PARENTS_NUM
 from api.models.genetic.individual import Individual
 from api.models.genetic.population import Population
@@ -50,7 +51,7 @@ class Environ:
             ind_fitness = self.compute_fitness(init_ind.get_dist())
             init_ind.set_fit(ind_fitness)
         self.__population.set_individuals(individuals)
-        [ic(ind) for ind in individuals]
+        # [ic(ind) for ind in individuals]
 
         # ! WHILE incumpla la condición de terminación DO ! #
         finishing_condition: bool = False
@@ -60,7 +61,7 @@ class Environ:
 
             # ! Cruzar individuos seleccionados. ! #
             crossed_cms: list[NDArray[np.bool_]] = self.crossover(inds)
-            ic(crossed_cms)
+            # ic(crossed_cms)
 
             # ! Mutar algunos individuos (+infactibles) ! #
             mutated_indivs: list[Individual] = self.mutate_cms(crossed_cms)
@@ -70,7 +71,7 @@ class Environ:
 
             # ! Reemplazar la población actual con la nueva generación ! #
             self.replace_population(mutated_indivs)
-            [ic(mut_ind) for mut_ind in mutated_indivs]
+            # [ic(mut_ind) for mut_ind in mutated_indivs]
 
         return rec.get_best_individual()
 
@@ -229,9 +230,9 @@ class Environ:
         # ]
         return winner_parents
 
-    def compute_fitness(self, distribution: NDArray[np.float64]) -> float:
+    def compute_fitness(self, distribution: tuple[tuple[int, ...], NDArray[np.float64]]) -> float:
+        iter_dist = distribution[StructProps.DIST_ARRAY]
         return emd(
-            distribution,
+            iter_dist,
             self.__distrib,
-            le=conf.little_endian,
         )

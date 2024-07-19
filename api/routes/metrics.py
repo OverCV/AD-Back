@@ -143,8 +143,8 @@ async def all_strats(
     # ic(time_report_df)
 
     separator = pd.DataFrame(
-        [{col: '- - -' for col in loss_report_df.columns}],
-        index=['- - -'],
+        [{col: '╌╌╌╌╌╌╌' for col in loss_report_df.columns}],
+        index=['╌╌╌╌╌╌╌'],
     )
 
     combined_df = pd.concat(

@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, MIN_INFO_PARTITION
+from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, DUMMY_MIN_INFO_PARTITION
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
 from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, W_LBL
 from utils.funcs import emd, get_labels
@@ -69,7 +69,7 @@ class Branch(Sia):
         # )
         self.network_id = DUMMY_NET_INT_ID
         self.sub_distrib = DUMMY_SUBDIST
-        self.min_info_part = MIN_INFO_PARTITION
+        self.min_info_part = DUMMY_MIN_INFO_PARTITION
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
@@ -130,7 +130,7 @@ class Branch(Sia):
             effect = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
             actual = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
             iter_distrib = sub_struct.create_distrib(effect, actual, data=True)[
-                StructProps.DIST_ARR
+                StructProps.DIST_ARRAY
             ]
             origin = self.__causes_labels[self._actual.index(idx_causes)]
             destiny = self.__effect_labels[self._effect.index(idx_effect)]

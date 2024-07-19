@@ -166,9 +166,9 @@ class Structure:
 
     def get_distrib(self, dual: bool = False) -> NDArray[np.float64]:
         return (
-            self.__dual_dist[StructProps.DIST_ARR]
+            self.__dual_dist[StructProps.DIST_ARRAY]
             if dual
-            else self.__prim_dist[StructProps.DIST_ARR]
+            else self.__prim_dist[StructProps.DIST_ARRAY]
         )
 
     def get_istate(self) -> str:

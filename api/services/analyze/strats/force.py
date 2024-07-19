@@ -85,7 +85,7 @@ class BruteForce(Sia):
             for i, c in zip(self._actual, str_causes):
                 actual[c == STR_ONE].append(i)
             indexed_distrib = sub_struct.create_distrib(effect, actual, data=True)
-            iter_distrib = indexed_distrib[StructProps.DIST_ARR]
+            iter_distrib = indexed_distrib[StructProps.DIST_ARRAY]
             # Comparar con la distribución original (objetivo)
             # ic(iter_distrib, self._target_dist)
             emd_dist = emd(*iter_distrib, *self._target_dist)
@@ -114,7 +114,7 @@ class BruteForce(Sia):
             indexed_distrib: tuple[tuple[int, ...], NDArray[np.float64]] = (
                 sub_struct.create_distrib(effect, actual, data=True)
             )
-            iter_dist = indexed_distrib[StructProps.DIST_ARR]
+            iter_dist = indexed_distrib[StructProps.DIST_ARRAY]
             # ic(*iter_dist, self._target_dist)
 
             # ic(iter_dist, self._target_dist)

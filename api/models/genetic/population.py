@@ -66,7 +66,7 @@ class Population:
     def update_distribution(self, cms: list[NDArray[np.bool_]]) -> list[NDArray[np.float64]]:
         # ! Check for the duality, also Threading! [#14] ! #
         # self.__distrib = distribution
-        sub_distrib: list[NDArray[np.float64]] = []
+        sub_distrib: list[tuple[tuple[int, ...], NDArray[np.float64]]] = []
         separator: int = len(self.__effect)
         for chromosome in cms:
             effect = {bin: [] for bin in BOOL_RANGE}
@@ -82,6 +82,7 @@ class Population:
                     data=True,
                 )
             )
+        # ic(sub_distrib)
         return sub_distrib
 
     def validate_cms(self, cms: list[NDArray[np.bool_]]) -> list[NDArray[np.bool_]]:

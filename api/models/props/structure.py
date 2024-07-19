@@ -11,8 +11,8 @@ class StructProps:
     TENSOR: str = 'tensor'
     SIZE: str = 'size'
 
-    DIST_IDX: int = 0
-    DIST_ARR: int = 1
+    DIST_INDICES: int = 0
+    DIST_ARRAY: int = 1
 
 
 class ConceptType(TypedDict):
