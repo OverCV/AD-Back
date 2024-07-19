@@ -7,16 +7,4 @@ GENETIC_ST: str = 'sia-genetic'
 
 UTF8_FORMAT: str = 'utf-8'
 
-M5: str = 'R5'
-
-MEASUREMENTS = {
-    M5: {
-        'title': 'R5',
-        'istate': ['100'],
-        'subsys': ['100'],
-        'effect': ['100'],
-        'actual': ['100'],
-    }
-}
-
 STORAGE_URL: str = 'data/reports/reporte_metricas.xlsx'

@@ -51,6 +51,9 @@ async def pyphi_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
+    ic()
+    ic(id, title, istate, subsys, effect, actual, dual)
+    ic()
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
@@ -65,7 +68,7 @@ async def pyphi_strategy(
     results = computing.use_pyphi()
     # ic(results)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
-    return
+    # return
 
 
 @temporizer

@@ -7,7 +7,7 @@ class StructProps:
     ISTATE: str = 'istate'
     EFFECT: str = 'effect'
     ACTUAL: str = 'actual'
-    SUBSYS: str = 'bgcond'
+    SUBSYS: str = 'subsys'
     FORMAT: str = 'format'
     TENSOR: str = 'tensor'
     SIZE: str = 'size'

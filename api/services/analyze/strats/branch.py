@@ -202,7 +202,7 @@ class Branch(Sia):
         # We create a priority queue to store the nodes
         queue: list[tuple[float, Nodum]] = []
         pq.heappush(queue, (FLOAT_ZERO, origin))
-        ic(queue)
+        # ! ic(queue)
 
         gb: float = INFTY_POS
         minimal_loss: Nodum = Nodum(ub=INFTY_POS, net=self.__net.copy())
