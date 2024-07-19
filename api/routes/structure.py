@@ -26,7 +26,7 @@ from api.shared.formatter import Format
 
 from constants.format import DEFFAULT_SHEET
 from data.tables import StructureTable
-from constants.structure import N1, N3, R3A, R4A, SA, SAMPLES, STRUCTURES
+from constants.structure import N1, N3, SA, SAMPLES
 from utils.consts import DATA
 
 

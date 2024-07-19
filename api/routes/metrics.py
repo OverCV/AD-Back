@@ -26,7 +26,7 @@ from constants.metrics import (
     GENETIC_ST,
     SERVER_URL,
 )
-from constants.structure import R5A, STRUCTURES
+from constants.structure import N6, N7, SA, SAMPLES
 from utils.consts import DATA, SMALL_PHI
 
 from server import conf
@@ -46,11 +46,11 @@ async def all_strats(
     ctrl_parameters: ControlSchema,
     sheet: str = 'Red N Nodos',
     id: int = None,
-    title: str = STRUCTURES[R5A][StructProps.TITLE],
-    istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
-    effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -189,11 +189,11 @@ async def all_strats(
     # for strategy in strategies:
     #     try:
     #         request_url = f'{SERVER_URL}/{strategy}/{query_params(
-    #             title=STRUCTURES[R5A][StructProps.TITLE],
-    #             istate=STRUCTURES[R5A][StructProps.ISTATE],
-    #             subsys=STRUCTURES[R5A][StructProps.SUBSYS],
-    #             effect=STRUCTURES[R5A][StructProps.EFFECT],
-    #             actual=STRUCTURES[R5A][StructProps.ACTUAL],
+    #             title=SAMPLES[N6][SA][N7][StructProps.TITLE],
+    #             istate=SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    #             subsys=SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    #             effect=SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    #             actual=SAMPLES[N6][SA][N7][StructProps.ACTUAL],
     #             dual=False,
     #         )}'
     #         ic(request_url)

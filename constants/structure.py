@@ -30,115 +30,18 @@ UNIT_MAT: NDArray[np.float64] = np.array([INT_ONE], dtype=np.float64)
 UNIT_MUL: tuple[tuple[int, ...], NDArray[np.float64]] = ((), UNIT_MAT)
 
 
-# DEFAULT_TITLE: str = 'System_Title'
-# DEFAULT_ISTATE: str = '1000000000'
-# DEFAULT_EFFECT: str = '1111111111'
-# DEFAULT_CAUSES: str = '1111111111'
-
 FUTURE = INT_ZERO
 CURRENT = INT_ONE
 
-
-R2A: str = 'R2A'
-R3A: str = 'R3A'
-
-R4A: str = 'R4A'
-R4B: str = 'R4B'
-R4C: str = 'R4C'
-R4D: str = 'R4D'
-R4E: str = 'R4E'
-
-R5A: str = 'R5A'
-
-R6A: str = 'R6A'
-
-R8A: str = 'R8A'
-R8B: str = 'R8B'
-
-R10A: str = 'R10A'
-
-
-class MechaInt(TypedDict):
-    title: str
-    istate: str
-    effect: str
-    actual: str
-    format: str
-
-
-STRUCTURES: dict[str, MechaInt] = {
-    R2A: {
-        StructProps.TITLE: R2A,
-        StructProps.ISTATE: '10',
-        StructProps.EFFECT: '11',
-        StructProps.ACTUAL: '11',
-        StructProps.SUBSYS: '11',
-        StructProps.FORMAT: S2C,
-    },
-    R3A: {
-        StructProps.TITLE: R3A,
-        StructProps.ISTATE: '100',
-        StructProps.EFFECT: '111',
-        StructProps.ACTUAL: '111',
-        StructProps.SUBSYS: '111',
-        StructProps.FORMAT: S2C,
-    },
-    R4A: {
-        StructProps.TITLE: R4A,
-        StructProps.ISTATE: '1000',
-        StructProps.EFFECT: '1111',
-        StructProps.ACTUAL: '1111',
-        StructProps.SUBSYS: '1110',
-        StructProps.FORMAT: S2C,
-    },
-    R5A: {
-        StructProps.TITLE: R5A,
-        StructProps.ISTATE: '10001',
-        StructProps.EFFECT: '11111',
-        StructProps.ACTUAL: '11111',
-        StructProps.SUBSYS: '11100',  # ! Implement for all ! #
-        StructProps.FORMAT: S2C,
-    },
-    R6A: {
-        StructProps.TITLE: R6A,
-        StructProps.ISTATE: '100000',
-        StructProps.EFFECT: '111111',
-        StructProps.ACTUAL: '111111',
-        StructProps.SUBSYS: '111000',
-        StructProps.FORMAT: S2C,
-    },
-    R8A: {
-        StructProps.TITLE: R8A,
-        StructProps.ISTATE: '10000000',
-        StructProps.EFFECT: '11111111',
-        StructProps.ACTUAL: '11111111',
-        StructProps.SUBSYS: '11100000',
-        StructProps.FORMAT: S2C,
-    },
-    R10A: {
-        StructProps.TITLE: R10A,
-        StructProps.ISTATE: '1000000000',
-        StructProps.EFFECT: '1111111111',
-        StructProps.ACTUAL: '1111111111',
-        StructProps.SUBSYS: '1110000000',
-        StructProps.FORMAT: S2C,
-    },
-}
+# class MechaInt(TypedDict):
+#     title: str
+#     istate: str
+#     effect: str
+#     actual: str
+#     format: str
 
 DUAL_LBL: str = 'dual'
 PRIM_LBL: str = 'prim'
-
-# ZERO_CHANNELS: int = 0
-# ONE_CHANNEL: int = 1
-
-
-"""
-
-colección de redes: R3, R4, R5, R6, R8, R10
-Coleccion de una red -> R3: A, B, C, D
-
-
-"""
 
 
 # N -> Number
@@ -157,6 +60,7 @@ N12: str = '12'
 N13: str = '13'
 N14: str = '14'
 N15: str = '15'
+STR_NUMBERS: list[str] = [N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N11, N12, N13, N14, N15]
 
 # S -> String
 SA: str = 'A'
@@ -166,6 +70,7 @@ SD: str = 'D'
 SE: str = 'E'
 SF: str = 'F'
 SG: str = 'G'
+STR_LETTERS: list[str] = [SA, SB, SC, SD, SE, SF, SG]
 
 
 CTRL_PARAMS: str = 'control_parameters'

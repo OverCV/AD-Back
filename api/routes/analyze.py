@@ -16,7 +16,7 @@ from api.schemas.structure import StructureResponse
 from api.services.analyze.compute import Compute
 from api.shared.formatter import Format
 
-from constants.structure import R5A, STRUCTURES
+from constants.structure import N6, N7, SA, SAMPLES
 from api.services.structure.base import (
     get_structure,
     get_structure_by_title,
@@ -42,11 +42,11 @@ fmt: Format = Format()
 )
 async def pyphi_strategy(
     id: Optional[int] = None,
-    title: str = STRUCTURES[R5A][StructProps.TITLE],
-    istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
-    effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -78,11 +78,11 @@ async def pyphi_strategy(
 async def force_strategy(
     # ! Add the optional parameter to select struct by id
     id: Optional[int] = None,
-    title: str = STRUCTURES[R5A][StructProps.TITLE],
-    istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
-    effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -117,11 +117,11 @@ async def force_strategy(
 async def branch_strategy(
     # ! Add the optional parameter to select struct by id
     id: Optional[int] = None,
-    title: str = STRUCTURES[R5A][StructProps.TITLE],
-    istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
-    effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
@@ -154,11 +154,11 @@ async def branch_strategy(
 async def genetic_strategy(
     ctrl_params: ControlSchema,
     id: Optional[int] = None,
-    title: str = STRUCTURES[R5A][StructProps.TITLE],
-    istate: str = STRUCTURES[R5A][StructProps.ISTATE],
-    subsys: str = STRUCTURES[R5A][StructProps.SUBSYS],
-    effect: str = STRUCTURES[R5A][StructProps.EFFECT],
-    actual: str = STRUCTURES[R5A][StructProps.ACTUAL],
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
