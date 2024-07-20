@@ -16,7 +16,7 @@ from api.schemas.structure import StructureResponse
 from api.services.analyze.compute import Compute
 from api.shared.formatter import Format
 
-from constants.structure import N6, N7, SA, SAMPLES
+from constants.structure import N1, N15, N6, N7, SA, SAMPLES
 from api.services.structure.base import (
     get_structure,
     get_structure_by_title,
@@ -42,11 +42,11 @@ fmt: Format = Format()
 )
 async def pyphi_strategy(
     id: Optional[int] = None,
-    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
-    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
-    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
-    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
-    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
+    title: str = SAMPLES[N15][SA][N1][StructProps.TITLE],
+    istate: str = SAMPLES[N15][SA][N1][StructProps.ISTATE],
+    subsys: str = SAMPLES[N15][SA][N1][StructProps.SUBSYS],
+    effect: str = SAMPLES[N15][SA][N1][StructProps.EFFECT],
+    actual: str = SAMPLES[N15][SA][N1][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),

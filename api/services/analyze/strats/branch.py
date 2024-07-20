@@ -149,12 +149,12 @@ class Branch(Sia):
                 print('Disconnected')
                 mips[(origin, destiny, emd_as_weight)] = deleted
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
-                # ! Maybe return here if emd is 0
+                # ! Maybe return here if emd is 0 # !
 
             elif emd_as_weight > FLOAT_ZERO:
                 # Si es conexo Y hay pérdida entonces restablecemos la arsita.
                 print('Connected and loss')
-                # ic((origin, destiny, emd_as_weight))
+                ic((origin, destiny, emd_as_weight))
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
 
             else:
