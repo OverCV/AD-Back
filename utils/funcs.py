@@ -175,7 +175,7 @@ def big_endian_int(n: int) -> list[int]:
 
 
 @cache
-def get_labels(n: int) -> tuple[str]:
+def get_labels(n: int) -> tuple[str, ...]:
     def get_excel_column(n: int) -> str:
         if n <= 0:
             return ''
@@ -284,5 +284,3 @@ def temporizer(func):
         return result  # Retornar el resultado de la función original
 
     return wrapper
-
-

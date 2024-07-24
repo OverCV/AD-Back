@@ -60,11 +60,11 @@ async def pyphi_strategy(
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
-    if not computing.init_concept():
-        raise HTTPException(
-            status_code=500,
-            detail='One or more of the SIA properties are not calculated',
-        )
+    # if not computing.init_concept():
+    #     raise HTTPException(
+    #         status_code=500,
+    #         detail='One or more of the SIA properties are not calculated',
+    #     )
     results = computing.use_pyphi()
     # ic(results)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
@@ -108,6 +108,27 @@ async def force_strategy(
     # reconstruct_network(results[MIP], db_nosql)
     # ic(results)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
+
+
+@temporizer
+@router.get(
+    '/sia-mst/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante árbol de expansión mínima.',
+    status_code=status.HTTP_200_OK,
+    response_model_by_alias=False,
+)
+async def mst_strategy(
+    id: Optional[int] = None,
+    title: str = SAMPLES[N15][SA][N1][StructProps.TITLE],
+    istate: str = SAMPLES[N15][SA][N1][StructProps.ISTATE],
+    subsys: str = SAMPLES[N15][SA][N1][StructProps.SUBSYS],
+    effect: str = SAMPLES[N15][SA][N1][StructProps.EFFECT],
+    actual: str = SAMPLES[N15][SA][N1][StructProps.ACTUAL],
+    dual: bool = False,
+    db_sql: Session = Depends(get_sqlite),
+    db_nosql: Session = Depends(get_mongo),
+):
+    pass
 
 
 @temporizer

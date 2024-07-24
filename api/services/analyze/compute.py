@@ -5,7 +5,7 @@ import pyphi.labels
 import pyphi.partition
 import pyphi.tpm
 
-from api.models.matrix import Matrix
+# from api.models.matrix import Matrix
 from api.models.props.sia import SiaType
 
 from api.models.structure import Structure
@@ -19,13 +19,24 @@ from api.services.analyze.strats.force import BruteForce
 import pyphi
 import pyphi.compute
 from pyphi.models.cuts import Bipartition, Part
+from pyphi.labels import NodeLabels
 
 # from pyphi.compute.subsystem import SystemIrreducibilityAnalysisConceptStyle
 from pyphi.models import RepertoireIrreducibilityAnalysis
 
 import copy
 from constants.structure import BOOL_RANGE, DIST, VOID
-from utils.consts import ACTUAL, COLS_IDX, INFTY_POS, MIP, NET_ID, SMALL_PHI, STR_ONE, SUB_DIST
+from utils.consts import (
+    ACTUAL,
+    BASE_2,
+    COLS_IDX,
+    INFTY_POS,
+    MIP,
+    NET_ID,
+    SMALL_PHI,
+    STR_ONE,
+    SUB_DIST,
+)
 
 from icecream import ic
 
@@ -58,13 +69,13 @@ class Compute:
             tensor=subtensor,
         )
         self.__str_effect: str = str_effect
-        self.__str_causes: str = str_actual
+        self.__str_actual: str = str_actual
         self.__str_bgcond: str = str_bgcond
         self.__dual: bool = dual
 
         self.__struct: Structure = None
         self.__effect: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
-        self.__causes: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
+        self.__actual: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
         self.__bgcond: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
         self.__distribution: NDArray[np.float64] = None
 
@@ -81,77 +92,173 @@ class Compute:
         for i, e in enumerate(self.__str_effect):
             if i in bgcond_elems:
                 self.__effect[e == STR_ONE].append(i)
-        for j, c in enumerate(self.__str_causes):
+        for j, c in enumerate(self.__str_actual):
             if j in bgcond_elems:
-                self.__causes[c == STR_ONE].append(j)
+                self.__actual[c == STR_ONE].append(j)
         for i, bg in enumerate(self.__str_bgcond):
             self.__bgcond[bg == STR_ONE].append(i)
 
         # Preservamos la superestructura para trabajar con una nueva
         self.__struct: Structure = copy.deepcopy(self.__sup_struct)
         self.__struct.set_bg_cond(self.__bgcond)
-        self.__struct.create_distrib(self.__effect, self.__causes)
+        self.__struct.create_distrib(self.__effect, self.__actual)
         self.__distribution = self.__struct.get_distrib(self.__dual)
 
         return self.__distribution is not None
 
-    def use_pyphi(self):
-        tensor: OrderedDict = self.__struct.get_tensor()
-        matrices: list[Matrix] = tensor.values()
-        submatrices: list[Matrix] = [
-            mat
-            for mat, bg in zip(matrices, self.__str_bgcond)
-            if (bg == STR_ONE) == (not self.__dual)
-        ]
-        # [
-        #     ic(mat.as_dataframe())
-        #     for mat in submatrices
-        # ]
-        tpms = np.array(
-            [mat.get_arr()[:, COLS_IDX] for mat in submatrices],
+    # def use_pyphi(self) -> SiaType:
+    #     tensor: OrderedDict = self.__sup_struct.get_tensor()
+    #     all_tpm = np.array([mat.get_arr()[:, COLS_IDX] for mat in tensor.values()])
+    #     tpm_sn: NDArray[np.float64] = np.column_stack(all_tpm)
+
+    #     # ic(
+    #     #     np.all((tpm_sn >= 0) & (tpm_sn <= 1)),
+    #     #     'TPM values out of range',
+    #     # )
+    #     # ic(
+    #     #     np.allclose(np.sum(tpm_sn, axis=1), 1),
+    #     #     'TPM rows do not sum to 1',
+    #     # )
+    #     # ic(
+    #     #     not np.any(np.all(tpm_sn == 0, axis=1)),
+    #     #     'TPM rows are all zeros',
+    #     # )
+
+    #     ic(tpm_sn.shape)
+
+    #     istate = (0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+    #     # istate = (1, 0, 0, 0, 0)
+
+    #     lbl_nodes = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O')
+    #     # lbl_nodes = ('A', 'B', 'C', 'D', 'E')
+
+    #     idx_nodes = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+    #     # idx_nodes = (0, 1, 2, 3, 4)
+
+    #     bg_nodes = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O')
+
+    #     ic(len(istate), len(lbl_nodes), len(idx_nodes), len(bg_nodes))
+
+    #     net = pyphi.Network(
+    #         tpm=tpm_sn,
+    #         node_labels=NodeLabels(lbl_nodes, idx_nodes),
+    #     )
+    #     subsys = pyphi.Subsystem(
+    #         network=net,
+    #         state=istate,
+    #         nodes=bg_nodes,
+    #     )
+
+    #     # A, B, C, D, E, F, G, H, I, J, K, L, M, N, O = subsys.node_indices
+    #     vA, vB, vC, vD, vE, vF, vG, vH, vI, vJ, vK, vL, vM, vN, vO = subsys.node_indices
+
+    #     # mecha = (A, B, D, E, F, G, H, I, J, K, L, O)
+    #     # purvi = (A, B, C, D, E, F, G, H, I)
+    #     mecha = (vA, vB, vD, vE, vF, vG, vH, vI, vJ, vK, vL, vO)
+    #     purvi = (vA, vB, vC, vD, vE, vF, vG, vH, vI)
+
+    #     er = subsys.effect_mip(mecha, purvi)
+    #     ic(er)
+
+    #     return
+
+    #     # A, B, C = subsys.node_indices
+    #     # print(subsys, A, B, C)
+
+    #     # mecha = (A, B, C)
+    #     # purvi = (A, B, C)
+
+    #     # er = subsys.effect_mip(mecha, purvi)
+
+    #     # print(er)
+
+    # def use_pp5(self) -> SiaType:
+    #     tensor: OrderedDict = self.__sup_struct.get_tensor()
+    #     all_tpm = np.array([mat.get_arr()[:, COLS_IDX] for mat in tensor.values()])
+    #     tpm_state_node: NDArray[np.float64] = np.column_stack(all_tpm)
+
+    #     # labels = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O')
+    #     istate = (1, 0, 0, 0, 0)
+    #     lbl_nodes = ('A', 'B', 'C', 'D', 'E')
+    #     idx_nodes = (0, 1, 2, 3, 4)
+
+    #     bg_nodes = ('A', 'B', 'C')
+
+    #     net = pyphi.Network(
+    #         tpm=tpm_state_node,
+    #         node_labels=NodeLabels(lbl_nodes, idx_nodes),
+    #     )
+    #     subsys = pyphi.Subsystem(
+    #         network=net,
+    #         state=istate,
+    #         nodes=bg_nodes,
+    #     )
+
+    #     A, B, C = subsys.node_indices
+    #     print(subsys, A, B, C)
+
+    #     mecha = (A, B, C)
+    #     purvi = (A, B, C)
+
+    #     er = subsys.effect_mip(mecha, purvi)
+
+    #     print(er)
+
+    def use_pyphi(self) -> SiaType:
+        # Selección de nodos mediante pyphi
+        bg_set = set(
+            idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
         )
+
+        tensor: OrderedDict = self.__sup_struct.get_tensor()
+        tpms = np.array([mat.get_arr()[:, COLS_IDX] for mat in tensor.values()])
         tpm_state_node: NDArray[np.float64] = np.column_stack(tpms)
 
-        num_nodes: int = len(matrices)
-        labels = get_labels(num_nodes)
-        indices = tuple(range(num_nodes))
+        num_nodes: int = self.__sup_struct.get_tensor_len()
+        istate = tuple(int(i) for i in self.__sup_struct.get_istate())
 
-        sub_labels = [
+        str_labels = get_labels(num_nodes)
+        idx_labels = tuple(range(num_nodes))
+        labels = NodeLabels(str_labels, idx_labels)
+
+        network = pyphi.Network(tpm=tpm_state_node, node_labels=labels)
+
+        # Aplicar las condiciones de background
+        bg_istate = tuple(
+            istate[i]
+            for i, bg in enumerate(self.__str_bgcond)
+            if (bg == STR_ONE) == (not self.__dual)
+        )
+
+        bg_labels = tuple(
             labels[i]
             for i, bg in enumerate(self.__str_bgcond)
             if (bg == STR_ONE) == (not self.__dual)
-        ]
-        sub_indices = [
-            indices[i]
-            for i, bg in enumerate(self.__str_bgcond)
-            if (bg == STR_ONE) == (not self.__dual)
-        ]
-        node_labels = pyphi.labels.NodeLabels(sub_labels, sub_indices)
-        # print(tpm_state_node)
-
-        network = pyphi.Network(
-            tpm=tpm_state_node,
-            node_labels=node_labels,
         )
 
-        istate = self.__struct.get_istate()
-        sub_istate = [
-            int(istate[i], 2)
-            for i, bg in enumerate(self.__str_bgcond)
-            if (bg == STR_ONE) == (not self.__dual)
-        ]
+        ic(bg_istate, bg_labels)
 
-        # ic(network, sub_istate)
         sub_system = pyphi.Subsystem(
             network=network,
-            state=sub_istate,
+            state=istate,
+            nodes=bg_labels,
         )
 
-        er: RepertoireIrreducibilityAnalysis = sub_system.effect_mip(
-            sub_system.node_indices,
-            sub_system.node_indices,
+        mech_idx = tuple(
+            i
+            for i, x in enumerate(self.__str_actual)
+            if all([(x == STR_ONE) == (not self.__dual), i in bg_set])
         )
-        # ic(er)
+
+        purv_idx = tuple(
+            i
+            for i, x in enumerate(self.__str_effect)
+            if all([(x == STR_ONE) == (not self.__dual), i in bg_set])
+        )
+
+        er = sub_system.effect_mip(mech_idx, purv_idx)
+        # ? Reconstrucción de resultados
+
         integrated_info: float = er.phi
 
         repertoire = er.repertoire
@@ -176,12 +283,12 @@ class Compute:
 
         min_info_part = [
             [
-                [sub_labels[i] for i in prim_mech] if prim_mech else [VOID],
-                [sub_labels[i] for i in prim_purv] if prim_purv else [VOID],
+                [bg_labels[i] for i in prim_mech] if prim_mech else [VOID],
+                [bg_labels[i] for i in prim_purv] if prim_purv else [VOID],
             ],
             [
-                [sub_labels[i] for i in dual_mech] if dual_mech else [VOID],
-                [sub_labels[i] for i in dual_purv] if dual_purv else [VOID],
+                [bg_labels[i] for i in dual_mech] if dual_mech else [VOID],
+                [bg_labels[i] for i in dual_purv] if dual_purv else [VOID],
             ],
         ]
 
@@ -191,15 +298,118 @@ class Compute:
             DIST: distribution,
             SUB_DIST: part_distrib,
             # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
-            # ! Falta el tiempo de ejecución ! #
             # NET_ID: network_id if conf.store_network else net_id,
         }
+        return self
+
+    #
+
+    # def use_pyphi(self):
+    #   #! Selección de bg-conds y resolución mediante pyphi. !#
+    #     tensor: OrderedDict = self.__struct.get_tensor()
+    #     matrices: list[Matrix] = tensor.values()
+    #     submatrices: list[Matrix] = [
+    #         mat
+    #         for mat, bg in zip(matrices, self.__str_bgcond)
+    #         if (bg == STR_ONE) == (not self.__dual)
+    #     ]
+    #     # [
+    #     #     ic(mat.as_dataframe())
+    #     #     for mat in submatrices
+    #     # ]
+    #     tpms = np.array(
+    #         [mat.get_arr()[:, COLS_IDX] for mat in submatrices],
+    #     )
+    #     tpm_state_node: NDArray[np.float64] = np.column_stack(tpms)
+
+    #     num_nodes: int = len(matrices)
+    #     labels = get_labels(num_nodes)
+    #     indices = tuple(range(num_nodes))
+
+    #     sub_labels = [
+    #         labels[i]
+    #         for i, bg in enumerate(self.__str_bgcond)
+    #         if (bg == STR_ONE) == (not self.__dual)
+    #     ]
+    #     sub_indices = [
+    #         indices[i]
+    #         for i, bg in enumerate(self.__str_bgcond)
+    #         if (bg == STR_ONE) == (not self.__dual)
+    #     ]
+    #     node_labels = pyphi.labels.NodeLabels(sub_labels, sub_indices)
+    #     # print(tpm_state_node)
+
+    #     network = pyphi.Network(
+    #         tpm=tpm_state_node,
+    #         node_labels=node_labels,
+    #     )
+
+    #     istate = self.__struct.get_istate()
+    #     sub_istate = [
+    #         int(istate[i], 2)
+    #         for i, bg in enumerate(self.__str_bgcond)
+    #         if (bg == STR_ONE) == (not self.__dual)
+    #     ]
+
+    #     # ic(network, sub_istate)
+    #     sub_system = pyphi.Subsystem(
+    #         network=network,
+    #         state=sub_istate,
+    #     )
+
+    #     er: RepertoireIrreducibilityAnalysis = sub_system.effect_mip(
+    #         sub_system.node_indices,
+    #         sub_system.node_indices,
+    #     )
+    #     # ic(er)
+    #     integrated_info: float = er.phi
+
+    #     repertoire = er.repertoire
+    #     repertoire = repertoire.squeeze()
+
+    #     part_reper = er.partitioned_repertoire
+    #     part_reper = part_reper.squeeze()
+
+    #     sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
+
+    #     distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
+    #     part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
+
+    #     min_info_part: Bipartition = er.partition
+
+    #     dual: Part = min_info_part.parts[not self.__dual]
+    #     prim: Part = min_info_part.parts[self.__dual]
+    #     dual_mech, dual_purv = dual.mechanism, dual.purview
+    #     prim_mech, prim_purv = prim.mechanism, prim.purview
+
+    #     # print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
+
+    #     min_info_part = [
+    #         [
+    #             [sub_labels[i] for i in prim_mech] if prim_mech else [VOID],
+    #             [sub_labels[i] for i in prim_purv] if prim_purv else [VOID],
+    #         ],
+    #         [
+    #             [sub_labels[i] for i in dual_mech] if dual_mech else [VOID],
+    #             [sub_labels[i] for i in dual_purv] if dual_purv else [VOID],
+    #         ],
+    #     ]
+
+    #     return {
+    #         SMALL_PHI: integrated_info,
+    #         MIP: min_info_part,
+    #         DIST: distribution,
+    #         SUB_DIST: part_distrib,
+    #         # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
+    #         # ! Falta el tiempo de ejecución ! #
+    #         # NET_ID: network_id if conf.store_network else net_id,
+    #     }
 
     def use_brute_force(self) -> SiaType:
         sia_force: BruteForce = BruteForce(
             self.__struct,
             self.__effect[not self.__dual],
-            self.__causes[not self.__dual],
+            self.__actual[not self.__dual],
             self.__distribution,
             self.__dual,
         )
@@ -210,7 +420,7 @@ class Compute:
         sia_branch: Branch = Branch(
             self.__struct,
             self.__effect[not self.__dual],
-            self.__causes[not self.__dual],
+            self.__actual[not self.__dual],
             self.__distribution,
             self.__dual,
         )
@@ -222,7 +432,7 @@ class Compute:
         sia_genetic: Genetic = Genetic(
             self.__struct,
             self.__effect[not self.__dual],
-            self.__causes[not self.__dual],
+            self.__actual[not self.__dual],
             self.__distribution,
             self.__dual,
             ctrl_params,
