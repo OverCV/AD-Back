@@ -39,7 +39,8 @@ class Sia(ABC):
             )
 
     def get_reperoire(self) -> dict:
-        # ic(self.integrated_info, self.min_info_part, self.sub_distrib, self.network_id)
+        ic(self.integrated_info, self.min_info_part, self.sub_distrib, self.network_id)
+
         concept: SiaType = {
             SMALL_PHI: self.integrated_info,
             MIP: self.min_info_part,

@@ -42,7 +42,7 @@ FIRST: int = INT_ZERO
 U_IDX: int = 0
 V_IDX: int = 1
 DATA_IDX: int = 2
-W_LBL: str = 'weight'
+WT_LBL: str = 'weight'
 
 # NODE_DATA_OPTIONS: list[str] = ['color', 'label', 'value']
 # EDGE_DATA_OPTIONS: list[str] = [W_LBL, 'color']

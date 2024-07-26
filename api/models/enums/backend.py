@@ -11,3 +11,4 @@ class ExecConfig(Enum):
     LOGGER_ENCODING = 'utf-8'
     DOTENV_PATH = '.venv/.dev.env'
     YES = True
+    NO = False

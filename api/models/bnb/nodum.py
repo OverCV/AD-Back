@@ -1,7 +1,7 @@
 import math
 import networkx as nx
 
-from utils.consts import FIRST, INT_ZERO, U_IDX, V_IDX, DATA_IDX, W_LBL
+from utils.consts import FIRST, INT_ZERO, U_IDX, V_IDX, DATA_IDX, WT_LBL
 from server import conf
 from icecream import ic
 
@@ -72,7 +72,7 @@ class Nodum:
     def sorted_edges(self) -> list[tuple[str, str, float]]:
         return sorted(
             self.__net.edges(data=True),
-            key=lambda edge: edge[DATA_IDX][W_LBL]
+            key=lambda edge: edge[DATA_IDX][WT_LBL]
             * math.sqrt(
                 self.__net.degree(edge[U_IDX]) ** 2 + self.__net.degree(edge[V_IDX]) ** 2,
             ),
@@ -91,5 +91,5 @@ class Nodum:
     #     return edges if all else edges[FIRST] if minimal else None
 
     def __str__(self) -> str:
-        edges = [(u, v, data[W_LBL]) for u, v, data in self.sorted_edges()]
+        edges = [(u, v, data[WT_LBL]) for u, v, data in self.sorted_edges()]
         return f'⟨ub: {self.__ub}, lb: {self.__lb}, edges: {edges}, ignore: {self.__ignore}⟩'

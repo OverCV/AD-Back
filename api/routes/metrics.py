@@ -30,10 +30,12 @@ from constants.metrics import (
     SERVER_URL,
 )
 from constants.structure import IS_DUAL, N1, N3, N4, N5, N6, N7, SA, SAMPLES, SHEET_NAME
-from utils.consts import DATA, SMALL_PHI
+from utils.consts import DATA, MIP, SMALL_PHI, STR_ONE, STR_ZERO
 
 from server import conf
 from icecream import ic
+
+from utils.funcs import get_labels
 
 
 router: APIRouter = APIRouter()
@@ -250,6 +252,99 @@ def mutlple_subsystems():
     pass
 
 
+@router.get(
+    '/all-istates-pyphi/',
+    response_description='Generación de reporte para todas las redes con todos los estados iniciales.',
+    status_code=status.HTTP_200_OK,
+    response_model_by_alias=False,
+)
+async def test_all_istates_pyphi(
+    id: int = SAMPLES[N6][SA][N7][StructProps.ID],
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    # istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
+    dual: bool = SAMPLES[N6][SA][N7][IS_DUAL],
+    db_sql: Session = Depends(get_sqlite),
+    db_nosql: Session = Depends(get_mongo),
+):
+    # Generar las combinaciones del estado incial, pero es una perdida pasar todos los estados si al final se seleccionan sólo ciertos indices del estado... La función por defecto recibe el estado complete, but si is selected om a sécofoc dp,aom. tjem ot doesn't matter to iterate all the other states, case:
+
+    """
+    R5A
+
+    subsys: 11100
+    subsys: 10011
+
+    effect: 11111
+    actual: 11111
+
+        istate0: 00000
+        istate1: 00001
+        istate2: 00010
+        istate3: 00011
+        ...
+        istate31: 11111
+
+    As we can see here until it reaches the third significant bit, istate 0 to 3 are the same and all the iterations over the bits index -1 and -2.
+    Then we only iterate len of subsys as dual times, those values then are selectivly assigned in the string and passed for testing.
+
+    But actually it matters, because those unused values are the BG-Conds...
+
+    """
+
+    # letters = get_labels(26)
+
+    # for let_a, let_f in zip(letters[:-1], letters[1:]):
+    #     print(let_a, let_f)
+
+    # # for i in letters:
+    # #     print(f'{i}XR-79E')
+    # return
+
+    num_nodes = len(subsys)
+
+    common_params = {
+        'id': id,
+        'title': title,
+        # 'istate': istate,
+        'subsys': subsys,
+        'effect': effect,
+        'actual': actual,
+        'dual': dual,
+        'db_sql': db_sql,
+        'db_nosql': db_nosql,
+    }
+
+    results = []
+
+    for idx in range(2**num_nodes):
+        istate = format(idx, f'0{num_nodes}b')
+        ic(istate)
+        common_params['istate'] = istate
+
+        try:
+            pyphi_response = await pyphi_strategy(**common_params)
+            pyphi_results = pyphi_response.body.decode(UTF8_FORMAT)
+            pyphi_data = json.loads(pyphi_results)[DATA]
+
+            results.append(
+                {
+                    SMALL_PHI: pyphi_data[SMALL_PHI],
+                    MIP: pyphi_data[MIP],
+                }
+            )
+
+            ic(pyphi_data)
+
+        except Exception as e:
+            print('\nPyPhi failed', e, '\n')
+            return
+
+    ic(results)
+
+
 # cond: bool = False
 
 # if cond:
@@ -259,22 +354,3 @@ def mutlple_subsystems():
 #     )
 # results = {}
 # return JSONResponse(content=jsonable_encoder(results), status_code=status.HTTP_200_OK)
-
-
-"""
-2024-07-19 05:56:33,320 INFO sqlalchemy.engine.Engine BEGIN (implicit)
-2024-07-19 05:56:33,323 INFO sqlalchemy.engine.Engine SELECT structure.id AS structure_id, structure.title AS structure_title, structure.tensor AS structure_tensor, structure.size AS structure_size, structure.format AS 
-structure_format 
-FROM structure 
-WHERE structure.title = ?
- LIMIT ? OFFSET ?
-2024-07-19 05:56:33,323 INFO sqlalchemy.engine.Engine [generated in 0.00031s] ('R5A', 1, 0)
-2024-07-19 05:56:33,324 INFO sqlalchemy.engine.Engine SELECT structure.id AS structure_id, structure.title AS structure_title, structure.tensor AS structure_tensor, structure.size AS structure_size, structure.format AS 
-structure_format 
-FROM structure 
-WHERE structure.title = ?
- LIMIT ? OFFSET ?
-2024-07-19 05:56:33,325 INFO sqlalchemy.engine.Engine [cached since 0.001756s ago] ('R5A', 1, 0)
-ic| self.__str_bgcond: '11100', STR_ONE: '1', self.__dual: False
-2024-07-19 05:56:33,759 INFO sqlalchemy.engine.Engine ROLLBACK
-"""

@@ -16,7 +16,7 @@ from api.schemas.structure import StructureResponse
 from api.services.analyze.compute import Compute
 from api.shared.formatter import Format
 
-from constants.structure import N1, N15, N6, N7, SA, SAMPLES
+from constants.structure import N1, N15, N5, N6, N7, SA, SAMPLES
 from api.services.structure.base import (
     get_structure,
     get_structure_by_title,
@@ -51,9 +51,9 @@ async def pyphi_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
-    ic()
-    ic(id, title, istate, subsys, effect, actual, dual)
-    ic()
+    # ic()
+    # ic(id, title, istate, subsys, effect, actual, dual)
+    # ic()
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
@@ -119,16 +119,31 @@ async def force_strategy(
 )
 async def mst_strategy(
     id: Optional[int] = None,
-    title: str = SAMPLES[N15][SA][N1][StructProps.TITLE],
-    istate: str = SAMPLES[N15][SA][N1][StructProps.ISTATE],
-    subsys: str = SAMPLES[N15][SA][N1][StructProps.SUBSYS],
-    effect: str = SAMPLES[N15][SA][N1][StructProps.EFFECT],
-    actual: str = SAMPLES[N15][SA][N1][StructProps.ACTUAL],
+    title: str = SAMPLES[N5][SA][N1][StructProps.TITLE],
+    istate: str = SAMPLES[N5][SA][N1][StructProps.ISTATE],
+    subsys: str = SAMPLES[N5][SA][N1][StructProps.SUBSYS],
+    effect: str = SAMPLES[N5][SA][N1][StructProps.EFFECT],
+    actual: str = SAMPLES[N5][SA][N1][StructProps.ACTUAL],
     dual: bool = False,
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
-    pass
+    # raise HTTPException(status_code=508, detail='Not implemented yet')
+    struct_response: StructureResponse = (
+        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
+    )
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
+    if not computing.init_concept():
+        raise HTTPException(
+            status_code=500,
+            detail='One or more of the SIA properties are not calculated',
+        )
+    results = computing.use_min_span_tree()
+
+    reconstruct_network(results[MIP], db_nosql)
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
 @temporizer

@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, DUMMY_MIN_INFO_PARTITION
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
-from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, W_LBL
+from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, WT_LBL
 from utils.funcs import emd, get_labels
 
 import utils.network as net
@@ -55,7 +55,7 @@ class Branch(Sia):
         self.__net = self.margin_n_expand()
 
         edges = self.__net.edges(data=True)
-        self.integrated_info = min([edge[DATA_IDX][W_LBL] for edge in edges])
+        self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
         #
         # raise NotImplementedError
         # part: None = None
@@ -348,8 +348,8 @@ class Branch(Sia):
         # Obtenemos los nodos sobre los que incide la arista
         # nodes: list[tuple[str, str, float]] = get_adj(node.get_net(), destiny)
 
-        ic(edge[DATA_IDX][W_LBL])
-        return edge[DATA_IDX][W_LBL]
+        ic(edge[DATA_IDX][WT_LBL])
+        return edge[DATA_IDX][WT_LBL]
 
     def plot_net(self, net: nx.Graph) -> None:
         """This function is used to plot the network."""

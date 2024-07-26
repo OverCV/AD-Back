@@ -5,7 +5,6 @@ import pyphi.labels
 import pyphi.partition
 import pyphi.tpm
 
-# from api.models.matrix import Matrix
 from api.models.props.sia import SiaType
 
 from api.models.structure import Structure
@@ -21,16 +20,12 @@ import pyphi.compute
 from pyphi.models.cuts import Bipartition, Part
 from pyphi.labels import NodeLabels
 
-# from pyphi.compute.subsystem import SystemIrreducibilityAnalysisConceptStyle
-from pyphi.models import RepertoireIrreducibilityAnalysis
 
 import copy
+from api.services.analyze.strats.tree import MSTree
 from constants.structure import BOOL_RANGE, DIST, VOID
 from utils.consts import (
-    ACTUAL,
-    BASE_2,
     COLS_IDX,
-    INFTY_POS,
     MIP,
     NET_ID,
     SMALL_PHI,
@@ -224,11 +219,11 @@ class Compute:
         network = pyphi.Network(tpm=tpm_state_node, node_labels=labels)
 
         # Aplicar las condiciones de background
-        bg_istate = tuple(
-            istate[i]
-            for i, bg in enumerate(self.__str_bgcond)
-            if (bg == STR_ONE) == (not self.__dual)
-        )
+        # bg_istate = tuple(
+        #     istate[i]
+        #     for i, bg in enumerate(self.__str_bgcond)
+        #     if (bg == STR_ONE) == (not self.__dual)
+        # )
 
         bg_labels = tuple(
             labels[i]
@@ -236,7 +231,7 @@ class Compute:
             if (bg == STR_ONE) == (not self.__dual)
         )
 
-        ic(bg_istate, bg_labels)
+        # ic(bg_istate, bg_labels)
 
         sub_system = pyphi.Subsystem(
             network=network,
@@ -257,6 +252,7 @@ class Compute:
         )
 
         er = sub_system.effect_mip(mech_idx, purv_idx)
+
         # ? Reconstrucción de resultados
 
         integrated_info: float = er.phi
@@ -300,7 +296,6 @@ class Compute:
             # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
             # NET_ID: network_id if conf.store_network else net_id,
         }
-        return self
 
     #
 
@@ -415,6 +410,17 @@ class Compute:
         )
         sia_force.calculate_concept()
         return sia_force.get_reperoire()
+
+    def use_min_span_tree(self) -> bool:
+        sia_mst: MSTree = MSTree(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_mst.analyze()
+        return sia_mst.get_reperoire()
 
     def use_branch_and_bound(self) -> bool:
         sia_branch: Branch = Branch(
