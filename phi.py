@@ -40,7 +40,7 @@ net = pyphi.Network(
     node_labels=labels,
 )
 
-net = pyphi.examples.rule154_network()
+net = pyphi.examples.fig4()
 
 # str_bg = ('A', 'B', 'C', 'D', 'E')
 str_bg = ('A', 'B', 'C')
