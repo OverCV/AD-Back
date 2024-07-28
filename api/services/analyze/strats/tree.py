@@ -55,7 +55,7 @@ class MSTree(Sia):
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         self.__net = self.margin_n_expand()
 
-        return True
+        raise HTTPException(344, 'Stop.')
 
         edges = self.__net.edges(data=True)
         self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
@@ -178,30 +178,30 @@ class MSTree(Sia):
         #     ic(min_key)
         #     return self.__net
         # else:
-        if True:  #! Remove this line [#20] ! #
-            ic()
-            edges = [
-                ('A(0)', 'A(1)', 0.50),
-                ('B(0)', 'A(1)', 0.90),
-                ('C(0)', 'A(1)', 0.40),
-                ('A(0)', 'B(1)', 0.30),
-                ('B(0)', 'B(1)', 0.80),
-                ('C(0)', 'B(1)', 0.45),
-                ('A(0)', 'C(1)', 0.60),
-                ('B(0)', 'C(1)', 0.70),
-                ('C(0)', 'C(1)', 0.20),
-            ]
-            # test_net = nx.DiGraph() if conf.directed else nx.Graph()
-            test_net = nx.Graph()
-            test_net.add_weighted_edges_from(edges)
-            # pass
-            # self.stoer_wagner(self.__net)
-            # self.stoer_wagner(test_net)
-            cut_value, partition = self.stoer_wagner(test_net)
+        edges = [
+            # ('A(0)', 'A(1)', 10),
+            ('B(0)', 'A(1)', 60),
+            ('C(0)', 'A(1)', 10),
+            ('A(0)', 'B(1)', 10),
+            # ('B(0)', 'B(1)', 13),
+            ('C(0)', 'B(1)', 50),
+            ('A(0)', 'C(1)', 30),
+            ('B(0)', 'C(1)', 10),
+            # ('C(0)', 'C(1)', 12),
+        ]
+        # test_net = nx.DiGraph() if conf.directed else nx.Graph()
+        test_net = nx.Graph()
+        test_net.add_weighted_edges_from(edges)
+        # pass
+        # self.stoer_wagner(self.__net)
+        # self.stoer_wagner(test_net)
+        cut_value, partition = self.stoer_wagner(test_net)
+        ic(cut_value, partition)
+        self.plot_net(test_net)
 
-            self.__net = test_net
+        self.__net = test_net
 
-            # self.min_span_tree()
+        # self.min_span_tree()
 
     def min_span_tree(self):
         """
@@ -299,7 +299,7 @@ class MSTree(Sia):
             for u, v, e in G.edges(data=True)
             if u != v
         )
-        G.__networkx_cache__ = None  # Disable caching
+        # G.__networkx_cache__ = None  # Disable caching
 
         for u, v, e in G.edges(data=True):
             if e[WT_LBL] < 0:
@@ -307,7 +307,7 @@ class MSTree(Sia):
 
         cut_value = INFTY_POS
         nodes = set(G)
-        contractions = []  # contracted node pairs #
+        contractions: list[tuple[str, str]] = []  # contracted node pairs #
 
         # Repeatedly pick a pair of nodes to contract until only one node is left.
         for i in range(n - 1):
@@ -348,9 +348,92 @@ class MSTree(Sia):
 
         # Recover the optimal partitioning from the contractions.
         G = nx.Graph(it.islice(contractions, best_phase))
-        v = contractions[best_phase][1]
+        v = contractions[best_phase][V_IDX]
+        ic(contractions, v)
         G.add_node(v)
-        reachable = set(nx.single_source_shortest_path_length(G, v))
+        ic(G._adj)
+        # reachable = set(nx.single_source_shortest_path_length(G, v))
+        reachable = set(self._single_shortest_path_length(G._adj    , v))
         partition = (list(reachable), list(nodes - reachable))
 
         return cut_value, partition
+
+    def _single_shortest_path_length(self, adj, firstlevel, cutoff=None):
+        """Yields (node, level) in a breadth first search
+
+        Shortest Path Length helper function
+        Parameters
+        ----------
+            adj : dict
+                Adjacency dict or view
+            firstlevel : list
+                starting nodes, e.g. [source] or [target]
+            cutoff : int or float
+                level at which we stop the process
+        """
+        seen = set(firstlevel)
+        nextlevel = firstlevel
+        level = 0
+        n = len(adj)
+        for v in nextlevel:
+            yield (v, level)
+        while nextlevel and cutoff > level:
+            level += 1
+            thislevel = nextlevel
+            nextlevel = []
+            for v in thislevel:
+                for w in adj[v]:
+                    if w not in seen:
+                        seen.add(w)
+                        nextlevel.append(w)
+                        yield (w, level)
+                if len(seen) == n:
+                    return
+
+    def plot_net(self, net: nx.Graph) -> None:
+        """This function is used to plot the network."""
+        # Separate the nodes into two sets
+        future_nodes = [node for node in net.nodes if node in self.__effect_labels]
+        current_nodes = [node for node in net.nodes if node in self.__causes_labels]
+
+        # Create a bipartite layout
+        pos = {}
+        try:
+            pos.update((node, (1, index)) for index, node in enumerate(future_nodes))
+            pos.update((node, (0, index)) for index, node in enumerate(current_nodes))
+        except KeyError:
+            pass
+
+        # Draw the bipartite graph with custom node and edge colors
+        nx.draw(
+            net,
+            pos=pos,
+            with_labels=True,
+            node_color='skyblue',
+            font_color='black',
+            edge_color='gray',
+        )
+
+        # Add edge labels with better visibility and consistent styles
+        labels = nx.get_edge_attributes(net, 'weight')
+        for (u, v), weight in labels.items():
+            offset = np.random.default_rng(seed=1).uniform(-0.2, 0.2)
+
+            # Calculate the position for the label closer to the destination node
+            pos_y = pos[v][1] + (pos[u][1] - pos[v][1]) * 0.3 + offset
+            pos_x = pos[v][0] + (pos[u][0] - pos[v][0]) * 0.3 + offset
+
+            plt.text(
+                pos_x,
+                pos_y,
+                weight,
+                ha='center',
+                va='center',
+                fontsize=8,  # You can adjust the fontsize as needed
+                bbox=dict(
+                    facecolor='white', edgecolor='none', alpha=0.2
+                ),  # Add a background to the text for better visibility
+            )
+
+        # Show the plot
+        plt.show()

@@ -23,27 +23,28 @@ path = 'assets/tpm_n2s/F5.xlsx'
 #     )
 # )
 
-arr: NDArray[np.float64] = pd.read_excel(path, header=None).to_numpy(dtype=np.float64)
-num_nodes = arr.shape[COLS_IDX]
+# arr: NDArray[np.float64] = pd.read_excel(path, header=None).to_numpy(dtype=np.float64)
+# num_nodes = arr.shape[COLS_IDX]
 
-print(arr)
+# print(arr)
 
-str_nodes = get_labels(num_nodes)
-idx_nodes = tuple(range(num_nodes))
-labels = NodeLabels(str_nodes, idx_nodes)
+# str_nodes = get_labels(num_nodes)
+# idx_nodes = tuple(range(num_nodes))
+# labels = NodeLabels(str_nodes, idx_nodes)
 
-print(str_nodes, idx_nodes, labels)
+# print(str_nodes, idx_nodes, labels)
 
 
-net = pyphi.Network(
-    tpm=arr,
-    node_labels=labels,
-)
-
+# net = pyphi.Network(
+#     tpm=arr,
+#     node_labels=labels,
+# )
 net = pyphi.examples.fig4()
+num_nodes = net.cm.shape[COLS_IDX]
 
 # str_bg = ('A', 'B', 'C', 'D', 'E')
 str_bg = ('A', 'B', 'C')
+
 
 for idx in range(2**num_nodes):
     str_istate = f'{idx:0{num_nodes}b}'

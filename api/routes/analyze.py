@@ -51,24 +51,16 @@ async def pyphi_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
-    # ic()
-    # ic(id, title, istate, subsys, effect, actual, dual)
-    # ic()
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
-    # if not computing.init_concept():
-    #     raise HTTPException(
-    #         status_code=500,
-    #         detail='One or more of the SIA properties are not calculated',
-    #     )
+
     results = computing.use_pyphi()
     # ic(results)
-    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
-    # return
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)  
 
 
 @temporizer
@@ -128,6 +120,9 @@ async def mst_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
+    """
+    `codigo de error 508` - No implementado aún
+    """
     # raise HTTPException(status_code=508, detail='Not implemented yet')
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
@@ -218,6 +213,16 @@ async def genetic_strategy(
     ic(results)
     reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
+
+
+@router.get(
+    '/sia-testing/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante un Algoritmo Genético.',
+    status_code=status.HTTP_200_OK,
+    response_model_by_alias=False,
+)
+async def sia_testing():
+    raise HTTPException(status_code=508, detail='Not implemented yet')
 
 
 # struct_res: StructureResponse = get_structure_by_title(title, db)
