@@ -27,7 +27,7 @@ from icecream import ic
 from server import conf
 
 
-class MSTree(Sia):
+class SWAlgorithm(Sia):
     """Class Branch is used to solve the mip problem using Branch&Bound strategy."""
 
     def __init__(
@@ -55,10 +55,10 @@ class MSTree(Sia):
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         self.__net = self.margin_n_expand()
 
-        raise HTTPException(344, 'Stop.')
+        # raise HTTPException(344, 'Stop.')
 
-        edges = self.__net.edges(data=True)
-        self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
+        # edges = self.__net.edges(data=True)
+        # self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
         #
         # raise NotImplementedError
         # part: None = None
@@ -70,6 +70,7 @@ class MSTree(Sia):
         #     self.sub_distrib,
         #     self.network_id,
         # )
+        self.integrated_info = -1
         self.network_id = DUMMY_NET_INT_ID
         self.sub_distrib = DUMMY_SUBDIST
         self.min_info_part = DUMMY_MIN_INFO_PARTITION
@@ -168,8 +169,7 @@ class MSTree(Sia):
                 alt_struct.set_matrix(idx_effect, sub_mat)
                 # ic(deleted)
 
-            print()
-
+        print()
         # self.plot_net(self.__net)
 
         # if len(mips) > INT_ZERO:
@@ -180,13 +180,13 @@ class MSTree(Sia):
         # else:
         edges = [
             # ('A(0)', 'A(1)', 10),
-            ('B(0)', 'A(1)', 60),
-            ('C(0)', 'A(1)', 10),
-            ('A(0)', 'B(1)', 10),
+            ('B(0)', 'A(1)', 10),
+            ('C(0)', 'A(1)', 60),
+            ('A(0)', 'B(1)', 20),
             # ('B(0)', 'B(1)', 13),
             ('C(0)', 'B(1)', 50),
-            ('A(0)', 'C(1)', 30),
-            ('B(0)', 'C(1)', 10),
+            ('A(0)', 'C(1)', 10),
+            ('B(0)', 'C(1)', 30),
             # ('C(0)', 'C(1)', 12),
         ]
         # test_net = nx.DiGraph() if conf.directed else nx.Graph()
@@ -195,20 +195,13 @@ class MSTree(Sia):
         # pass
         # self.stoer_wagner(self.__net)
         # self.stoer_wagner(test_net)
-        cut_value, partition = self.stoer_wagner(test_net)
-        ic(cut_value, partition)
+        result = self.stoer_wagner(test_net)
+        ic(result)
         self.plot_net(test_net)
 
         self.__net = test_net
 
         # self.min_span_tree()
-
-    def min_span_tree(self):
-        """
-        Branch and Bound algorithm to solve the MIP problem.
-        """
-        # ! Implementar Branch and Bound para la solución del MIP #18 ! #
-        raise NotImplementedError
 
     def stoer_wagner(self, G, weight=WT_LBL, used_heap=BinaryHeap):
         r"""Returns the weighted minimum edge cut using the Stoer-Wagner algorithm.
@@ -281,8 +274,6 @@ class MSTree(Sia):
         >>> cut_value
         4
         """
-        ic(G)
-
         n = len(G)
         if n < 2:
             raise nx.NetworkXError('graph has less than two nodes.')
@@ -294,16 +285,20 @@ class MSTree(Sia):
             (
                 u,
                 v,
-                {WT_LBL: e.get(weight, 1)},
+                {WT_LBL: d.get(weight, 1)},
             )
-            for u, v, e in G.edges(data=True)
+            for u, v, d in G.edges(data=True)
             if u != v
         )
         # G.__networkx_cache__ = None  # Disable caching
 
-        for u, v, e in G.edges(data=True):
-            if e[WT_LBL] < 0:
-                raise nx.NetworkXError('graph has a negative-weighted edge.')
+        if any((d[WT_LBL] < FLOAT_ZERO for _, _, d in G.edges(data=True))):
+            raise nx.NetworkXError('graph has a negative-weighted edge.')
+
+        # return -1
+        # for u, v, d in G.edges(data=True):
+        #     if d[WT_LBL] < 0:
+        #         raise nx.NetworkXError('graph has a negative-weighted edge.')
 
         cut_value = INFTY_POS
         nodes = set(G)
@@ -318,15 +313,15 @@ class MSTree(Sia):
             # A. The tightness of connectivity of a node not in A is defined by the
             # of edges connecting it to nodes in A.
             heap = used_heap()  # min-heap emulating a max-heap
-            for v, e in G[u].items():
-                heap.insert(v, -e[WT_LBL])
+            for v, d in G[u].items():
+                heap.insert(v, -d[WT_LBL])
             # Repeat until all but one node has been added to A.
             for _ in range(n - i - 2):
                 u = heap.pop()[0]
                 A.add(u)
-                for v, e in G[u].items():
+                for v, d in G[u].items():
                     if v not in A:
-                        heap.insert(v, heap.get(v, 0) - e[WT_LBL])
+                        heap.insert(v, heap.get(v, 0) - d[WT_LBL])
             # A and the remaining node v define a "cut of the phase". There is a
             # minimum cut of the original graph that is also a cut of the phase.
             # Due to contractions in earlier phases, v may in fact represent
@@ -338,12 +333,12 @@ class MSTree(Sia):
                 best_phase = i
             # Contract v and the last node added to A.
             contractions.append((u, v))
-            for w, e in G[v].items():
+            for w, d in G[v].items():
                 if w != u:
                     if w not in G[u]:
-                        G.add_edge(u, w, weight=e[WT_LBL])
+                        G.add_edge(u, w, weight=d[WT_LBL])
                     else:
-                        G[u][w][WT_LBL] += e[WT_LBL]
+                        G[u][w][WT_LBL] += d[WT_LBL]
             G.remove_node(v)
 
         # Recover the optimal partitioning from the contractions.
@@ -353,12 +348,12 @@ class MSTree(Sia):
         G.add_node(v)
         ic(G._adj)
         # reachable = set(nx.single_source_shortest_path_length(G, v))
-        reachable = set(self._single_shortest_path_length(G._adj    , v))
+        reachable = set(self._single_shortest_path_length(G._adj, v))
         partition = (list(reachable), list(nodes - reachable))
 
         return cut_value, partition
 
-    def _single_shortest_path_length(self, adj, firstlevel, cutoff=None):
+    def _single_shortest_path_length(self, adj, first_level, cutoff=None):
         """Yields (node, level) in a breadth first search
 
         Shortest Path Length helper function
@@ -366,26 +361,26 @@ class MSTree(Sia):
         ----------
             adj : dict
                 Adjacency dict or view
-            firstlevel : list
-                starting nodes, e.g. [source] or [target]
+            firstlevel : list'
+                starting nodes, e.g. [sourc'e] or [target]
             cutoff : int or float
                 level at which we stop the process
         """
-        seen = set(firstlevel)
-        nextlevel = firstlevel
+        seen = set(first_level)
+        next_level = first_level
         level = 0
         n = len(adj)
-        for v in nextlevel:
+        for v in next_level:
             yield (v, level)
-        while nextlevel and cutoff > level:
+        while next_level and cutoff > level:
             level += 1
-            thislevel = nextlevel
-            nextlevel = []
+            thislevel = next_level
+            next_level = []
             for v in thislevel:
                 for w in adj[v]:
                     if w not in seen:
                         seen.add(w)
-                        nextlevel.append(w)
+                        next_level.append(w)
                         yield (w, level)
                 if len(seen) == n:
                     return
@@ -437,3 +432,10 @@ class MSTree(Sia):
 
         # Show the plot
         plt.show()
+
+    def min_span_tree(self):
+        """
+        Branch and Bound algorithm to solve the MIP problem.
+        """
+        # ! Implementar Branch and Bound para la solución del MIP #18 ! #
+        raise NotImplementedError

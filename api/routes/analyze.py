@@ -60,7 +60,7 @@ async def pyphi_strategy(
 
     results = computing.use_pyphi()
     # ic(results)
-    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)  
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
 @temporizer

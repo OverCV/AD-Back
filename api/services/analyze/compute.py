@@ -22,7 +22,7 @@ from pyphi.labels import NodeLabels
 
 
 import copy
-from api.services.analyze.strats.tree import MSTree
+from api.services.analyze.strats.frank_mech import SWAlgorithm
 from constants.structure import BOOL_RANGE, DIST, VOID
 from utils.consts import (
     COLS_IDX,
@@ -412,7 +412,7 @@ class Compute:
         return sia_force.get_reperoire()
 
     def use_min_span_tree(self) -> bool:
-        sia_mst: MSTree = MSTree(
+        sia_mst: SWAlgorithm = SWAlgorithm(
             self.__struct,
             self.__effect[not self.__dual],
             self.__actual[not self.__dual],
