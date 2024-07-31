@@ -1,63 +1,35 @@
-import pyphi
-from pyphi.labels import NodeLabels
-from pyphi.models import RepertoireIrreducibilityAnalysis
+import networkx as nx
+import matplotlib.pyplot as plt
 
-import numpy as np
-import pandas as pd
+# Crear un grafo bipartito
+B = nx.Graph()
 
-from numpy.typing import NDArray
+# Número de nodos en cada conjunto
+num_nodes = 4
 
-from utils.consts import COLS_IDX
-from utils.funcs import get_labels
+# Añadir nodos a los conjuntos U y V
+U = [f'u{i+1}' for i in range(num_nodes)]
+V = [f'v{i+1}' for i in range(num_nodes)]
 
-# path = 'assets/tpm_n2s/tpm_fly1_awake_lil_endian.csv'
-path = 'assets/tpm_n2s/F5.xlsx'
+# Añadir los nodos al grafo
+B.add_nodes_from(U, bipartite=0)
+B.add_nodes_from(V, bipartite=1)
 
-# CSV Con 15 nodos
-# df = pd.read_csv(path, header=None)
+# Conectar cada nodo de U con cada nodo de V
+edges = [(u, v) for u in U for v in V]
+B.add_edges_from(edges)
 
-# # Convertir el DataFrame en un numpy array
-# arr: NDArray[np.float64] = np.vstack(
-#     df[0].apply(
-#         lambda x: np.fromstring(x.strip('[]'), sep=','),
-#     )
-# )
+# Crear un layout circular intercalado para los nodos
+# Primero creamos una lista intercalada de nodos
+intercalado = [None] * (len(U) + len(V))
+intercalado[::2] = U
+intercalado[1::2] = V
 
-# arr: NDArray[np.float64] = pd.read_excel(path, header=None).to_numpy(dtype=np.float64)
-# num_nodes = arr.shape[COLS_IDX]
+# Crear un layout circular para los nodos intercalados
+pos = nx.circular_layout(intercalado)
 
-# print(arr)
-
-# str_nodes = get_labels(num_nodes)
-# idx_nodes = tuple(range(num_nodes))
-# labels = NodeLabels(str_nodes, idx_nodes)
-
-# print(str_nodes, idx_nodes, labels)
-
-
-# net = pyphi.Network(
-#     tpm=arr,
-#     node_labels=labels,
-# )
-net = pyphi.examples.fig4()
-num_nodes = net.cm.shape[COLS_IDX]
-
-# str_bg = ('A', 'B', 'C', 'D', 'E')
-str_bg = ('A', 'B', 'C')
-
-
-for idx in range(2**num_nodes):
-    str_istate = f'{idx:0{num_nodes}b}'
-    istate = tuple(map(int, str_istate))
-    print(istate)
-    subsys = pyphi.Subsystem(
-        network=net,
-        state=istate,
-        nodes=str_bg,
-    )
-    print(subsys)
-
-    # er: RepertoireIrreducibilityAnalysis = subsys.effect_repertoire(
-    #     mechanism='full',
-    #     direction='past',
-    # )
+# Dibujar el grafo
+plt.figure(figsize=(8, 8))
+nx.draw(B, pos, with_labels=True, node_color='lightblue', edge_color='gray')
+plt.title('Grafo Bipartito en Forma de Caparazón')
+plt.show()
