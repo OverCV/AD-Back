@@ -15,7 +15,7 @@ V = [f'v{i+1}' for i in range(num_nodes)]
 B.add_nodes_from(U, bipartite=0)
 B.add_nodes_from(V, bipartite=1)
 
-# Conectar cada nodo de U con cada nodo de V 
+# Conectar cada nodo de U con cada nodo de V
 edges = [(u, v) for u in U for v in V]
 B.add_edges_from(edges)
 
@@ -25,7 +25,7 @@ intercalado = [None] * (len(U) + len(V))
 intercalado[::2] = U
 intercalado[1::2] = V
 
-# Crear un layout circular para los nodos intercalados
+# Crear un layout circular para los nodos intercalados 
 pos = nx.circular_layout(intercalado)
 
 # Dibujar el grafo
