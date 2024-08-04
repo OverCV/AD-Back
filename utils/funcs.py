@@ -42,7 +42,7 @@ def emd(
     endian_keys: list[str] = lil_endian(max_len) if le else big_endian(max_len)
     earth_moved: float = FLOAT_ZERO
 
-    while not np.allclose(u, ROWS_IDX):
+    while not np.allclose(u, INT_ZERO):
         u_sorter: NDArray[np.intp] = np.argsort(-u)
         v_sorter: NDArray[np.intp] = np.argsort(-v)
 
@@ -56,11 +56,10 @@ def emd(
         u[u_idx] -= remainder
         v[v_idx] -= remainder
 
-        distance: int
-        valid_distances: dict[str, Callable] = {
+        valid_metrics: dict[str, Callable] = {
             HAMMING_DIST: hamming_distance,
         }
-        metric_distance: Callable = valid_distances.get(md)
+        metric_distance: Callable[[int, int], int] = valid_metrics[md]
 
         distance: int = metric_distance(end_u_key, end_v_key)
         earth_moved += remainder * distance

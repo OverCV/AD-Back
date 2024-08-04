@@ -144,7 +144,7 @@ async def mst_strategy(
 @temporizer
 @router.get(
     '/sia-branch/',
-    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante ramificación y poda.',
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
@@ -160,6 +160,7 @@ async def branch_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
+    ic(istate, subsys, effect, actual)
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )

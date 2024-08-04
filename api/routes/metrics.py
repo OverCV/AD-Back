@@ -21,9 +21,9 @@ from data.motors import get_mongo, get_sqlite
 
 
 from constants.metrics import (
-    FORCE_ST,
     STORAGE_URL,
     UTF8_FORMAT,
+    FORCE_ST,
     PYPHI_ST,
     BRANCH_ST,
     GENETIC_ST,
@@ -126,6 +126,8 @@ async def all_strats(
         ]
     except Exception as e:
         print('\nPyPhi failed', e, '\n')
+        # ! Improve the error handling ! #
+        return JSONResponse(content={DATA: jsonable_encoder({f'error {e}'})})
 
     try:
         force_response = await force_strategy(**common_params)

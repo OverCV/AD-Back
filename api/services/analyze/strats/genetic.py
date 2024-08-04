@@ -10,7 +10,7 @@ from api.services.analyze.sia import Sia
 
 from icecream import ic
 from constants.dummy import DUMMY_MIN_INFO_PARTITION, DUMMY_NET_INT_ID, DUMMY_SUBDIST
-from utils.consts import INFTY_POS
+from utils.consts import INFTY_POS, ROWS_IDX, STR_ONE, STR_ZERO
 
 
 class Genetic(Sia):
@@ -50,6 +50,19 @@ class Genetic(Sia):
             )
             best = env.evolve()
 
+        # part=('010', '000')
+        # best: Individual: [ True False  True  True  True  True], 0.25
+        m: int = len(self._effect)
+        # ic(self._actual, self._effect)
+        # ind_effect = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][:m]])
+        # ind_actual = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][m+1:]])
+        print()
+        # ic(best.get_chr())
+        ind_effect = [STR_ONE if x else STR_ZERO for x in best.get_chr()[:m]]
+        ind_actual = [STR_ONE if x else STR_ZERO for x in best.get_chr()[m:]]
+        mip = self.label_mip((''.join(ind_effect), ''.join(ind_actual)))
+        # ic(ind_effect, ind_actual)
+        # ic(mip)
         ic(best)
 
         # self.__environments.append(
@@ -68,9 +81,9 @@ class Genetic(Sia):
         # emd_dist = emd(*iter_distrib, *self._target_dist)
 
         self.integrated_info = best.get_fitness()
-        self.network_id = DUMMY_NET_INT_ID
-        self.min_info_part = DUMMY_MIN_INFO_PARTITION
+        self.min_info_part = mip
         self.sub_distrib = best.get_dist()[StructProps.DIST_ARRAY]
+        self.network_id = DUMMY_NET_INT_ID
 
         # ic(emd_dist)
         not_std_sln = any(

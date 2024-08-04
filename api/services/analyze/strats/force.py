@@ -49,7 +49,7 @@ class BruteForce(Sia):
             else self.calculate_dists(bipartitions)
         )
         # ic(self._target_dist)
-        # print(f'{part=}')
+        print(f'{part=}')
         mip = self.label_mip(part)
 
         self.network_id = -1
