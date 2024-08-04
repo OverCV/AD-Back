@@ -160,7 +160,6 @@ async def branch_strategy(
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
-    # raise HTTPException(status_code=508, detail='Not implemented yet')
     struct_response: StructureResponse = (
         get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
     )

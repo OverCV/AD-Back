@@ -25,7 +25,7 @@ intercalado = [None] * (len(U) + len(V))
 intercalado[::2] = U
 intercalado[1::2] = V
 
-# Crear un layout circular para los nodos intercalados 
+# Crear un layout circular para los nodos intercalados
 pos = nx.circular_layout(intercalado)
 
 # Dibujar el grafo

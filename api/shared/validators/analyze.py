@@ -21,6 +21,8 @@ def has_valid_inputs(istate: str, effect: str, actual: str, bgconds: str, tensor
 
     # ! Validate the non-sense of giving an empty future or the actual [#10] ! #
 
+    ic(istate, effect, actual, bgconds, tensor_len)
+
     if len(effect) != len(actual):
         raise HTTPException('Effect and Actual should have the same length')
 

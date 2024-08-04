@@ -1,11 +1,12 @@
-from functools import reduce
+# from functools import reduce
 
 import numpy as np
 from numpy.typing import NDArray
 import pandas as pd
-from constants.structure import UNIT_MAT
+
+# from constants.structure import UNIT_MAT
 from utils.consts import ROWS_IDX
-from utils.funcs import big_endian, lil_endian
+from utils.funcs import big_endian, emd, lil_endian
 
 
 # def combine_arrays(
@@ -63,9 +64,15 @@ def bin_prod(
     return combined_idx, df_result.values
 
 
-A = (0,), np.array([1, 0], dtype=np.float64)
-B = (1,), np.array([0.75, 0.25], dtype=np.float64)
-C = (2,), np.array([0, 1], dtype=np.float64)
+sub_distribution = np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
+distribution = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], dtype=np.float64)
+
+res_emd = emd(sub_distribution, distribution)
+print(res_emd)
+
+# A = (0,), np.array([1, 0], dtype=np.float64)
+# B = (1,), np.array([0.75, 0.25], dtype=np.float64)
+# C = (2,), np.array([0, 1], dtype=np.float64)
 
 # AC = product([], True)
 # print('prod one elem', AC)
