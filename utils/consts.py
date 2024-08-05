@@ -28,6 +28,7 @@ EMPTY_STR: str = ''
 """ Schemas """
 
 EX_STR: str = 'example'
+SAMPLES_STR: str = 'samples'
 
 """ Analyze """
 

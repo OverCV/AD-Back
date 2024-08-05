@@ -11,7 +11,8 @@ import pandas as pd
 
 
 from constants.format import HAMMING_DIST
-from utils.consts import BASE_2, FLOAT_ZERO, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE
+from constants.structure import VOID
+from utils.consts import ACTUAL, BASE_2, EFFECT, FLOAT_ZERO, INT_ONE, INT_ZERO, ROWS_IDX, STR_ONE
 
 from server import conf
 # from icecream import ic
@@ -283,3 +284,32 @@ def temporizer(func):
         return result  # Retornar el resultado de la función original
 
     return wrapper
+
+
+def label_mip(
+    partition: tuple[str, str], concept: tuple[tuple[int, ...], tuple[int, ...]]
+) -> tuple[tuple[tuple[str], tuple[str]], tuple[tuple[str], tuple[str]]]:
+    """
+        # ! Mejorar
+    Dar una tupla ['101', '010'] y ['A', 'B', 'C'] y regresar una tupla de tuplas de tuplas de strings
+    """
+    effect, actual = concept
+    # Incrementamos uno puesto son índices de arreglo
+    max_len = max(*effect, *actual) + 1
+    labels = get_labels(max_len)
+    concepts = [effect, actual]
+    mip = [[[], []], [[], []]]
+
+    # Negate b -> Reorder partitions. Negate k -> Invert fraction (concepts) #
+    for k, (part, con) in enumerate(zip(partition, concepts)):
+        for b, lbl_idx in zip(part, con):
+            mip[1 - int(b)][1 - k].append(labels[lbl_idx])
+
+    for con in mip[EFFECT]:
+        if len(con) == INT_ZERO:
+            con.append(VOID)
+    for con in mip[ACTUAL]:
+        if len(con) == INT_ZERO:
+            con.append(VOID)
+
+    return tuple(mip)

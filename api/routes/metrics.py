@@ -16,7 +16,7 @@ from api.routes.analyze import (
     genetic_strategy,
     pyphi_strategy,
 )
-from api.schemas.sample import SampleRequest
+from api.schemas.sample import SampleCollection, SampleRequest
 from data.motors import get_mongo, get_sqlite
 
 
@@ -29,8 +29,8 @@ from constants.metrics import (
     GENETIC_ST,
     SERVER_URL,
 )
-from constants.structure import IS_DUAL, N1, N3, N4, N5, N6, N7, SA, SAMPLES, SHEET_NAME
-from utils.consts import DATA, MIP, SMALL_PHI, STR_ONE, STR_ZERO
+from constants.structure import IS_DUAL, N1, N15, N3, N4, N5, N6, N7, SA, SAMPLES, SHEET_NAME
+from utils.consts import DATA, EMPTY_STR, MIP, SMALL_PHI, STR_ONE, STR_ZERO
 
 from server import conf
 from icecream import ic
@@ -50,14 +50,14 @@ executed_df: list[pd.DataFrame] = []
 )
 async def all_strats(
     ctrl_parameters: ControlSchema,
-    sheet: str = SAMPLES[N4][SA][N4][SHEET_NAME],
-    id: int = SAMPLES[N4][SA][N4][StructProps.ID],
-    title: str = SAMPLES[N4][SA][N4][StructProps.TITLE],
-    istate: str = SAMPLES[N4][SA][N4][StructProps.ISTATE],
-    subsys: str = SAMPLES[N4][SA][N4][StructProps.SUBSYS],
-    effect: str = SAMPLES[N4][SA][N4][StructProps.EFFECT],
-    actual: str = SAMPLES[N4][SA][N4][StructProps.ACTUAL],
-    dual: bool = SAMPLES[N4][SA][N4][IS_DUAL],
+    sheet: str = SAMPLES[N15][SA][N1][SHEET_NAME],
+    id: int = SAMPLES[N15][SA][N1][StructProps.ID],
+    title: str = SAMPLES[N15][SA][N1][StructProps.TITLE],
+    istate: str = SAMPLES[N15][SA][N1][StructProps.ISTATE],
+    subsys: str = SAMPLES[N15][SA][N1][StructProps.SUBSYS],
+    effect: str = SAMPLES[N15][SA][N1][StructProps.EFFECT],
+    actual: str = SAMPLES[N15][SA][N1][StructProps.ACTUAL],
+    dual: bool = SAMPLES[N15][SA][N1][IS_DUAL],
     db_sql: Session = Depends(get_sqlite),
     db_nosql: Session = Depends(get_mongo),
 ):
@@ -92,7 +92,47 @@ async def all_strats(
     time_rows = [TIME_ROW_PYPHI, TIME_ROW_BFORCE]
 
     # ! Formatear mejor ! #
-    report_columns = [f'{subsys}=({effect}|{actual})']
+
+    print(subsys)
+    all_labels = EMPTY_STR.join(get_labels(len(subsys)))
+
+    effect_labels = EMPTY_STR.join(
+        [
+            s
+            for bg, b, s in zip(
+                subsys,
+                effect,
+                all_labels,
+            )
+            if (b == STR_ONE and bg == STR_ONE)
+        ]
+    )
+    actual_labels = EMPTY_STR.join(
+        [
+            s
+            for bg, b, s in zip(
+                subsys,
+                actual,
+                all_labels,
+            )
+            if (b == STR_ONE and bg == STR_ONE)
+        ]
+    )
+
+    # ic(effect, effect_labels)
+    # ic(actual, actual_labels)
+
+    subsys_labels = EMPTY_STR
+    for b, s in zip(subsys, all_labels):
+        subsys_labels += s.lower() if b == STR_ZERO else s
+
+    # ic(subsys_labels)
+    # ic(f'{subsys_labels}=({effect_labels}|{actual_labels})')
+
+    # return
+
+    col_str = f'{subsys_labels}=({effect_labels}|{actual_labels})'
+    report_columns = [col_str]
 
     loss_report_df = pd.DataFrame(index=loss_rows, columns=report_columns)
     time_report_df = pd.DataFrame(index=time_rows, columns=report_columns)
@@ -118,12 +158,10 @@ async def all_strats(
         pyphi_results = pyphi_response.body.decode(UTF8_FORMAT)
         pyphi_data = json.loads(pyphi_results)[DATA]
 
-        ic(pyphi_data)
+        # ic(pyphi_data)
 
-        loss_report_df.at[LOSS_ROW_PYPHI, f'{subsys}=({effect}|{actual})'] = pyphi_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_PYPHI, f'{subsys}=({effect}|{actual})'] = conf.execution_times[
-            'pyphi_strategy'
-        ]
+        loss_report_df.at[LOSS_ROW_PYPHI, col_str] = pyphi_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_PYPHI, col_str] = conf.execution_times['pyphi_strategy']
     except Exception as e:
         print('\nPyPhi failed', e, '\n')
         # ! Improve the error handling ! #
@@ -134,8 +172,8 @@ async def all_strats(
         force_results = force_response.body.decode(UTF8_FORMAT)
         force_data = json.loads(force_results)[DATA]
 
-        loss_report_df.at[LOSS_ROW_BFORCE, f'{subsys}=({effect}|{actual})'] = force_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_BFORCE, f'{subsys}=({effect}|{actual})'] = conf.execution_times[
+        loss_report_df.at[LOSS_ROW_BFORCE, col_str] = force_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_BFORCE, col_str] = conf.execution_times[
             'force_strategy'  #! Obtenible del diccionario #!
         ]
     except Exception as e:
@@ -147,10 +185,8 @@ async def all_strats(
         branch_data = json.loads(branch_results)[DATA]
 
         # ic(branch_data)
-        loss_report_df.at[LOSS_ROW_BRANCH, f'{subsys}=({effect}|{actual})'] = branch_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_BRANCH, f'{subsys}=({effect}|{actual})'] = conf.execution_times[
-            'branch_strategy'
-        ]
+        loss_report_df.at[LOSS_ROW_BRANCH, col_str] = branch_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times['branch_strategy']
     except Exception as e:
         print('\nBranch failed', e, '\n')
 
@@ -164,12 +200,8 @@ async def all_strats(
         genetic_results = genetic_response.body.decode(UTF8_FORMAT)
         genetic_data = json.loads(genetic_results)[DATA]
 
-        loss_report_df.at[LOSS_ROW_GENETIC, f'{subsys}=({effect}|{actual})'] = genetic_data[
-            SMALL_PHI
-        ]
-        time_report_df.at[TIME_ROW_GENETIC, f'{subsys}=({effect}|{actual})'] = conf.execution_times[
-            'genetic_strategy'
-        ]
+        loss_report_df.at[LOSS_ROW_GENETIC, col_str] = genetic_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_GENETIC, col_str] = conf.execution_times['genetic_strategy']
     except Exception as e:
         print('\nGenetic failed', e, '\n')
 
@@ -207,14 +239,16 @@ async def all_strats(
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
-async def mutlple_metrics(
-    samples: list[SampleRequest],
+async def multiple_metrics(
+    cluster: SampleCollection,
     sql_db: Session = Depends(get_sqlite),
     nosql_db: Session = Depends(get_mongo),
 ):
-    merged_df = pd.DataFrame()
     # Pasamos como lista de objetos las estructuras samples de las redes ya guardadas.
-    for sample in samples:
+    merged_df = pd.DataFrame()
+    net_samples = cluster.samples
+
+    for sample in net_samples:
         # ic(sample)
         try:
             await all_strats(

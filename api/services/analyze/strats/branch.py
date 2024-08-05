@@ -217,16 +217,16 @@ class Branch(Sia):
         ic(self.__net.edges(data=True))
         ic(limit)
 
-        self.plot_net(self.__net)
+        # self.plot_net(self.__net)
 
         while len(queue) > INT_ZERO:
             # ? Obtenemos el hijo de la cola de prioridad hasta que esté vacía.
             print()
-            ic(queue)
+            # ic(queue)
             _, son = pq.heappop(queue)
             all_nodes.add(son)
 
-            print(son)
+            # print(son)
 
             if any(
                 (
@@ -240,13 +240,13 @@ class Branch(Sia):
                 net=son.get_net().copy(),
                 ignore=son.get_ignored().copy(),
             )
-            print(left)
+            # print(left)
             # ? Ordenamos las aristas para ignorar la primera (mejor)
 
             for ledge in left.sorted_edges():
                 # Al momento de ignorar es importante iterar las aristas puesto no vale tomar la mejor, esto porque es necesario ignorar todas las que vayan siendo requeridas, de forma que cuando ya se haya tomado la mejor, se continuará para la segunda, tercera, etc... hasta que se toma sale del ciclo.
                 if (ledge[U_IDX], ledge[V_IDX]) in left.get_ignored().keys():
-                    print('lmin skip', (ledge[U_IDX], ledge[V_IDX]))
+                    # print('lmin skip', (ledge[U_IDX], ledge[V_IDX]))
                     continue
                 left.ignore_new(
                     (ledge[U_IDX], ledge[V_IDX]),
@@ -273,7 +273,7 @@ class Branch(Sia):
             for redge in right.sorted_edges():
                 # Iteramos de forma ordenada las aristas puesto hemos de validar dos condiciones, si la arista debe ser ignorada entonces continuamos a la siguiente iteración para tomar la siguiente mejor arista, sea el caso entonces rompemos el ciclo para tras tomarla no seguir tomando.
                 if (redge[U_IDX], redge[V_IDX]) in right.get_ignored().keys():
-                    print('rmin skip', (redge[U_IDX], redge[V_IDX]))
+                    # print('rmin skip', (redge[U_IDX], redge[V_IDX]))
                     continue
                 r_net: nx.DiGraph | nx.Graph = right.get_net()
                 right.inc_ub(self.calculate_ub(right, redge))
@@ -297,12 +297,12 @@ class Branch(Sia):
                     status_code=status.HTTP_508_LOOP_DETECTED,
                     detail='Maximal limit has been reached.',
                 )
-            print('-' * 37)
-        ic(str(minimal_loss))
+            # print('-' * 37)
+        # ic(str(minimal_loss))
         # ic()
         edges_deleted = minimal_loss.get_deletions()
         ic(edges_deleted)
-        self.plot_net(minimal_loss.get_net())
+        # self.plot_net(minimal_loss.get_net())
         self.integrated_info = minimal_loss.get_ub()
         return minimal_loss.get_net()
 
@@ -348,7 +348,7 @@ class Branch(Sia):
         # Obtenemos los nodos sobre los que incide la arista
         # nodes: list[tuple[str, str, float]] = get_adj(node.get_net(), destiny)
 
-        ic(edge[DATA_IDX][WT_LBL])
+        # ic(edge[DATA_IDX][WT_LBL])
         return edge[DATA_IDX][WT_LBL]
 
     def plot_net(self, net: nx.Graph) -> None:

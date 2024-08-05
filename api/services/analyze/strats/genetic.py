@@ -11,6 +11,7 @@ from api.services.analyze.sia import Sia
 from icecream import ic
 from constants.dummy import DUMMY_MIN_INFO_PARTITION, DUMMY_NET_INT_ID, DUMMY_SUBDIST
 from utils.consts import INFTY_POS, ROWS_IDX, STR_ONE, STR_ZERO
+from utils.funcs import label_mip
 
 
 class Genetic(Sia):
@@ -60,7 +61,8 @@ class Genetic(Sia):
         # ic(best.get_chr())
         ind_effect = [STR_ONE if x else STR_ZERO for x in best.get_chr()[:m]]
         ind_actual = [STR_ONE if x else STR_ZERO for x in best.get_chr()[m:]]
-        mip = self.label_mip((''.join(ind_effect), ''.join(ind_actual)))
+        concept = (self._effect, self._actual)
+        mip = label_mip((''.join(ind_effect), ''.join(ind_actual)), concept)
         # ic(ind_effect, ind_actual)
         # ic(mip)
         ic(best)

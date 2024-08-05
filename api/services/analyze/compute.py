@@ -79,7 +79,7 @@ class Compute:
         Desde este nivel se deifinen las condiciones de bg, las cuales permiten conocer los elementos/ínidces usables para los diferentes subsistemas a generar.
         """
 
-        ic(self.__str_bgcond, STR_ONE, self.__dual)
+        # ic(self.__str_bgcond, STR_ONE, self.__dual)
 
         bgcond_elems = [
             idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
@@ -275,16 +275,17 @@ class Compute:
         dual_mech, dual_purv = dual.mechanism, dual.purview
         prim_mech, prim_purv = prim.mechanism, prim.purview
 
-        # print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
+        ic(bg_labels)
+        ic(dual_purv, dual_mech, prim_purv, prim_mech)
 
         min_info_part = [
             [
-                [bg_labels[i] for i in prim_mech] if prim_mech else [VOID],
-                [bg_labels[i] for i in prim_purv] if prim_purv else [VOID],
+                [bg_labels[prim_mech.index(i)] for i in prim_mech] if prim_mech else [VOID],
+                [bg_labels[prim_purv.index(i)] for i in prim_purv] if prim_purv else [VOID],
             ],
             [
-                [bg_labels[i] for i in dual_mech] if dual_mech else [VOID],
-                [bg_labels[i] for i in dual_purv] if dual_purv else [VOID],
+                [bg_labels[dual_mech.index(i)] for i in dual_mech] if dual_mech else [VOID],
+                [bg_labels[dual_purv.index(i)] for i in dual_purv] if dual_purv else [VOID],
             ],
         ]
 

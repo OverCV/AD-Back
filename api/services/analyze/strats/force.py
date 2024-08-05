@@ -17,7 +17,7 @@ from utils.consts import (
     INFTY_POS,
     STR_ONE,
 )
-from utils.funcs import dec2bin, emd
+from utils.funcs import dec2bin, emd, label_mip
 import concurrent.futures
 
 from server import conf
@@ -50,7 +50,8 @@ class BruteForce(Sia):
         )
         # ic(self._target_dist)
         print(f'{part=}')
-        mip = self.label_mip(part)
+        concept = (self._effect, self._actual)  
+        mip = label_mip(part, concept)
 
         self.network_id = -1
         self.min_info_part = mip

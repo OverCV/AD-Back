@@ -24,7 +24,7 @@ from api.services.structure.base import (
 )
 from api.shared.formatter import Format
 
-from constants.format import DEFFAULT_SHEET
+from constants.format import DEFFAULT_SHEET, S2C
 from data.tables import StructureTable
 from constants.structure import N1, N3, SA, SAMPLES
 from utils.consts import DATA
@@ -42,8 +42,7 @@ router: APIRouter = APIRouter()
 async def create_structure(
     # title: str = Form(default=STRUCTURES[R3A][StructProps.TITLE]),
     title: str = Form(default=SAMPLES[N3][SA][N1][StructProps.TITLE]),
-    # format: str = Form(default=STRUCTURES[R3A][StructProps.FORMAT]),
-    format: str = Form(default=SAMPLES[N3][SA][N1][StructProps.FORMAT]),
+    format: str = S2C,
     tensor: UploadFile = File(...),
     sheet: str = Form(default=DEFFAULT_SHEET),
     db: Session = Depends(get_sqlite),

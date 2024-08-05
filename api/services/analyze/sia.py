@@ -54,27 +54,30 @@ class Sia(ABC):
     def analyze(self) -> SiaType:
         pass
 
-    def label_mip(self, partition: tuple[str, str]) -> tuple[tuple[tuple[str], tuple[str]]]:
-        """
-            # ! Mejorar
-        Dar una tupla ['101', '010'] y ['A', 'B', 'C'] y regresar una tupla de tuplas de tuplas de strings
-        """
-        # Incrementamos uno puesto son índices de arreglo
-        max_len = max(*self._effect, *self._actual) + 1
-        labels = get_labels(max_len)
-        concepts = [self._effect, self._actual]
-        mip = [[[], []], [[], []]]
+    # def label_mip(self, partition: tuple[str, str]) -> tuple[tuple[tuple[str], tuple[str]]]:
+    #     """
+    #         # ! Mejorar
+    #     Dar una tupla ['101', '010'] y ['A', 'B', 'C'] y regresar una tupla de tuplas de tuplas de strings
+    #     """
+    #     # Incrementamos uno puesto son índices de arreglo
+    #     ic()
+    #     ic(self._effect, self._actual)
 
-        # Negate b -> Reorder partitions. Negate k -> Invert fraction (concepts) #
-        for k, (part, con) in enumerate(zip(partition, concepts)):
-            for b, lbl_idx in zip(part, con):
-                mip[1 - int(b)][1 - k].append(labels[lbl_idx])
+    #     max_len = max(*self._effect, *self._actual) + 1
+    #     labels = get_labels(max_len)
+    #     concepts = [self._effect, self._actual]
+    #     mip = [[[], []], [[], []]]
 
-        for con in mip[EFFECT]:
-            if len(con) == INT_ZERO:
-                con.append(VOID)
-        for con in mip[ACTUAL]:
-            if len(con) == INT_ZERO:
-                con.append(VOID)
+    #     # Negate b -> Reorder partitions. Negate k -> Invert fraction (concepts) #
+    #     for k, (part, con) in enumerate(zip(partition, concepts)):
+    #         for b, lbl_idx in zip(part, con):
+    #             mip[1 - int(b)][1 - k].append(labels[lbl_idx])
 
-        return tuple(mip)
+    #     for con in mip[EFFECT]:
+    #         if len(con) == INT_ZERO:
+    #             con.append(VOID)
+    #     for con in mip[ACTUAL]:
+    #         if len(con) == INT_ZERO:
+    #             con.append(VOID)
+
+    #     return tuple(mip)
