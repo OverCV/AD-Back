@@ -165,7 +165,7 @@ class Branch(Sia):
                 alt_struct.set_matrix(idx_effect, sub_mat)
                 # ic(deleted)
 
-            print()
+            # print()
 
         # self.plot_net(self.__net)
 
@@ -221,7 +221,7 @@ class Branch(Sia):
 
         while len(queue) > INT_ZERO:
             # ? Obtenemos el hijo de la cola de prioridad hasta que esté vacía.
-            print()
+            # print()
             # ic(queue)
             _, son = pq.heappop(queue)
             all_nodes.add(son)

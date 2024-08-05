@@ -275,8 +275,8 @@ class Compute:
         dual_mech, dual_purv = dual.mechanism, dual.purview
         prim_mech, prim_purv = prim.mechanism, prim.purview
 
-        ic(bg_labels)
-        ic(dual_purv, dual_mech, prim_purv, prim_mech)
+        # ic(bg_labels)
+        # ic(dual_purv, dual_mech, prim_purv, prim_mech)
 
         min_info_part = [
             [

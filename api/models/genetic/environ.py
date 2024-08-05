@@ -42,7 +42,7 @@ class Environ:
     def evolve(self) -> Individual:
         """Method evolve is used to evolve the population."""
         # ! Inicialización de la población ! #
-        ic(self.__population.get_concept())
+        # ic(self.__population.get_concept())
         self.__population.generate_individuals(self.__ctrl_params[INIT_POP_SIZE])
 
         # ! Computar función de evaluación para todo individuo. ! #
