@@ -6,7 +6,7 @@ import pandas as pd
 
 # from constants.structure import UNIT_MAT
 from utils.consts import ROWS_IDX
-from utils.funcs import big_endian, emd, lil_endian
+from utils.funcs import big_endian, emd_fn, lil_endian
 
 
 # def combine_arrays(
@@ -67,7 +67,7 @@ def bin_prod(
 sub_distribution = np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
 distribution = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], dtype=np.float64)
 
-res_emd = emd(sub_distribution, distribution)
+res_emd = emd_fn(sub_distribution, distribution)
 print(res_emd)
 
 # A = (0,), np.array([1, 0], dtype=np.float64)

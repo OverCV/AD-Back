@@ -10,7 +10,7 @@ from api.models.structure import Structure
 
 from icecream import ic
 from utils.consts import ACTUAL, EFFECT, INFTY_POS, ROWS_IDX
-from utils.funcs import emd
+from utils.funcs import emd_fn
 
 from server import conf
 from api.models.genetic.recorder import rec
@@ -232,7 +232,7 @@ class Environ:
 
     def compute_fitness(self, distribution: tuple[tuple[int, ...], NDArray[np.float64]]) -> float:
         iter_dist = distribution[StructProps.DIST_ARRAY]
-        return emd(
+        return emd_fn(
             iter_dist,
             self.__distrib,
         )

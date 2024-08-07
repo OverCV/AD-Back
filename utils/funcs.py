@@ -4,7 +4,10 @@ import math
 import time
 from typing import Callable
 
+from pyemd import emd
+
 from numpy.typing import NDArray
+from decimal import Decimal, getcontext
 import numpy as np
 import pandas as pd
 # from scipy.stats import wasserstein_distance
@@ -17,6 +20,9 @@ from utils.consts import ACTUAL, BASE_2, EFFECT, FLOAT_ZERO, INT_ONE, INT_ZERO, 
 from server import conf
 # from icecream import ic
 
+# Set the precision to 50 decimal places
+getcontext().prec = 50
+
 """ If needed, this class could partitionate into several modules associated with the business logic. """
 
 up_sep_ln: str = '\n' + '︵' * 16 + '\n'
@@ -25,7 +31,7 @@ up_sep: str = '︵' * 16
 dn_sep: str = '︶' * 16
 
 
-def emd(
+def emd_fn(
     u: NDArray[np.float64],
     v: NDArray[np.float64],
     le: bool = conf.little_endian,
@@ -70,6 +76,44 @@ def emd(
 @cache
 def hamming_distance(a: int, b: int) -> int:
     return bin(a ^ b).count(STR_ONE)
+
+
+def emd_hamming(p, q):
+    """
+    Calculate the Earth Mover's Distance (EMD) between two probability distributions p and q
+    using the Hamming distance as the ground metric.
+    """
+    n = len(p)
+    cost_matrix = np.zeros((n, n))
+
+    # Fill the cost matrix with Hamming distances
+    for i in range(n):
+        for j in range(n):
+            binary_i = np.binary_repr(i, width=int(np.log2(n)))
+            binary_j = np.binary_repr(j, width=int(np.log2(n)))
+            cost_matrix[i, j] = hamming_distance_str(binary_i, binary_j)
+
+    # Convert p and q to numpy arrays
+    p = np.array([Decimal(x) for x in p], dtype=object)
+    q = np.array([Decimal(x) for x in q], dtype=object)
+
+    # Normalize the distributions to sum to 1
+    p /= sum(p)
+    q /= sum(q)
+
+    # Convert p, q, and cost_matrix to float64
+    p = np.array(p, dtype=np.float64)
+    q = np.array(q, dtype=np.float64)
+    cost_matrix = np.array(cost_matrix, dtype=np.float64)
+
+    # Calculate EMD using the cost matrix
+    emd_value = emd(p, q, cost_matrix)
+    return emd_value
+
+
+def hamming_distance_str(x, y):
+    """Calculate the Hamming distance between two binary vectors."""
+    return sum(x_i != y_i for x_i, y_i in zip(x, y))
 
 
 @cache
