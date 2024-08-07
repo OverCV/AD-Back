@@ -53,6 +53,8 @@ class Population:
             if pop_size == 0
             else self.generate_k_cms(len(self.__effect), len(self.__actual), pop_size)
         )
+        ic(len(self.__effect), len(self.__actual))
+        # ic(chromosomes)
         validated_cms = self.validate_cms(chromosomes)
         sub_dists = self.update_distribution(validated_cms)
 

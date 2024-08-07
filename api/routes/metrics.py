@@ -206,8 +206,8 @@ async def all_strats(
         print('\nGenetic failed', e, '\n')
 
     separator = pd.DataFrame(
-        [{col: '═━━━━━═' for col in loss_report_df.columns}],
-        index=['═━━━━━═'],
+        [{col: '═━━━━═' for col in loss_report_df.columns}],
+        index=['═━━━━═'],
     )
 
     ic(loss_report_df, time_report_df)

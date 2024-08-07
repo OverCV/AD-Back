@@ -29,9 +29,9 @@ class Environ:
         dual: bool,
     ) -> None:
         self.__ctrl_params: dict[str, float | int] = ctrl_params
-        # self.__structure: Structure = structure
         self.__distrib: NDArray[np.float64] = distribution
 
+        # self.__structure: Structure = structure
         # self.__effect: list[int] = concept[EFFECT]
         # self.__causes: list[int] = concept[ACTUAL]
 

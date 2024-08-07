@@ -39,6 +39,8 @@ class Genetic(Sia):
         # ! Start time measurement ! #
         # ! Finish time measurement ! #
 
+        ic(self._effect, self._actual)
+
         # best_of_all
         for param in self.__control_params:
             #! rep.report('Creating environment')
