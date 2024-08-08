@@ -17,7 +17,7 @@ from utils.consts import (
     INFTY_POS,
     STR_ONE,
 )
-from utils.funcs import dec2bin, emd_fn, label_mip
+from utils.funcs import dec2bin, emd_pyphi, label_mip
 import concurrent.futures
 
 from server import conf
@@ -89,7 +89,7 @@ class BruteForce(Sia):
             iter_distrib = indexed_distrib[StructProps.DIST_ARRAY]
             # Comparar con la distribución original (objetivo)
             # ic(iter_distrib, self._target_dist)
-            emd_dist = emd_fn(*iter_distrib, *self._target_dist)
+            emd_dist = emd_pyphi(*iter_distrib, *self._target_dist)
             if emd_dist < self.integrated_info:
                 self.integrated_info = emd_dist
                 self.sub_distrib = iter_distrib
@@ -121,7 +121,7 @@ class BruteForce(Sia):
             # ic(iter_dist, self._target_dist)
             # print(iter_dist)
 
-            emd_dist = emd_fn(*iter_dist, *self._target_dist)
+            emd_dist = emd_pyphi(*iter_dist, *self._target_dist)
             return emd_dist, iter_dist, (str_effect, str_causes)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:

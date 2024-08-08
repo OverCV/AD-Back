@@ -75,45 +75,35 @@ def emd_fn(
 
 @cache
 def hamming_distance(a: int, b: int) -> int:
-    return bin(a ^ b).count(STR_ONE)
+    return (a ^ b).bit_count()
 
 
-def emd_hamming(p, q):
+def emd_pyphi(u: NDArray[np.float64], v: NDArray[np.float64]) -> float:
     """
-    Calculate the Earth Mover's Distance (EMD) between two probability distributions p and q
-    using the Hamming distance as the ground metric.
+    Calculate the Earth Mover's Distance (EMD) between two probability distributions u and v.
+    The Hamming distance was used as the ground metric.
     """
-    n = len(p)
-    cost_matrix = np.zeros((n, n))
+    # Validate (u, v) are NDArrays of type np.float64
+    if not all(isinstance(arr, np.ndarray) for arr in [u, v]):
+        raise TypeError('u and v must be numpy arrays.')
+
+    n: int = len(u)
+    costs: NDArray[np.float64] = np.empty((n, n))
 
     # Fill the cost matrix with Hamming distances
+    # for i in range(n):
+    #     costs[i, i] = 0
+    #     for j in range(i):
+    #         costs[i, j] = hamming_distance(i, j)
+    #         costs[j, i] = costs[i, j]
+
     for i in range(n):
-        for j in range(n):
-            binary_i = np.binary_repr(i, width=int(np.log2(n)))
-            binary_j = np.binary_repr(j, width=int(np.log2(n)))
-            cost_matrix[i, j] = hamming_distance_str(binary_i, binary_j)
+        # Utiliza comprensión de listas para calcular los costos
+        costs[i, :i] = [hamming_distance(i, j) for j in range(i)]
+        costs[:i, i] = costs[i, :i]  # Reflejar los valores
 
-    # Convert p and q to numpy arrays
-    p = np.array([Decimal(x) for x in p], dtype=object)
-    q = np.array([Decimal(x) for x in q], dtype=object)
-
-    # Normalize the distributions to sum to 1
-    p /= sum(p)
-    q /= sum(q)
-
-    # Convert p, q, and cost_matrix to float64
-    p = np.array(p, dtype=np.float64)
-    q = np.array(q, dtype=np.float64)
-    cost_matrix = np.array(cost_matrix, dtype=np.float64)
-
-    # Calculate EMD using the cost matrix
-    emd_value = emd(p, q, cost_matrix)
-    return emd_value
-
-
-def hamming_distance_str(x, y):
-    """Calculate the Hamming distance between two binary vectors."""
-    return sum(x_i != y_i for x_i, y_i in zip(x, y))
+    cost_mat: NDArray[np.float64] = np.array(costs, dtype=np.float64)
+    return emd(u, v, cost_mat)
 
 
 @cache
