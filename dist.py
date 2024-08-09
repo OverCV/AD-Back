@@ -5,13 +5,14 @@ from decimal import Decimal, getcontext  # Esto es para lograr mayor precision e
 from numpy.typing import NDArray
 
 from utils.consts import STR_ONE
+from utils.funcs import hamming_distance
 
 
 # Set the precision to 50 decimal places
 # getcontext().prec = 50
 
 
-# def emd_hamming(p, q):
+# def emd_luz(p, q):
 #     """
 #     Calculate the Earth Mover's Distance (EMD) between two probability distributions p and q
 #     using the Hamming distance as the ground metric.
@@ -44,14 +45,7 @@ from utils.consts import STR_ONE
 #     emd_value = emd(p, q, cost_matrix)
 #     return emd_value
 
-
-# def hamming_distance(x: str, y: str) -> int:
-#     """Calculate the Hamming distance between two binary vectors."""
-#     return sum(x_i != y_i for x_i, y_i in zip(x, y))
-
-
-def hamming_distance(a: int, b: int) -> int:
-    return (a ^ b).bit_count()
+colors = ['⬜', '🟩', '🟪', '⬛']
 
 
 def emd_hamming(u: NDArray[np.float64], v: NDArray[np.float64]) -> float:
@@ -64,21 +58,18 @@ def emd_hamming(u: NDArray[np.float64], v: NDArray[np.float64]) -> float:
         raise TypeError('u and v must be numpy arrays.')
 
     n: int = len(u)
-    costs: NDArray[np.float64] = np.empty((n, n))
+    costs: NDArray[np.float64] = np.zeros((n, n))
 
-    # Fill the cost matrix with Hamming distances
-    # for i in range(n):
-    #     costs[i, i] = 0
-    #     for j in range(i):
-    #         costs[i, j] = hamming_distance(i, j)
-    #         costs[j, i] = costs[i, j]
-    # costs = np.array(
-    #     [[0 if i == j else hamming_distance(i, j) for j in range(n)] for i in range(n)]
-    # )
     for i in range(n):
         # Utiliza comprensión de listas para calcular los costos
         costs[i, :i] = [hamming_distance(i, j) for j in range(i)]
         costs[:i, i] = costs[i, :i]  # Reflejar los valores
+
+    print(costs)
+
+    colored = [[colors[int(cost)] for cost in row] for row in costs]
+    for row in colored:
+        print(row)
 
     cost_mat = np.array(costs, dtype=np.float64)
     emd_value: float = emd(u, v, cost_mat)
@@ -228,3 +219,13 @@ v = np.array(v, dtype=np.float64)
 
 emd_value = emd_hamming(u, v)
 print(f'EMD using Hamming distance: {round(emd_value, 17)}')
+
+# Fill the cost matrix with Hamming distances
+# for i in range(n):
+#     costs[i, i] = 0
+#     for j in range(i):
+#         costs[i, j] = hamming_distance(i, j)
+#         costs[j, i] = costs[i, j]
+# costs = np.array(
+#     [[0 if i == j else hamming_distance(i, j) for j in range(n)] for i in range(n)]
+# )

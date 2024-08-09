@@ -210,7 +210,6 @@ async def genetic_strategy(
             detail='One or more of the SIA properties are not calculated',
         )
     results = computing.use_genetic_algorithm([ctrl_params.model_dump()])
-    # ic(results)
     reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 

@@ -9,7 +9,6 @@ from fastapi import APIRouter, status, Depends
 from api.models.props.structure import StructProps
 from api.schemas.genetic.control import ControlSchema
 
-# from api.schemas.sample import SampleRequest
 from api.routes.analyze import (
     branch_strategy,
     force_strategy,

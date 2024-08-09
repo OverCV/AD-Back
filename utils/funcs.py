@@ -90,17 +90,11 @@ def emd_pyphi(u: NDArray[np.float64], v: NDArray[np.float64]) -> float:
     n: int = len(u)
     costs: NDArray[np.float64] = np.empty((n, n))
 
-    # Fill the cost matrix with Hamming distances
-    # for i in range(n):
-    #     costs[i, i] = 0
-    #     for j in range(i):
-    #         costs[i, j] = hamming_distance(i, j)
-    #         costs[j, i] = costs[i, j]
-
     for i in range(n):
         # Utiliza comprensión de listas para calcular los costos
         costs[i, :i] = [hamming_distance(i, j) for j in range(i)]
         costs[:i, i] = costs[i, :i]  # Reflejar los valores
+    np.fill_diagonal(costs, 0)
 
     cost_mat: NDArray[np.float64] = np.array(costs, dtype=np.float64)
     return emd(u, v, cost_mat)
@@ -287,19 +281,19 @@ def timer(func: Callable):
     return wrapper
 
 
-def memoize(func):
-    # Store the results in a dictionary that maps arguments to results
-    cache = {}
+# def memoize(func):
+#     # Store the results in a dictionary that maps arguments to results
+#     cache = {}
 
-    # Define the wrapper function to return.
-    def wrapper(*args, **kwargs):
-        # If these arguments haven't been seen before;
-        if (args, kwargs) not in cache:
-            # Call cache and store the result
-            cache[(args, kwargs)] = func(*args, **kwargs)
-        return cache[(args, kwargs)]
+#     # Define the wrapper function to return.
+#     def wrapper(*args, **kwargs):
+#         # If these arguments haven't been seen before;
+#         if (args, kwargs) not in cache:
+#             # Call cache and store the result
+#             cache[(args, kwargs)] = func(*args, **kwargs)
+#         return cache[(args, kwargs)]
 
-    return wrapper
+#     return wrapper
 
 
 def temporizer(func):
