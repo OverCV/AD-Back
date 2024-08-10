@@ -47,7 +47,7 @@ class Population:
         cms1 -> ABC|DE
              -> [FVV.FV] = (BC.E)(A.D)
         """
-        # Debate: Si el máximo de combinaciones es eg. 32, cómo se le pide una población de eg. 100 individuos?
+        # Debate: Si el espacio de búsqueda (max combinaciones) es eg. 32, cómo se le pide una población de eg. 100 individuos (por body)?
         chromosomes: NDArray[np.float64] = (
             self.generate_random
             if pop_size == 0

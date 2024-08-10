@@ -11,6 +11,7 @@ from api.schemas.genetic.control import ControlSchema
 
 from api.routes.analyze import (
     branch_strategy,
+    fm_strategy,
     force_strategy,
     genetic_strategy,
     pyphi_strategy,
@@ -83,6 +84,9 @@ async def all_strats(
 
     LOSS_ROW_BRANCH = f'{SMALL_PHI} Ramificación'
     TIME_ROW_BRANCH = '(ms) Ramificación'
+
+    LOSS_ROW_FRANKM = f'{SMALL_PHI} Stoer-Wagner'
+    TIME_ROW_FRANKM = '(ms) Stoer-Wagner'
 
     LOSS_ROW_GENETIC = f'{SMALL_PHI} Genético'
     TIME_ROW_GENETIC = '(ms) Genético'
@@ -188,6 +192,17 @@ async def all_strats(
         time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times['branch_strategy']
     except Exception as e:
         print('\nBranch failed', e, '\n')
+
+    try:
+        frankm_response = await fm_strategy(**common_params)
+        frankm_results = frankm_response.body.decode(UTF8_FORMAT)
+        frankm_data = json.loads(frankm_results)[DATA]
+
+        # ic(frankm_data)
+        loss_report_df.at[LOSS_ROW_FRANKM, col_str] = frankm_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_FRANKM, col_str] = conf.execution_times['fm_strategy']
+    except Exception as e:
+        print('\nFrank-Mech failed', e, '\n')
 
     try:
         # ! Mejorar la forma de pasar parámetros, luego volver función ! #

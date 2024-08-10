@@ -7,12 +7,10 @@ import itertools as it
 import copy
 import heapq as pq
 
-from fastapi import HTTPException, status
 import numpy as np
 from numpy.typing import NDArray
 import networkx as nx
-from networkx.utils import arbitrary_element
-from networkx.utils import BinaryHeap
+from networkx.utils import arbitrary_element, BinaryHeap
 from matplotlib import pyplot as plt
 
 from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, DUMMY_MIN_INFO_PARTITION
@@ -27,7 +25,7 @@ from icecream import ic
 from server import conf
 
 
-class SWAlgorithm(Sia):
+class FMAlgorithm(Sia):
     """Class Branch is used to solve the mip problem using Branch&Bound strategy."""
 
     def __init__(
@@ -53,7 +51,7 @@ class SWAlgorithm(Sia):
         self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._actual]
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
-        self.__net = self.margin_n_expand()
+        self.integrated_info, partition = self.margin_n_expand()
 
         # raise HTTPException(344, 'Stop.')
 
@@ -70,7 +68,7 @@ class SWAlgorithm(Sia):
         #     self.sub_distrib,
         #     self.network_id,
         # )
-        self.integrated_info = -1
+
         self.network_id = DUMMY_NET_INT_ID
         self.sub_distrib = DUMMY_SUBDIST
         self.min_info_part = DUMMY_MIN_INFO_PARTITION
@@ -139,7 +137,7 @@ class SWAlgorithm(Sia):
             origin = self.__causes_labels[self._actual.index(idx_causes)]
             destiny = self.__effect_labels[self._effect.index(idx_effect)]
 
-            emd_as_weight = emd_pyphi(iter_distrib, self._target_dist)
+            emd_as_weight = emd_pyphi(*iter_distrib, *self._target_dist)
 
             self.__net.remove_edge(origin, destiny)
 
@@ -172,38 +170,47 @@ class SWAlgorithm(Sia):
         print()
         # self.plot_net(self.__net)
 
-        # if len(mips) > INT_ZERO:
-        #     ic()
-        #     min_key = min(mips.keys(), key=lambda x: x[DATA_IDX])  # x=(u,v,w) #
-        #     ic(min_key)
-        #     return self.__net
-        # else:
-        edges = [
-            # ('A(0)', 'A(1)', 10),
-            ('B(0)', 'A(1)', 10),
-            ('C(0)', 'A(1)', 60),
-            ('A(0)', 'B(1)', 20),
-            # ('B(0)', 'B(1)', 13),
-            ('C(0)', 'B(1)', 50),
-            ('A(0)', 'C(1)', 10),
-            ('B(0)', 'C(1)', 30),
-            # ('C(0)', 'C(1)', 12),
-        ]
-        # test_net = nx.DiGraph() if conf.directed else nx.Graph()
-        test_net = nx.Graph()
-        test_net.add_weighted_edges_from(edges)
-        # pass
-        # self.stoer_wagner(self.__net)
-        # self.stoer_wagner(test_net)
-        result = self.stoer_wagner(test_net)
-        ic(result)
-        self.plot_net(test_net)
+        if len(mips) > INT_ZERO:
+            # x=(u,v,w) #
+            min_key = min(
+                mips.keys(),
+                key=lambda x: x[DATA_IDX],
+            )
+            ic(min_key)
+            self.__net.remove_edge(min_key[U_IDX], min_key[V_IDX])
+            # self.plot_net(self.__net)
+            partition = list(
+                nx.connected_components(self.__net)
+                if not conf.directed
+                else nx.weakly_connected_components(self.__net)
+            )
+            wt_index: int = 2
+            ic(partition)
+            return min_key[wt_index], partition
+        else:
+            # edges = [
+            #     # ('A(0)', 'A(1)', 10),
+            #     ('B(0)', 'A(1)', 10),
+            #     ('C(0)', 'A(1)', 60),
+            #     ('A(0)', 'B(1)', 20),
+            #     # ('B(0)', 'B(1)', 13),
+            #     ('C(0)', 'B(1)', 50),
+            #     ('A(0)', 'C(1)', 10),
+            #     ('B(0)', 'C(1)', 30),
+            #     # ('C(0)', 'C(1)', 12),
+            # ]
+            # test_net = nx.DiGraph() if conf.directed else nx.Graph()
+            # test_net = nx.Graph()
+            # test_net.add_weighted_edges_from(edges)
+            # ic(self.stoer_wagner(test_net))
+            return self.stoer_wagner(self.__net)
+            # self.plot_net(test_net)
 
-        self.__net = test_net
+        # self.__net = test_net
 
         # self.min_span_tree()
 
-    def stoer_wagner(self, G, weight=WT_LBL, used_heap=BinaryHeap):
+    def stoer_wagner(self, net, weight=WT_LBL, used_heap=BinaryHeap):
         r"""Returns the weighted minimum edge cut using the Stoer-Wagner algorithm.
 
         Determine the minimum edge cut of a connected graph using the
@@ -274,26 +281,30 @@ class SWAlgorithm(Sia):
         >>> cut_value
         4
         """
-        n = len(G)
+
+        n = len(net)
         if n < 2:
-            raise nx.NetworkXError('graph has less than two nodes.')
-        # if not nx.is_connected(G):
-        #     raise nx.NetworkXError('graph is not connected.')
+            raise nx.NetworkXError('Graph has less than two nodes.')
 
-        # Make a copy of the graph for internal use.
-        G = nx.Graph(
-            (
-                u,
-                v,
-                {WT_LBL: d.get(weight, 1)},
-            )
-            for u, v, d in G.edges(data=True)
-            if u != v
-        )
+        # if any((d[WT_LBL] < FLOAT_ZERO for _, _, d in G.edges(data=True))):
+        #     raise nx.NetworkXError('graph has a negative-weighted edge.')
+
+        G = nx.Graph()
+        for u, v, d in net.edges(data=True):
+            # if d[WT_LBL] < FLOAT_ZERO:
+            #     raise nx.NetworkXError('graph has a negative-weighted edge.')
+            # Make a copy of the graph for internal use.
+            if u != v:
+                if v not in G:
+                    G.add_node(v)
+                if u not in G:
+                    G.add_node(u)
+                if v not in G[u]:
+                    G.add_edge(u, v, weight=d[WT_LBL])
+                else:
+                    G[u][v][WT_LBL] += d[WT_LBL]
+
         # G.__networkx_cache__ = None  # Disable caching
-
-        if any((d[WT_LBL] < FLOAT_ZERO for _, _, d in G.edges(data=True))):
-            raise nx.NetworkXError('graph has a negative-weighted edge.')
 
         # return -1
         # for u, v, d in G.edges(data=True):
@@ -309,9 +320,7 @@ class SWAlgorithm(Sia):
             # Pick an arbitrary node u and create a set A = {u}.
             u = arbitrary_element(G)
             A = {u}
-            # Repeatedly pick the node "most tightly connected" to A and add it to
-            # A. The tightness of connectivity of a node not in A is defined by the
-            # of edges connecting it to nodes in A.
+            # Repeatedly pick the node "most tightly connected" to A and add it to A. The tightness of connectivity of a node not in A is defined by the of edges connecting it to nodes in A.
             heap = used_heap()  # min-heap emulating a max-heap
             for v, d in G[u].items():
                 heap.insert(v, -d[WT_LBL])
@@ -326,14 +335,17 @@ class SWAlgorithm(Sia):
             # minimum cut of the original graph that is also a cut of the phase.
             # Due to contractions in earlier phases, v may in fact represent
             # multiple nodes in the original graph.
+
             v, w = heap.min()
             w = -w
+            # ic(w, cut_value)
             if w < cut_value:
                 cut_value = w
                 best_phase = i
             # Contract v and the last node added to A.
             contractions.append((u, v))
             for w, d in G[v].items():
+                # ic(w, u)
                 if w != u:
                     if w not in G[u]:
                         G.add_edge(u, w, weight=d[WT_LBL])
@@ -348,12 +360,14 @@ class SWAlgorithm(Sia):
         G.add_node(v)
         ic(G._adj)
         # reachable = set(nx.single_source_shortest_path_length(G, v))
-        reachable = set(self._single_shortest_path_length(G._adj, v))
+
+        reachable = set(self.single_shortest_path_length(G._adj, [v]))
+        ic(reachable)
         partition = (list(reachable), list(nodes - reachable))
 
         return cut_value, partition
 
-    def _single_shortest_path_length(self, adj, first_level, cutoff=None):
+    def single_shortest_path_length(self, adj, first_level):
         """Yields (node, level) in a breadth first search
 
         Shortest Path Length helper function
@@ -362,26 +376,29 @@ class SWAlgorithm(Sia):
             adj : dict
                 Adjacency dict or view
             firstlevel : list'
-                starting nodes, e.g. [sourc'e] or [target]
+                starting nodes, e.g. [source] or [target]
             cutoff : int or float
                 level at which we stop the process
         """
+        # ic(adj)
         seen = set(first_level)
         next_level = first_level
         level = 0
         n = len(adj)
         for v in next_level:
-            yield (v, level)
-        while next_level and cutoff > level:
+            # yield (v, level)
+            yield v
+        while next_level:
             level += 1
-            thislevel = next_level
+            this_level = next_level
             next_level = []
-            for v in thislevel:
+            for v in this_level:
                 for w in adj[v]:
                     if w not in seen:
                         seen.add(w)
                         next_level.append(w)
-                        yield (w, level)
+                        # yield (w, level)
+                        yield w
                 if len(seen) == n:
                     return
 

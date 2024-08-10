@@ -22,7 +22,7 @@ from pyphi.labels import NodeLabels
 
 
 import copy
-from api.services.analyze.strats.frank_mech import SWAlgorithm
+from api.services.analyze.strats.frank_mech import FMAlgorithm
 from constants.structure import BOOL_RANGE, DIST, VOID
 from utils.consts import (
     COLS_IDX,
@@ -412,8 +412,8 @@ class Compute:
         sia_force.calculate_concept()
         return sia_force.get_reperoire()
 
-    def use_min_span_tree(self) -> bool:
-        sia_mst: SWAlgorithm = SWAlgorithm(
+    def use_min_frank_mech(self) -> bool:
+        sia_mst: FMAlgorithm = FMAlgorithm(
             self.__struct,
             self.__effect[not self.__dual],
             self.__actual[not self.__dual],

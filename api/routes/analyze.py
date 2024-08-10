@@ -104,12 +104,12 @@ async def force_strategy(
 
 @temporizer
 @router.get(
-    '/sia-mst/',
-    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante árbol de expansión mínima.',
+    '/sia-fm/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante técnica de Frank y Mechthild.',
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
-async def mst_strategy(
+async def fm_strategy(
     id: Optional[int] = None,
     title: str = SAMPLES[N5][SA][N1][StructProps.TITLE],
     istate: str = SAMPLES[N5][SA][N1][StructProps.ISTATE],
@@ -135,7 +135,7 @@ async def mst_strategy(
             status_code=500,
             detail='One or more of the SIA properties are not calculated',
         )
-    results = computing.use_min_span_tree()
+    results = computing.use_min_frank_mech()
 
     reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
