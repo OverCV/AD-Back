@@ -280,12 +280,12 @@ class Compute:
 
         min_info_part = [
             [
-                [bg_labels[prim_mech.index(i)] for i in prim_mech] if prim_mech else [VOID],
-                [bg_labels[prim_purv.index(i)] for i in prim_purv] if prim_purv else [VOID],
+                [labels[i] for i in prim_mech] if prim_mech else [VOID],
+                [labels[i] for i in prim_purv] if prim_purv else [VOID],
             ],
             [
-                [bg_labels[dual_mech.index(i)] for i in dual_mech] if dual_mech else [VOID],
-                [bg_labels[dual_purv.index(i)] for i in dual_purv] if dual_purv else [VOID],
+                [labels[i] for i in dual_mech] if dual_mech else [VOID],
+                [labels[i] for i in dual_purv] if dual_purv else [VOID],
             ],
         ]
 
