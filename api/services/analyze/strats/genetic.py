@@ -1,3 +1,4 @@
+from fastapi import params
 import numpy as np
 from numpy.typing import NDArray
 
@@ -39,7 +40,6 @@ class Genetic(Sia):
         # ! Start time measurement ! #
         # ! Finish time measurement ! #
 
-        ic(self._effect, self._actual)
 
         # best_of_all
         for param in self.__control_params:
@@ -56,17 +56,13 @@ class Genetic(Sia):
         # part=('010', '000')
         # best: Individual: [ True False  True  True  True  True], 0.25
         m: int = len(self._effect)
-        # ic(self._actual, self._effect)
         # ind_effect = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][:m]])
         # ind_actual = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][m+1:]])
         print()
-        # ic(best.get_chr())
         ind_effect = [STR_ONE if x else STR_ZERO for x in best.get_chr()[:m]]
         ind_actual = [STR_ONE if x else STR_ZERO for x in best.get_chr()[m:]]
         concept = (self._effect, self._actual)
         mip = label_mip((''.join(ind_effect), ''.join(ind_actual)), concept)
-        # ic(ind_effect, ind_actual)
-        # ic(mip)
         ic(best)
 
         # self.__environments.append(

@@ -53,7 +53,6 @@ class Population:
             if pop_size == 0
             else self.generate_k_cms(len(self.__effect), len(self.__actual), pop_size)
         )
-        ic(len(self.__effect), len(self.__actual))
         # ic(chromosomes)
         validated_cms = self.validate_cms(chromosomes)
         sub_dists = self.update_distribution(validated_cms)
@@ -105,27 +104,27 @@ class Population:
 
     def generate_cms(self, m: int, n: int) -> NDArray[np.bool_]:
         # Número total de combinaciones binarias para n bits
-        total_combinaciones = 2**n
+        total_combinations = 2**n
         # Crear un array de enteros que representa los números binarios
-        enteros = np.arange(total_combinaciones, dtype=np.uint8)
+        integers = np.arange(total_combinations, dtype=np.uint8)
         # Convertir los enteros a su representación binaria
-        binarios = (enteros[:, None] & (1 << np.arange(n))) > 0
+        binaries = (integers[:, None] & (1 << np.arange(n))) > 0
         # Crear un array de valores True de tamaño (total_combinaciones, m)
-        trues = np.ones((total_combinaciones, m), dtype=bool)
+        truthies = np.ones((total_combinations, m), dtype=bool)
         # Concatenar los valores True al inicio de cada fila del array binario
-        return np.hstack((trues, binarios))
+        return np.hstack((truthies, binaries))
 
     def generate_k_cms(self, m: int, n: int, k: int) -> list[NDArray[np.bool_]]:
         # Crear un array de enteros que representa los números binarios
         total_combinaciones = 2 ** (m + n - 1) - 1
-        mini_combs: int = min(k, total_combinaciones)
+        min_combs: int = min(k, total_combinaciones)
 
         if k > total_combinaciones:
             # Si las combinaciones brindadas por el usuario superan el tamaño máximo de combinaciones ofrecidas por fuerza bruta, usamos la primera forma (primera línea de combinaciones)
             return self.generate_cms(m, n)
         else:
             # Crear un arreglo de enteros desde 0 hasta mini_combs - 1
-            enteros = np.arange(mini_combs, dtype=np.uint32)
+            enteros = np.arange(min_combs, dtype=np.uint32)
             # Convertir cada entero a una matriz de bits booleana
             combinaciones_binarias = (enteros[:, None] & (1 << np.arange(m + n))) > 0
             return combinaciones_binarias

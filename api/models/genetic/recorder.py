@@ -8,6 +8,9 @@ class Recorder:
         self.__bests_inds: list[Individual] = list()
         # self._num_generations: list[int] = [0]
 
+    def reset(self) -> None:
+        self.__bests_inds = list()
+
     def add_best_individual(self, ind: Individual) -> None:
         self.__bests_inds.append(ind)
 

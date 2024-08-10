@@ -41,6 +41,9 @@ class Environ:
 
     def evolve(self) -> Individual:
         """Method evolve is used to evolve the population."""
+
+        # Reseteamos el registro de los mejores individuos puesto tras una nueva llamada al endpoint mantendría los mejores individuos de la llamada anterior, por consiguiente la condición de terminación (max-iteraciones) se cumpliría puesto se calcula mediante el número de mejores individuos.
+        rec.reset()
         # ! Inicialización de la población ! #
         # ic(self.__population.get_concept())
         self.__population.generate_individuals(self.__ctrl_params[INIT_POP_SIZE])
