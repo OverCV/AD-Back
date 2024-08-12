@@ -1,3 +1,4 @@
+from networkx import Graph
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
 from api.models.matrix import Matrix
@@ -210,7 +211,7 @@ class FMAlgorithm(Sia):
 
         # self.min_span_tree()
 
-    def stoer_wagner(self, net, weight=WT_LBL, used_heap=BinaryHeap):
+    def stoer_wagner(self, net: nx.Graph | nx.DiGraph, used_heap=BinaryHeap):
         r"""Returns the weighted minimum edge cut using the Stoer-Wagner algorithm.
 
         Determine the minimum edge cut of a connected graph using the
