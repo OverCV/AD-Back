@@ -44,9 +44,10 @@ pyphi.config.PARALLEL_CUT_EVALUATION = False
 pyphi.config.PARALLEL_COMPLEX_EVALUATION = False
 
 
-class Compute:
-    """Class Compute is used to compute all different System Irreducibility analysis."""
+"""Class Compute is used to compute all different System Irreducibility analysis."""
 
+
+class Compute:
     def __init__(
         self,
         struct: StructureResponse,
@@ -127,7 +128,7 @@ class Compute:
         #     if (bg == STR_ONE) == (not self.__dual)
         # )
 
-        bg_labels = tuple(
+        bg_labels: tuple[str] = tuple(
             labels[i]
             for i, bg in enumerate(self.__str_bgcond)
             if (bg == STR_ONE) == (not self.__dual)
@@ -153,7 +154,10 @@ class Compute:
             if all([(x == STR_ONE) == (not self.__dual), i in bg_set])
         )
 
+        ic(mech_idx, purv_idx)
+
         er = sub_system.effect_mip(mech_idx, purv_idx)
+        ic(er)
 
         # ? Reconstrucción de resultados
 
