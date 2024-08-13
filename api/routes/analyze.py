@@ -111,7 +111,7 @@ async def force_strategy(
 )
 async def fm_strategy(
     id: Optional[int] = None,
-    title: str =  SAMPLES[N5][SA][N1][StructProps.TITLE],
+    title: str =    SAMPLES[N5][SA][N1][StructProps.TITLE],
     istate: str = SAMPLES[N5][SA][N1][StructProps.ISTATE],
     subsys: str = SAMPLES[N5][SA][N1][StructProps.SUBSYS],
     effect: str = SAMPLES[N5][SA][N1][StructProps.EFFECT],

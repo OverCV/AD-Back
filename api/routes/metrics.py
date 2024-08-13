@@ -1,11 +1,16 @@
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+
 import pandas as pd
 import json
+
+import numpy as np
+from numpy.typing import NDArray
 
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, status, Depends
 
+from api.shared.validators import analyze as av
 from api.models.props.structure import StructProps
 from api.schemas.genetic.control import ControlSchema
 
@@ -17,6 +22,9 @@ from api.routes.analyze import (
     pyphi_strategy,
 )
 from api.schemas.sample import SampleCollection, SampleRequest
+from api.schemas.structure import StructureResponse
+from api.services.structure.base import get_structure, get_structure_by_title
+from api.shared.formatter import Format
 from data.motors import get_mongo, get_sqlite
 
 
@@ -40,6 +48,7 @@ from utils.funcs import get_labels
 
 router: APIRouter = APIRouter()
 executed_df: list[pd.DataFrame] = []
+fmt: Format = Format()
 
 
 @router.post(
@@ -394,6 +403,31 @@ async def test_all_istates_pyphi(
 
     ic(results)
 
+
+@router.get(
+    '/combine-pyphi/',
+    response_description='Generación de reporte para todas las redes con todos los estados iniciales.',
+    status_code=status.HTTP_200_OK,
+    response_model_by_alias=False,
+)
+async def combine_pyphi(
+    id: int = SAMPLES[N3][SA][N1][StructProps.ID],
+    title: str = SAMPLES[N3][SA][N1][StructProps.TITLE],
+    istate: str = SAMPLES[N3][SA][N1][StructProps.ISTATE],
+    subsys: str = SAMPLES[N3][SA][N1][StructProps.SUBSYS],
+    effect: str = SAMPLES[N3][SA][N1][StructProps.EFFECT],
+    actual: str = SAMPLES[N3][SA][N1][StructProps.ACTUAL],
+    dual: bool = SAMPLES[N3][SA][N1][IS_DUAL],
+    db_sql: Session = Depends(get_sqlite),
+    db_nosql: Session = Depends(get_mongo),
+):
+    struct_response: StructureResponse = (
+        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
+    )
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+
+    
 
 # cond: bool = False
 
