@@ -10,7 +10,7 @@ import itertools as it
 from icecream import ic
 
 from utils.consts import BASE_2, COLS_IDX, STR_ONE
-from utils.funcs import get_labels, lil_endian_int
+from utils.funcs import get_labels, lil_endian_int, product
 
 import pyphi
 import pyphi.compute
@@ -105,22 +105,97 @@ ic| list(it.combinations(future_lbls, size)): [('A', 'B'), ('A', 'C'), ('B', 'C'
             nodes=bg_labels,
         )
 
+        # Combinaciones con mismo alcance
+
+        #! Aca se omite el proceso dual
+
+        for mech in self_rel:
+            comp_mech = tuple(i for i in bg_labels if i not in set(bg_labels))
+            comp_purv = tuple(i for i in bg_labels if i not in set(mech))
+
+            # ? Reconstrucción distribución dual (la primal no tiene sentido)
+            # ic(comp_mech, mech, bg_labels, comp_purv)
+            dual_er = sub_system.effect_mip(bg_labels, comp_purv)
+            # ic(dual_er)
+
+            repertoire = dual_er.repertoire
+            repertoire = repertoire.squeeze()
+
+            sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
+
+            distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
+
+            # print(f'\n({comp_mech}|{mech})x({bg_labels}|{comp_purv})')
+            # ic(distribution)
+
+        # Combinaciones mecanismo y alcance
+
+        #! Aca no se omite nada
+        for lbl_prim in bg_labels:
+            prim_comp = tuple(lbl for lbl in bg_labels if lbl != lbl_prim)
+            for lbl_dual in bg_labels:
+                dual_comp = tuple(lbl for lbl in bg_labels if lbl != lbl_dual)
+
+                # print(((lbl_prim,), (lbl_dual,)), 'x', (prim_comp, dual_comp))
+
+                prim_er = sub_system.effect_mip((lbl_prim,), (lbl_dual,))
+
+                repertoire = prim_er.repertoire
+                repertoire = repertoire.squeeze()
+
+                sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
+
+                dist_prim: list[float] = [repertoire[sub_state] for sub_state in sub_states]
+                idx_dist_prim = (lbl_dual, dist_prim)
+
+                print((lbl_prim,), (lbl_dual,), dist_prim)
+
+                #
+
+                dual_er = sub_system.effect_mip(prim_comp, dual_comp)
+                repertoire = dual_er.repertoire
+                repertoire = repertoire.squeeze()
+
+                sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
+
+                dist_dual: list[float] = [repertoire[sub_state] for sub_state in sub_states]
+                idx_dist_dual = (dual_comp, dist_dual)
+
+                print(prim_comp, dual_comp, dist_dual)
+                print()
+                subtensor = product(idx_dist_prim, idx_dist_dual)
+                # dist_dual
+
         # Combinaciones con mismo mecanismo
         # primal = list(it.combinations(bg_labels, size))
         for mech in self_rel:
+            break
             # (0 1) (1 2) (0 2)
-            comp_mech = tuple(i for i in bg_labels if i not in set(mech))
-            comp_purv = tuple(i for i in bg_labels if i not in set(bg_labels))
+            comp_purv = tuple(i for i in bg_labels if i not in set(mech))
+            comp_mech = tuple(i for i in bg_labels if i not in set(bg_labels))
 
             #! Reconstrucción distribución primal (omision)
-            prim_er = sub_system.effect_mip(mech, comp_purv)
-            # ic(mech, comp_purv)
-            # ic(comp_mech, bg_labels)
-            print(f'({mech}|{comp_purv})x({comp_mech}|{bg_labels})')
-            # ic(bg_labels, mech)
+            # prim_er = sub_system.effect_mip(mech, comp_purv)
+            # # ic(mech, comp_purv)
+            # # ic(comp_mech, bg_labels)
+            # # ic(bg_labels, mech)
 
-            repertoire = prim_er.repertoire
-            ic(repertoire)
+            # repertoire = prim_er.repertoire
+            # ic(repertoire)
+            # repertoire = repertoire.squeeze()
+
+            # sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
+
+            # distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
+
+            # ic(distribution)
+
+            #! Reconstrucción distribución dual
+            dual_er = sub_system.effect_mip(comp_purv, bg_labels)
+            ic(dual_er)
+            print(f'({mech}|{comp_mech})x({comp_purv}|{bg_labels})')
+
+            repertoire = dual_er.repertoire
             repertoire = repertoire.squeeze()
 
             sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
@@ -128,16 +203,4 @@ ic| list(it.combinations(future_lbls, size)): [('A', 'B'), ('A', 'C'), ('B', 'C'
             distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
 
             ic(distribution)
-
-            #! Reconstrucción distribución dual
-            # dual_er = sub_system.effect_mip(comp_mech, bg_labels)
-
             # dual_er
-
-        # Combinaciones mecanismo y alcance
-
-        #! Aca no se omite nada
-
-        # Combinaciones con mismo alcance
-
-        #! Aca se omite el proceso dual

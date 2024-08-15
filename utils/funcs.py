@@ -117,7 +117,7 @@ def big_endian(n: int) -> list[str]:
 
 
 def product(
-    arrays: list[NDArray[np.float64]], le: bool = conf.little_endian
+    arrays: list[tuple[tuple[int, ...], NDArray[np.float64]]], le: bool = conf.little_endian
 ) -> tuple[tuple[int, ...], NDArray[np.float64]]:
     # return reduce(lambda x, y: np.kron
     return (
