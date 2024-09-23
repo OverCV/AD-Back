@@ -19,7 +19,6 @@ from constants.structure import (
     N9,
     SA,
     SAMPLES,
-    SB,
     SHEET_NAME,
 )
 from utils.consts import EX_STR, SAMPLES_STR

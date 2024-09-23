@@ -111,7 +111,7 @@ async def force_strategy(
 )
 async def fm_strategy(
     id: Optional[int] = None,
-    title: str =    SAMPLES[N5][SA][N1][StructProps.TITLE],
+    title: str = SAMPLES[N5][SA][N1][StructProps.TITLE],
     istate: str = SAMPLES[N5][SA][N1][StructProps.ISTATE],
     subsys: str = SAMPLES[N5][SA][N1][StructProps.SUBSYS],
     effect: str = SAMPLES[N5][SA][N1][StructProps.EFFECT],
@@ -173,6 +173,35 @@ async def branch_strategy(
             detail='One or more of the SIA properties are not calculated',
         )
     results = computing.use_branch_and_bound()
+
+    reconstruct_network(results[MIP], db_nosql)
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
+
+
+@temporizer
+async def queyranne_strategy(
+    id: Optional[int] = None,
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
+    dual: bool = False,
+    db_sql: Session = Depends(get_sqlite),
+    db_nosql: Session = Depends(get_mongo),
+):
+    struct_response: StructureResponse = (
+        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
+    )
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
+    if not computing.init_concept():
+        raise HTTPException(
+            status_code=500,
+            detail='One or more of the SIA properties are not calculated',
+        )
+    results = computing.use_queyranne()
 
     reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)

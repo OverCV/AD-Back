@@ -58,6 +58,9 @@ class Metric:
         num_nodes: int = self.__sup_struct.get_tensor_len()
         istate = tuple(int(i) for i in self.__sup_struct.get_istate())
 
+        istate_arr = self.__sup_struct.get_distrib()
+        ic(istate_arr)
+
         str_labels = get_labels(num_nodes)
         idx_labels = tuple(range(num_nodes))
         labels = NodeLabels(str_labels, idx_labels)
@@ -146,9 +149,10 @@ ic| list(it.combinations(future_lbls, size)): [('A', 'B'), ('A', 'C'), ('B', 'C'
                 sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
 
                 dist_prim: list[float] = [repertoire[sub_state] for sub_state in sub_states]
-                idx_dist_prim = (lbl_dual, dist_prim)
+                prim_arr: NDArray[np.float64] = np.array(dist_prim, dtype=np.float64)
+                idx_dist_prim = ((lbl_dual,), prim_arr)
 
-                print((lbl_prim,), (lbl_dual,), dist_prim)
+                print((lbl_dual,), dist_prim)
 
                 #
 
@@ -159,12 +163,16 @@ ic| list(it.combinations(future_lbls, size)): [('A', 'B'), ('A', 'C'), ('B', 'C'
                 sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
 
                 dist_dual: list[float] = [repertoire[sub_state] for sub_state in sub_states]
-                idx_dist_dual = (dual_comp, dist_dual)
+                dual_arr: NDArray[np.float64] = np.array(dist_dual, dtype=np.float64)
+                idx_dist_dual = (dual_comp, dual_arr)
 
-                print(prim_comp, dual_comp, dist_dual)
-                print()
-                subtensor = product(idx_dist_prim, idx_dist_dual)
+                print(dual_comp, dist_dual)
+
+                print(idx_dist_prim, idx_dist_dual)
+                subtensor = product([idx_dist_prim, idx_dist_dual])
+                print(subtensor)
                 # dist_dual
+                print()
 
         # Combinaciones con mismo mecanismo
         # primal = list(it.combinations(bg_labels, size))

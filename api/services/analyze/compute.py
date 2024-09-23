@@ -204,109 +204,6 @@ class Compute:
             # NET_ID: network_id if conf.store_network else net_id,
         }
 
-    #
-
-    # def use_pyphi(self):
-    #   #! Selección de bg-conds y resolución mediante pyphi. !#
-    #     tensor: OrderedDict = self.__struct.get_tensor()
-    #     matrices: list[Matrix] = tensor.values()
-    #     submatrices: list[Matrix] = [
-    #         mat
-    #         for mat, bg in zip(matrices, self.__str_bgcond)
-    #         if (bg == STR_ONE) == (not self.__dual)
-    #     ]
-    #     # [
-    #     #     ic(mat.as_dataframe())
-    #     #     for mat in submatrices
-    #     # ]
-    #     tpms = np.array(
-    #         [mat.get_arr()[:, COLS_IDX] for mat in submatrices],
-    #     )
-    #     tpm_state_node: NDArray[np.float64] = np.column_stack(tpms)
-
-    #     num_nodes: int = len(matrices)
-    #     labels = get_labels(num_nodes)
-    #     indices = tuple(range(num_nodes))
-
-    #     sub_labels = [
-    #         labels[i]
-    #         for i, bg in enumerate(self.__str_bgcond)
-    #         if (bg == STR_ONE) == (not self.__dual)
-    #     ]
-    #     sub_indices = [
-    #         indices[i]
-    #         for i, bg in enumerate(self.__str_bgcond)
-    #         if (bg == STR_ONE) == (not self.__dual)
-    #     ]
-    #     node_labels = pyphi.labels.NodeLabels(sub_labels, sub_indices)
-    #     # print(tpm_state_node)
-
-    #     network = pyphi.Network(
-    #         tpm=tpm_state_node,
-    #         node_labels=node_labels,
-    #     )
-
-    #     istate = self.__struct.get_istate()
-    #     sub_istate = [
-    #         int(istate[i], 2)
-    #         for i, bg in enumerate(self.__str_bgcond)
-    #         if (bg == STR_ONE) == (not self.__dual)
-    #     ]
-
-    #     # ic(network, sub_istate)
-    #     sub_system = pyphi.Subsystem(
-    #         network=network,
-    #         state=sub_istate,
-    #     )
-
-    #     er: RepertoireIrreducibilityAnalysis = sub_system.effect_mip(
-    #         sub_system.node_indices,
-    #         sub_system.node_indices,
-    #     )
-    #     # ic(er)
-    #     integrated_info: float = er.phi
-
-    #     repertoire = er.repertoire
-    #     repertoire = repertoire.squeeze()
-
-    #     part_reper = er.partitioned_repertoire
-    #     part_reper = part_reper.squeeze()
-
-    #     sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
-
-    #     distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
-    #     part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
-
-    #     min_info_part: Bipartition = er.partition
-
-    #     dual: Part = min_info_part.parts[not self.__dual]
-    #     prim: Part = min_info_part.parts[self.__dual]
-    #     dual_mech, dual_purv = dual.mechanism, dual.purview
-    #     prim_mech, prim_purv = prim.mechanism, prim.purview
-
-    #     # print(f'{dual_pur, dual_mech, prim_pur, prim_mech=}')
-
-    #     min_info_part = [
-    #         [
-    #             [sub_labels[i] for i in prim_mech] if prim_mech else [VOID],
-    #             [sub_labels[i] for i in prim_purv] if prim_purv else [VOID],
-    #         ],
-    #         [
-    #             [sub_labels[i] for i in dual_mech] if dual_mech else [VOID],
-    #             [sub_labels[i] for i in dual_purv] if dual_purv else [VOID],
-    #         ],
-    #     ]
-
-    #     return {
-    #         SMALL_PHI: integrated_info,
-    #         MIP: min_info_part,
-    #         DIST: distribution,
-    #         SUB_DIST: part_distrib,
-    #         # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
-    #         # ! Falta el tiempo de ejecución ! #
-    #         # NET_ID: network_id if conf.store_network else net_id,
-    #     }
-
     def use_brute_force(self) -> SiaType:
         sia_force: BruteForce = BruteForce(
             self.__struct,
@@ -339,6 +236,9 @@ class Compute:
         )
         sia_branch.calculate_concept()
         return sia_branch.get_reperoire()
+
+    def use_queyranne():
+        ...
 
     def use_genetic_algorithm(self, ctrl_params: list[dict[str, int | float]]) -> bool:
         # ! Made for S2P
