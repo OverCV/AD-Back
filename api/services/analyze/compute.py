@@ -23,6 +23,7 @@ from pyphi.labels import NodeLabels
 
 import copy
 from api.services.analyze.strats.frank_mech import FMAlgorithm
+from api.services.analyze.strats.queyranne import Queyranne
 from constants.structure import BOOL_RANGE, DIST, VOID
 from utils.consts import (
     COLS_IDX,
@@ -79,8 +80,6 @@ class Compute:
         """
         Desde este nivel se deifinen las condiciones de bg, las cuales permiten conocer los elementos/ínidces usables para los diferentes subsistemas a generar.
         """
-
-        # ic(self.__str_bgcond, STR_ONE, self.__dual)
 
         bgcond_elems = [
             idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
@@ -212,7 +211,7 @@ class Compute:
             self.__distribution,
             self.__dual,
         )
-        sia_force.calculate_concept()
+        sia_force.analyze()
         return sia_force.get_reperoire()
 
     def use_min_frank_mech(self) -> bool:
@@ -234,11 +233,19 @@ class Compute:
             self.__distribution,
             self.__dual,
         )
-        sia_branch.calculate_concept()
+        sia_branch.analyze()
         return sia_branch.get_reperoire()
 
-    def use_queyranne():
-        ...
+    def use_queyranne(self) -> bool:
+        sia_queyranne: Queyranne = Queyranne(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_queyranne.analyze()
+        # return sia_queyranne.get_reperoire()
 
     def use_genetic_algorithm(self, ctrl_params: list[dict[str, int | float]]) -> bool:
         # ! Made for S2P
@@ -250,7 +257,7 @@ class Compute:
             self.__dual,
             ctrl_params,
         )
-        sia_genetic.calculate_concept()
+        sia_genetic.analyze()
         return sia_genetic.get_reperoire()
         # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje
 

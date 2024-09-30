@@ -29,7 +29,7 @@ class Sia(ABC):
         # ! Eliminar la id de red [#12] ! #
         self.network_id: nx.Graph | nx.DiGraph = None
 
-    def calculate_concept(self) -> None:
+    def analyze(self) -> None:
         # Analyze method returns a boolean that indicates if there's NOT a standard parameter solution
         # Obliga a que se deben de asignar los resultados dentro del método analyze, caso contrario se activa la excepción puesto se detecta hay un parámetro sin calcular (faltante).
         if self.analyze():

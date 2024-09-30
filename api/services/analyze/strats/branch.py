@@ -92,7 +92,7 @@ class Branch(Sia):
             self.__causes_labels: ['A(t=0)', 'C(t=0)', 'E(t=0)']
         """
 
-        concept_comb = list(it.product(self._actual, self._effect))
+        concept_comb: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
 
         self.__net.add_nodes_from(self.__effect_labels)
         self.__net.add_nodes_from(self.__causes_labels)
@@ -129,13 +129,16 @@ class Branch(Sia):
 
             effect = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
             actual = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
+
+            ic(effect, actual)
+
             iter_distrib = sub_struct.create_distrib(effect, actual, data=True)[
                 StructProps.DIST_ARRAY
             ]
             origin = self.__causes_labels[self._actual.index(idx_causes)]
             destiny = self.__effect_labels[self._effect.index(idx_effect)]
 
-            emd_as_weight = emd_pyphi(iter_distrib, self._target_dist)
+            emd_as_weight = emd_pyphi(*iter_distrib, *self._target_dist)
 
             self.__net.remove_edge(origin, destiny)
 
