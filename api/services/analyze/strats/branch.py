@@ -52,7 +52,8 @@ class Branch(Sia):
         self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._actual]
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
-        self.__net = self.margin_n_expand()
+        # self.__net = self.margin_n_expand()
+        self.margin_n_expand()
 
         edges = self.__net.edges(data=True)
         self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
@@ -115,14 +116,14 @@ class Branch(Sia):
         # ic(ordered_comb)
         # self.plot_net(self.__net)
         # for idx_causes, idx_effect in concept_comb:
-        for idx_causes, idx_effect in ordered_comb:
+        for idx_actual, idx_effect in ordered_comb:
             # Iteramos las aristas ya definidas en el producto causa efecto
             # ! Por qué no re-instanciar la matriz (no la clase)? [#15] ! #
             sub_struct: Structure = copy.deepcopy(alt_struct)
             sub_mat: Matrix = sub_struct.get_matrix(idx_effect)
 
             sub_states: list[int] = copy.deepcopy(self._actual)
-            sub_states.remove(idx_causes)
+            sub_states.remove(idx_actual)
 
             sub_mat.margin(sub_states)
             sub_mat.expand(self._actual)
@@ -135,7 +136,7 @@ class Branch(Sia):
             iter_distrib = sub_struct.create_distrib(effect, actual, data=True)[
                 StructProps.DIST_ARRAY
             ]
-            origin = self.__causes_labels[self._actual.index(idx_causes)]
+            origin = self.__causes_labels[self._actual.index(idx_actual)]
             destiny = self.__effect_labels[self._effect.index(idx_effect)]
 
             emd_as_weight = emd_pyphi(*iter_distrib, *self._target_dist)
@@ -170,7 +171,7 @@ class Branch(Sia):
 
             # print()
 
-        # self.plot_net(self.__net)
+        self.plot_net(self.__net)
 
         if len(mips) > INT_ZERO:
             min_key = min(mips.keys(), key=lambda x: x[DATA_IDX])  # x=(u,v,w)
