@@ -245,7 +245,7 @@ class Compute:
             self.__dual,
         )
         sia_queyranne.analyze()
-        # return sia_queyranne.get_reperoire()
+        return sia_queyranne.get_reperoire()
 
     def use_genetic_algorithm(self, ctrl_params: list[dict[str, int | float]]) -> bool:
         # ! Made for S2P

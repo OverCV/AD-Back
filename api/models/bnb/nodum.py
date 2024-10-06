@@ -3,7 +3,6 @@ import networkx as nx
 
 from utils.consts import FIRST, INT_ZERO, U_IDX, V_IDX, DATA_IDX, WT_LBL
 from server import conf
-from icecream import ic
 
 
 class Nodum:

@@ -13,10 +13,13 @@ from numpy.typing import NDArray
 import networkx as nx
 from matplotlib import pyplot as plt
 
+from api.models.queyranne.deletion import Deletion
+
 from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, DUMMY_MIN_INFO_PARTITION
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
 from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, WT_LBL
 from utils.funcs import emd_pyphi, get_labels
+
 
 import utils.network as net
 
@@ -44,7 +47,6 @@ class Queyranne(Sia):
         self.__net: nx.DiGraph | nx.Graph = nx.DiGraph() if conf.directed else nx.Graph()
 
     def analyze(self) -> bool:
-        # ic(self._effect, self._causes, self._target_dist)
         max_len = max(*self._effect, *self._actual) + 1
         labels = get_labels(max_len)
         self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
@@ -56,15 +58,13 @@ class Queyranne(Sia):
         # self.__net = self.strategy()
         partition = self.strategy()
 
-
         # edges = self.__net.edges(data=True)
         # self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
-        self.integrated_info = partition['minuend_emd']
+        self.integrated_info = partition.get_minuend_emd()
 
         # raise NotImplementedError
         # part: None = None
         # mip = self.label_mip(part)
-        # self.min_info_part = mip
         # ic(
         #     self.integrated_info,
         #     self.min_info_part,
@@ -73,8 +73,8 @@ class Queyranne(Sia):
         # )
 
         self.network_id = DUMMY_NET_INT_ID
-        self.sub_distrib = DUMMY_SUBDIST
-        self.min_info_part = DUMMY_MIN_INFO_PARTITION
+        self.sub_distrib = partition.get_subdist()
+        self.min_info_part = partition.get_omega() + [partition.get_edge()]
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
@@ -87,64 +87,68 @@ class Queyranne(Sia):
 
         return not_std_sln
 
-    def strategy(self) -> dict[str, float | bool | tuple[int, int]]:
+    def strategy(self) -> Deletion:
         edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
 
         self.set_network_data(edges_idx)
 
         omega = []
         alpha = edges_idx[:]
+        ic(self.__net.edges)
 
         for _ in edges_idx:
-            loses = []
+            iter_deletions: list[Deletion] = []
+            all_mips = []
             for x in alpha:
-                lose = dict()
-
-                emd, minuend_emd, subdist = self.calcule_emd(omega, x)
-                ic(emd)
+                minuend_emd, subtrahend_emd, subdist = self.calcule_emd(omega, x)
 
                 trimmed_net = self.remove_edges(
                     self.__net.copy(),
                     omega + [x],
                 )
-                # self.plot_net(trimmed_net)
-                (
-                    lose['edge'],
-                    lose['minuend_emd'],
-                    lose['emd'],
-                    lose['disconnected'],
-                    lose['subdist'],
-                ) = (
+                deletion: Deletion = Deletion(
                     x,
+                    omega,
                     minuend_emd,
-                    emd,
+                    subtrahend_emd,
+                    minuend_emd - subtrahend_emd,
                     net.is_disconnected(trimmed_net),
                     subdist,
                 )
 
-                loses.append(lose)
+                if net.is_disconnected(trimmed_net):
+                    all_mips.append(deletion)
+                    self.__net
 
-            min_lose = min(loses, key=lambda x: x['emd'])
-            mip_iter = [x for x in loses if x['disconnected']]
-            ic(min_lose, mip_iter)
+                iter_deletions.append(deletion)
+                ic(str(deletion))
+                # print([str(lose) for lose in iter_deletions], end='\n')
+                # self.plot_net(self.__net)
+
+                # self.plot_net(trimmed_net)
+                # self.plot_net(self.__net)
+
+            min_lose = min(iter_deletions, key=lambda x: x.get_emd())
+            mip_iter = [x for x in iter_deletions if x.is_disconn()]
+            str(min_lose)
 
             if len(mip_iter) > 0:
-                min_mip_iter = min(mip_iter, key=lambda x: x['emd'])
-                ic(min_mip_iter)
+                min_mip_iter = min(mip_iter, key=lambda x: x.get_emd())
+                ic(str(min_mip_iter))
                 return min_mip_iter
 
-            ic(min_lose)
+            ic(str(min_lose))
 
-            alpha.remove(min_lose['edge'])
-            omega.append(min_lose['edge'])
+            alpha.remove(min_lose.get_edge())
+            omega.append(min_lose.get_edge())
 
-        print(omega, alpha)
+        # print(omega, alpha)
 
     def calcule_emd(
         self,
         omega: list[tuple[int, int]],
         concept: tuple[int, int],
-    ) -> float:
+    ) -> tuple[float, float, NDArray[np.float64]]:
         actual, effect = concept
         struct = copy.deepcopy(self._structure)
         # y_struct = copy.deepcopy(self._structure)
@@ -178,17 +182,16 @@ class Queyranne(Sia):
             mat.margin(w_actual_states)
             mat.expand(self._actual)
 
-        w_iter_distrib = struct.create_distrib(effect_dist, actual_dist, data=True)[
-            StructProps.DIST_ARRAY
-        ]
+        w_iter_distrib: NDArray[np.float64] = struct.create_distrib(
+            effect_dist, actual_dist, data=True
+        )[StructProps.DIST_ARRAY]
         minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
 
-        return minuend_emd - subtrahend_emd, minuend_emd, w_iter_distrib
+        return minuend_emd, subtrahend_emd, w_iter_distrib
 
     def remove_edges(
         self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
     ) -> nx.Graph | nx.DiGraph:
-        # self.plot_net(net)
         for u, v in edges:
             net.remove_edge(
                 self.actual_edge_by_index(u),
@@ -196,7 +199,7 @@ class Queyranne(Sia):
             )
         return net
 
-    def set_network_data(self, concepts) -> None:
+    def set_network_data(self, concepts: list[tuple[int, int]]) -> None:
         self.__net.add_nodes_from(self.__effect_labels)
         self.__net.add_nodes_from(self.__causes_labels)
         self.__net.add_edges_from(

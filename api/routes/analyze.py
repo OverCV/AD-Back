@@ -208,7 +208,6 @@ async def queyranne_strategy(
             detail='One or more of the SIA properties are not calculated',
         )
     results = computing.use_queyranne()
-
     # reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
