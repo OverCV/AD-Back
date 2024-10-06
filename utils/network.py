@@ -1,8 +1,11 @@
 import networkx as nx
 from networkx.utils import arbitrary_element
 from typing import FrozenSet, Set, Union
+
 # from functools import lru_cache
 import concurrent.futures
+
+import utils.network as net
 
 from server import conf
 

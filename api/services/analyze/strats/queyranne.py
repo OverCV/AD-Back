@@ -1,4 +1,3 @@
-from pyparsing import alphas
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
 from api.models.matrix import Matrix
@@ -87,71 +86,137 @@ class Queyranne(Sia):
         return not_std_sln
 
     def macro(self) -> None:
-        """
-        # x = (t, t+1)
+        edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
 
-        se tiene [aA, aB, aC, bA, ..., cB, cC]
+        self.set_network_data(edges_idx)
 
-        omega = {}
-        alpha = [aA, aB, aC, bA, ..., cB, cC]
-
-            grafo eliminando (omega U Xi) - (Xi)
-
-            toma un elem de alpha
-
-            queda (x, alpha) no hay que ¿retomar?
-
-                g({} + {xi}) - g({xi})
-
-
-
-        ciclo:
-
-        por e en alpha:
-        ---------
-
-        omega vacio, alpha lleno. por cada elem en alpha, tomar un elemento y add en omega y se quita de alpha. Usar aleph como lista completa, realizar calculo EMD, de todas las iteraciones habrá un mejor, este se añade en omega.
-
-        para la siguiente fase se tiene omega con un elemento (que genero minima perdida) en omega
-
-
-        si en algún punto hubo bipartición en g(w U xi) se retorna como mejor
-
-        -------
-        edges = [x1, x2, ..., xn]
-        aleph = [x1, x2, ..., xn] = edges[:]
-
-        # for edge in edges:
-        alpha = [x1, x2, ..., xn] = edges[:]
         omega = []
+        alpha = edges_idx[:]
 
-        while len(edges) - len(omega) > 0: | len(alpha) > 0: | for _ in edges:
+        for _ in edges_idx:
+            mips = []
 
-            mips = dict()
-            deletions: dict()
+            loses = []
+            for x in alpha:
+                lose = dict()
 
-            for i=(0->n):
-                alpha = aleph[:]
-                x = alpha.pop(i)
+                emd = np.random.random() - np.random.random()
 
-                emd = g(omega + [x]) - g([x])
+                trimmed_net = self.remove_edges(
+                    self.__net.copy(),
+                    omega + [x],
+                )
 
-                for edge in omega+[x]:
-                    graph.remove_edge(edge)
+                self.plot_net(trimmed_net)
 
-                if is_disconnected(graph):
-                    mips[tuple(omega+x)] = emd  # order matter?
+                lose['edge'], lose['emd'], lose['disconnected'] = (
+                    x,
+                    emd,
+                    net.is_disconnected(trimmed_net),
+                )
 
-                deletions[x] = emd, alpha[:]
+                loses.append(lose)
 
-            if mips:
-                return min(mips => mip.value)
+            min_lose = min(loses, key=lambda x: x['emd'])
+            # mip_iter = min([x for x in loses if x['disconnected']], key=lambda x: x['emd'])
+            mip_iter = [x for x in loses if x['disconnected']]
+            ic(min_lose, mip_iter)
 
-            gamma = min(deletions)
-            gamma_idx = alpha.index(gamma)
+            if len(mip_iter) > 0:
+                # Si es disconexo
+                min_mip_iter = min(mip_iter, key=lambda x: x['emd'])
+                ic(min_mip_iter)
+                return min_mip_iter
 
-            omega.add( aleph.pop(gamma_idx) )
+            print(min_lose)
+            print(omega)
 
+            alpha.remove(min_lose['edge'])
+            omega.append(min_lose['edge'])
+
+        print(omega)
+
+    def remove_edges(
+        self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
+    ) -> nx.Graph | nx.DiGraph:
+        # self.plot_net(net)
+        for u, v in edges:
+            net.remove_edge(
+                self.actual_edge_by_index(u),
+                self.effect_edge_by_index(v),
+            )
+        return net
+
+    def set_network_data(self, concepts) -> None:
+        self.__net.add_nodes_from(self.__effect_labels)
+        self.__net.add_nodes_from(self.__causes_labels)
+        self.__net.add_edges_from(
+            (
+                (
+                    self.__causes_labels[self._actual.index(j)],
+                    self.__effect_labels[self._effect.index(i)],
+                )
+                for j, i in concepts
+            )
+        )
+
+    def actual_edge_by_index(self, index):
+        return self.__causes_labels[self._actual.index(index)]
+
+    def effect_edge_by_index(self, index):
+        return self.__effect_labels[self._effect.index(index)]
+
+    def plot_net(self, net: nx.Graph) -> None:
+        """This function is used to plot the network."""
+        # Separate the nodes into two sets
+        future_nodes = [node for node in net.nodes if node in self.__effect_labels]
+        current_nodes = [node for node in net.nodes if node in self.__causes_labels]
+
+        # Create a bipartite layout
+        pos = {}
+        try:
+            pos.update((node, (1, index)) for index, node in enumerate(future_nodes))
+            pos.update((node, (0, index)) for index, node in enumerate(current_nodes))
+        except KeyError:
+            pass
+
+        # Draw the bipartite graph with custom node and edge colors
+        nx.draw(
+            net,
+            pos=pos,
+            with_labels=True,
+            node_color='skyblue',
+            font_color='black',
+            edge_color='gray',
+        )
+
+        # Add edge labels with better visibility and consistent styles
+        labels = nx.get_edge_attributes(net, 'weight')
+        for (u, v), weight in labels.items():
+            offset = np.random.default_rng(seed=1).uniform(-0.2, 0.2)
+
+            # Calculate the position for the label closer to the destination node
+            pos_y = pos[v][1] + (pos[u][1] - pos[v][1]) * 0.3 + offset
+            pos_x = pos[v][0] + (pos[u][0] - pos[v][0]) * 0.3 + offset
+
+            plt.text(
+                pos_x,
+                pos_y,
+                weight,
+                ha='center',
+                va='center',
+                fontsize=8,  # You can adjust the fontsize as needed
+                bbox=dict(
+                    facecolor='white', edgecolor='none', alpha=0.2
+                ),  # Add a background to the text for better visibility
+            )
+
+        # Show the plot
+        plt.show()
+
+    def meso(self) -> None:
+        """
+          # x = (t, t+1)
         ------
 
         omega = []
@@ -175,37 +240,74 @@ class Queyranne(Sia):
             omega.add(min_lose.edge)
 
 
+          -------
+          se tiene [aA, aB, aC, bA, ..., cB, cC]
+
+          omega = {}
+          alpha = [aA, aB, aC, bA, ..., cB, cC]
+
+              grafo eliminando (omega U Xi) - (Xi)
+
+              toma un elem de alpha
+
+              queda (x, alpha) no hay que ¿retomar?
+
+                  g({} + {xi}) - g({xi})
+
+
+
+          ciclo:
+
+          por e en alpha:
+          ---------
+
+          omega vacio, alpha lleno. por cada elem en alpha, tomar un elemento y add en omega y se quita de alpha. Usar aleph como lista completa, realizar calculo EMD, de todas las iteraciones habrá un mejor, este se añade en omega.
+
+          para la siguiente fase se tiene omega con un elemento (que genero minima perdida) en omega
+
+
+          si en algún punto hubo bipartición en g(w U xi) se retorna como mejor
+
+          -------
+          edges = [x1, x2, ..., xn]
+          aleph = [x1, x2, ..., xn] = edges[:]
+
+          # for edge in edges:
+          alpha = [x1, x2, ..., xn] = edges[:]
+          omega = []
+
+          while len(edges) - len(omega) > 0: | len(alpha) > 0: | for _ in edges:
+
+              mips = dict()
+              deletions: dict()
+
+              for i=(0->n):
+                  alpha = aleph[:]
+                  x = alpha.pop(i)
+
+                  emd = g(omega + [x]) - g([x])
+
+                  for edge in omega+[x]:
+                      graph.remove_edge(edge)
+
+                  if is_disconnected(graph):
+                      mips[tuple(omega+x)] = emd  # order matter?
+
+                  deletions[x] = emd, alpha[:]
+
+              if mips:
+                  return min(mips => mip.value)
+
+              gamma = min(deletions)
+              gamma_idx = alpha.index(gamma)
+
+              omega.add( aleph.pop(gamma_idx) )
+
+
+
 
 
         """
-
-        edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
-
-        limit: int = 2 ** (len(self._actual) + len(self._effect)) - 1
-        limit: int = 1
-
-        while limit > 0:
-            print('Se empieza con un elemento del iterable distinto cada vez')
-            betha = edges_idx[:]
-            omega = []
-
-            #
-
-
-            print(betha)
-            for i, (u, v) in enumerate(betha):
-                alpha = betha[:]
-                edge = (u, v)
-                print(f'Iteración {i}')
-                print(f'Elemento {u, v}')
-                print(f'Omega {omega}')
-                betha.remove(edge)
-                betha.pop()
-
-            # ! Decrement ! #
-            limit -= 1
-
-        # print(concepts)
 
     def strategy(self) -> nx.DiGraph | nx.Graph:
         """Method margin_n_expand is used to generate the network from the structure."""
@@ -237,7 +339,7 @@ class Queyranne(Sia):
             # ? Para IT1
             smat_ij = mat[Xi]
             smat_kl = mat[Zk]
-                             
+
             # ! Xi U Zk
             states = all_states
             states -= wl
