@@ -54,10 +54,12 @@ class Queyranne(Sia):
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         # self.__net = self.strategy()
-        self.strategy()
+        partition = self.strategy()
+
 
         # edges = self.__net.edges(data=True)
         # self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
+        self.integrated_info = partition['minuend_emd']
 
         # raise NotImplementedError
         # part: None = None
@@ -85,7 +87,7 @@ class Queyranne(Sia):
 
         return not_std_sln
 
-    def strategy(self) -> None:
+    def strategy(self) -> dict[str, float | bool | tuple[int, int]]:
         edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
 
         self.set_network_data(edges_idx)
@@ -98,18 +100,26 @@ class Queyranne(Sia):
             for x in alpha:
                 lose = dict()
 
-                emd = self.calcule_emd(omega, x)
+                emd, minuend_emd, subdist = self.calcule_emd(omega, x)
+                ic(emd)
 
                 trimmed_net = self.remove_edges(
                     self.__net.copy(),
                     omega + [x],
                 )
                 # self.plot_net(trimmed_net)
-
-                lose['edge'], lose['emd'], lose['disconnected'] = (
+                (
+                    lose['edge'],
+                    lose['minuend_emd'],
+                    lose['emd'],
+                    lose['disconnected'],
+                    lose['subdist'],
+                ) = (
                     x,
+                    minuend_emd,
                     emd,
                     net.is_disconnected(trimmed_net),
+                    subdist,
                 )
 
                 loses.append(lose)
@@ -158,8 +168,7 @@ class Queyranne(Sia):
         ]
         subtrahend_emd = emd_pyphi(*iter_distrib, *self._target_dist)
 
-        # return subtrahend_emd
-
+        # for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
         for w_actual, w_effect in omega:
             mat = struct.get_matrix(w_effect)
 
@@ -174,9 +183,7 @@ class Queyranne(Sia):
         ]
         minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
 
-        return minuend_emd - subtrahend_emd
-
-        # for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
+        return minuend_emd - subtrahend_emd, minuend_emd, w_iter_distrib
 
     def remove_edges(
         self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
