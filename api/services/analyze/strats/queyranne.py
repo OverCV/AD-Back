@@ -54,7 +54,7 @@ class Queyranne(Sia):
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         # self.__net = self.strategy()
-        self.macro()
+        self.strategy()
 
         # edges = self.__net.edges(data=True)
         # self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
@@ -85,7 +85,7 @@ class Queyranne(Sia):
 
         return not_std_sln
 
-    def macro(self) -> None:
+    def strategy(self) -> None:
         edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
 
         self.set_network_data(edges_idx)
@@ -94,20 +94,17 @@ class Queyranne(Sia):
         alpha = edges_idx[:]
 
         for _ in edges_idx:
-            mips = []
-
             loses = []
             for x in alpha:
                 lose = dict()
 
-                emd = np.random.random() - np.random.random()
+                emd = self.calcule_emd(omega, x)
 
                 trimmed_net = self.remove_edges(
                     self.__net.copy(),
                     omega + [x],
                 )
-
-                self.plot_net(trimmed_net)
+                # self.plot_net(trimmed_net)
 
                 lose['edge'], lose['emd'], lose['disconnected'] = (
                     x,
@@ -118,23 +115,68 @@ class Queyranne(Sia):
                 loses.append(lose)
 
             min_lose = min(loses, key=lambda x: x['emd'])
-            # mip_iter = min([x for x in loses if x['disconnected']], key=lambda x: x['emd'])
             mip_iter = [x for x in loses if x['disconnected']]
             ic(min_lose, mip_iter)
 
             if len(mip_iter) > 0:
-                # Si es disconexo
                 min_mip_iter = min(mip_iter, key=lambda x: x['emd'])
                 ic(min_mip_iter)
                 return min_mip_iter
 
-            print(min_lose)
-            print(omega)
+            ic(min_lose)
 
             alpha.remove(min_lose['edge'])
             omega.append(min_lose['edge'])
 
-        print(omega)
+        print(omega, alpha)
+
+    def calcule_emd(
+        self,
+        omega: list[tuple[int, int]],
+        concept: tuple[int, int],
+    ) -> float:
+        actual, effect = concept
+        struct = copy.deepcopy(self._structure)
+        # y_struct = copy.deepcopy(self._structure)
+
+        # Modificar las matrices por referencia altera la estructura
+        mat = struct.get_matrix(effect)
+
+        # Marginalizamos sólo el tiempo (t)
+        actual_states = self._actual[:]
+        actual_states.remove(actual)
+
+        mat.margin(actual_states)
+        mat.expand(self._actual)
+
+        # Se define las particiones primales y duales, en este escenario no se ha particionado por mover un estado futuro a su complemento, sino que toda la distribución está en una sección, tal que no requiere complementación
+        effect_dist = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
+        actual_dist = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
+
+        iter_distrib = struct.create_distrib(effect_dist, actual_dist, data=True)[
+            StructProps.DIST_ARRAY
+        ]
+        subtrahend_emd = emd_pyphi(*iter_distrib, *self._target_dist)
+
+        # return subtrahend_emd
+
+        for w_actual, w_effect in omega:
+            mat = struct.get_matrix(w_effect)
+
+            w_actual_states = self._actual[:]
+            w_actual_states.remove(w_actual)
+
+            mat.margin(w_actual_states)
+            mat.expand(self._actual)
+
+        w_iter_distrib = struct.create_distrib(effect_dist, actual_dist, data=True)[
+            StructProps.DIST_ARRAY
+        ]
+        minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
+
+        return minuend_emd - subtrahend_emd
+
+        # for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
 
     def remove_edges(
         self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
@@ -213,145 +255,3 @@ class Queyranne(Sia):
 
         # Show the plot
         plt.show()
-
-    def meso(self) -> None:
-        """
-          # x = (t, t+1)
-        ------
-
-        omega = []
-        alpha = edges[:]
-        for _ in edges:
-            loses=[]
-
-            for x in alpha:
-                emd = g(omega + [x]) - g([x])
-
-                lose = Lose()
-                lose.emd, lose.edge = emd, x
-                loses.add(lose)
-
-                # si net es desconexo, guardar como partición
-
-            min_lose = min(loses)
-            net.remove_edges(omega[:] + [min_lose.edge])
-
-            alpha.remove(min_lose.edge)
-            omega.add(min_lose.edge)
-
-
-          -------
-          se tiene [aA, aB, aC, bA, ..., cB, cC]
-
-          omega = {}
-          alpha = [aA, aB, aC, bA, ..., cB, cC]
-
-              grafo eliminando (omega U Xi) - (Xi)
-
-              toma un elem de alpha
-
-              queda (x, alpha) no hay que ¿retomar?
-
-                  g({} + {xi}) - g({xi})
-
-
-
-          ciclo:
-
-          por e en alpha:
-          ---------
-
-          omega vacio, alpha lleno. por cada elem en alpha, tomar un elemento y add en omega y se quita de alpha. Usar aleph como lista completa, realizar calculo EMD, de todas las iteraciones habrá un mejor, este se añade en omega.
-
-          para la siguiente fase se tiene omega con un elemento (que genero minima perdida) en omega
-
-
-          si en algún punto hubo bipartición en g(w U xi) se retorna como mejor
-
-          -------
-          edges = [x1, x2, ..., xn]
-          aleph = [x1, x2, ..., xn] = edges[:]
-
-          # for edge in edges:
-          alpha = [x1, x2, ..., xn] = edges[:]
-          omega = []
-
-          while len(edges) - len(omega) > 0: | len(alpha) > 0: | for _ in edges:
-
-              mips = dict()
-              deletions: dict()
-
-              for i=(0->n):
-                  alpha = aleph[:]
-                  x = alpha.pop(i)
-
-                  emd = g(omega + [x]) - g([x])
-
-                  for edge in omega+[x]:
-                      graph.remove_edge(edge)
-
-                  if is_disconnected(graph):
-                      mips[tuple(omega+x)] = emd  # order matter?
-
-                  deletions[x] = emd, alpha[:]
-
-              if mips:
-                  return min(mips => mip.value)
-
-              gamma = min(deletions)
-              gamma_idx = alpha.index(gamma)
-
-              omega.add( aleph.pop(gamma_idx) )
-
-
-
-
-
-        """
-
-    def strategy(self) -> nx.DiGraph | nx.Graph:
-        """Method margin_n_expand is used to generate the network from the structure."""
-        concept_comb = list(it.product(self._actual, self._effect))
-        ic(concept_comb)
-        ic(self._actual, self._effect)
-
-        alt_struct = copy.deepcopy(self._structure)
-
-        edges_number: int = len(self._actual) * len(self._effect)
-        inter_idx: int = 0
-        last_idx: int = -1
-        omega: list[set[str]] = [{}]
-
-        while len(omega[last_idx]) < edges_number:
-            sub_struct_xy: Structure = copy.deepcopy(alt_struct)
-            sub_struct_y: Structure = copy.deepcopy(alt_struct)
-
-        # El algoritmo tomará un elemento X futuro y marginalizará un elemento pasado y, esto lo realizará para todo t+1 en cada t.
-        # De este listado se hará unión con algún otro elemento Z (totalidad) distinto, tratado en algún w. Sobre este elemento zwXY se aplicará la distancia métrica. Así msimo generamos diferencia con la distancia métrica de wZ, este resultado será almacenado para futuras comparaciones.
-        # Del listado de valores de la iteración (IT1) se tomará el mínimo de forma que se pueda reconstruír el zwXY que lo generó. Este proceso se repite hasta que el conjunto de mínimos sea igual al número de aristas.
-
-        """
-        Ejemplo:
-        (X|y), (Z|w)
-        ---------
-        omega = {}
-        for (Xi, yj) in zip((t+1), (t)):
-            # ? Para IT1
-            smat_ij = mat[Xi]
-            smat_kl = mat[Zk]
-
-            # ! Xi U Zk
-            states = all_states
-            states -= wl
-            smat_ij.margin(states)    # margin mantiene los parámetros
-            smat_wl = smat_ij
-
-            states -= yj
-            smat_ij.margin(states)    # margin mantiene los parámetros
-
-            smat_ij.expand(all_states)
-            save.expand(all_states)
-
-            llenar la lista de muestreo si la arista no está en omega
-
-        """
