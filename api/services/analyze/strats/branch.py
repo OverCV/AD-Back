@@ -149,7 +149,7 @@ class Branch(Sia):
 
             # net.precalculate_adjacencies(self.__net)
             if net.is_disconnected(self.__net):
-                # Si es disconexo no reestablecemos la arista, la guardamos como logro independiente de si tuvo peso o no.
+                # Si es disconexo reestablecemos la arista, la guardamos como logro independiente de si tuvo peso o no.
                 # print('Disconnected')
                 mips[(origin, destiny, emd_as_weight)] = deleted
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
@@ -163,7 +163,7 @@ class Branch(Sia):
 
             else:
                 # print('Connected no loss')
-                # Si es conexo y no hay pérdida entonces guardamos la arista. A sy vez guardamos estas aristas en 0 para la reconstrucción.
+                # Si es conexo y no hay pérdida entonces guardamos la arista. A su vez guardamos estas aristas en 0 para la reconstrucción.
                 # ic((origin, destiny, emd_as_weight))
                 deleted.append((origin, destiny, emd_as_weight))
                 alt_struct.set_matrix(idx_effect, sub_mat)

@@ -60,7 +60,7 @@ class Queyranne(Sia):
 
         # edges = self.__net.edges(data=True)
         # self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
-        self.integrated_info = partition.get_minuend_emd()
+        # self.integrated_info = partition.get_minuend_emd()
 
         # raise NotImplementedError
         # part: None = None
@@ -73,8 +73,8 @@ class Queyranne(Sia):
         # )
 
         self.network_id = DUMMY_NET_INT_ID
-        self.sub_distrib = partition.get_subdist()
-        self.min_info_part = partition.get_omega() + [partition.get_edge()]
+        # self.sub_distrib = partition.get_subdist()
+        # self.min_info_part = partition.get_omega() + [partition.get_edge()]
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
@@ -97,8 +97,8 @@ class Queyranne(Sia):
         ic(self.__net.edges)
 
         for _ in edges_idx:
-            iter_deletions: list[Deletion] = []
-            all_mips = []
+            iter_dels: list[Deletion] = []
+            iter_mips = []
             for x in alpha:
                 minuend_emd, subtrahend_emd, subdist = self.calcule_emd(omega, x)
 
@@ -117,10 +117,10 @@ class Queyranne(Sia):
                 )
 
                 if net.is_disconnected(trimmed_net):
-                    all_mips.append(deletion)
+                    iter_mips.append(deletion)
                     self.__net
 
-                iter_deletions.append(deletion)
+                iter_dels.append(deletion)
                 ic(str(deletion))
                 # print([str(lose) for lose in iter_deletions], end='\n')
                 # self.plot_net(self.__net)
@@ -128,8 +128,8 @@ class Queyranne(Sia):
                 # self.plot_net(trimmed_net)
                 # self.plot_net(self.__net)
 
-            min_lose = min(iter_deletions, key=lambda x: x.get_emd())
-            mip_iter = [x for x in iter_deletions if x.is_disconn()]
+            min_lose = min(iter_dels, key=lambda x: x.get_emd())
+            mip_iter = [x for x in iter_dels if x.is_disconn()]
             str(min_lose)
 
             if len(mip_iter) > 0:
@@ -137,7 +137,7 @@ class Queyranne(Sia):
                 ic(str(min_mip_iter))
                 return min_mip_iter
 
-            ic(str(min_lose))
+            print(str(min_lose))
 
             alpha.remove(min_lose.get_edge())
             omega.append(min_lose.get_edge())
@@ -188,6 +188,7 @@ class Queyranne(Sia):
         minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
 
         return minuend_emd, subtrahend_emd, w_iter_distrib
+
 
     def remove_edges(
         self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
