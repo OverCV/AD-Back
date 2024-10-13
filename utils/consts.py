@@ -40,6 +40,7 @@ DIST: str = 'distribution'
 
 """ Network """
 FIRST: int = INT_ZERO
+LAST_IDX: int = -INT_ONE
 U_IDX: int = 0
 V_IDX: int = 1
 DATA_IDX: int = 2

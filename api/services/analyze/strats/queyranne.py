@@ -1,3 +1,4 @@
+from cycler import V
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
 from api.models.matrix import Matrix
@@ -17,7 +18,18 @@ from api.models.queyranne.deletion import Deletion
 
 from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, DUMMY_MIN_INFO_PARTITION
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
-from utils.consts import FIRST, FLOAT_ZERO, INFTY_POS, INT_ZERO, U_IDX, V_IDX, DATA_IDX, WT_LBL
+from utils.consts import (
+    EMPTY_STR,
+    FIRST,
+    FLOAT_ZERO,
+    INFTY_POS,
+    INT_ZERO,
+    LAST_IDX,
+    U_IDX,
+    V_IDX,
+    DATA_IDX,
+    WT_LBL,
+)
 from utils.funcs import emd_pyphi, get_labels
 
 
@@ -56,7 +68,7 @@ class Queyranne(Sia):
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         # self.__net = self.strategy()
-        partition = self.strategy()
+        partition: Deletion = self.strategy()
 
         # edges = self.__net.edges(data=True)
         # self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
@@ -73,7 +85,7 @@ class Queyranne(Sia):
         # )
 
         self.network_id = DUMMY_NET_INT_ID
-        # self.sub_distrib = partition.get_subdist()
+        self.sub_distrib = partition.get_subdist()
         # self.min_info_part = partition.get_omega() + [partition.get_edge()]
         not_std_sln = any(
             [
@@ -89,23 +101,25 @@ class Queyranne(Sia):
 
     def strategy(self) -> Deletion:
         edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
+        struct = copy.deepcopy(self._structure)
 
         self.set_network_data(edges_idx)
 
         omega = []
         alpha = edges_idx[:]
-        ic(self.__net.edges)
 
-        for _ in edges_idx:
-            iter_dels: list[Deletion] = []
-            iter_mips = []
+        # for _ in edges_idx:
+        while len(alpha) > 0:
+            xiter_dels: list[Deletion] = []
+            yiter_dels: list[Deletion] = []
+            iter_part: list[Deletion] = []
+            betha: list[tuple[int, int]] = []
             for x in alpha:
-                minuend_emd, subtrahend_emd, subdist = self.calcule_emd(omega, x)
-
-                trimmed_net = self.remove_edges(
-                    self.__net.copy(),
-                    omega + [x],
+                minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
+                    omega, x, copy.deepcopy(struct)
                 )
+                trimmed_net = copy.deepcopy(self.__net)
+                trimmed_net = self.remove_edges(trimmed_net, omega + [x])
                 deletion: Deletion = Deletion(
                     x,
                     omega,
@@ -115,80 +129,136 @@ class Queyranne(Sia):
                     net.is_disconnected(trimmed_net),
                     subdist,
                 )
-
-                if net.is_disconnected(trimmed_net):
-                    iter_mips.append(deletion)
-                    self.__net
-
-                iter_dels.append(deletion)
                 ic(str(deletion))
-                # print([str(lose) for lose in iter_deletions], end='\n')
+
+                if self.submodule(omega, x, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
+                    struct.set_matrix(x[V_IDX], substruct.get_matrix(x[V_IDX]))
+                    self.__net = self.remove_edges(self.__net, [x])
+                    print('Deleted:', x)
+                    omega.append(x)
+
+                    if net.is_disconnected(trimmed_net):
+                        iter_part.append(deletion)
+                else:
+                    # Añadimos las aristas con peso para revisarlas
+                    betha.append(x)
+
+                xiter_dels.append(deletion)
+                # # self.__net = self.remove_edges(self.__net, [x])
+
+                # if net.is_disconnected(trimmed_net):
+                #     # Disconexo => reestablecemos la arista, guardamos la MIP.
+                #     # self.__net.add_weighted_edges_from([(*x, subtrahend_emd)])
+                #     iter_part.append(deletion)
+
+                # elif minuend_emd > FLOAT_ZERO and subtrahend_emd > FLOAT_ZERO:
+                #     # Conexo & hay pérdida => restablecemos la arsita.
+                #     # ? self.remove_edges(self.__net, [x])
+                #     # self.__net.add_weighted_edges_from([(*x, subtrahend_emd)])
+                #     ...
+
+                # else:
+                #     # Conexo & no hay pérdida => guardamos la arista. A su vez guardamos estas aristas en 0 para la reconstrucción.
+                #     iter_dels.append(deletion)
+                #     struct.set_matrix(x[V_IDX], substruct.get_matrix(x[V_IDX]))
+
                 # self.plot_net(self.__net)
 
                 # self.plot_net(trimmed_net)
-                # self.plot_net(self.__net)
 
-            min_lose = min(iter_dels, key=lambda x: x.get_emd())
-            mip_iter = [x for x in iter_dels if x.is_disconn()]
-            str(min_lose)
+            for y in betha:
+                # Proceso de remuestreo sin aristas peso 0
+                ic(y)
+                minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
+                    omega, y, copy.deepcopy(struct)
+                )
+                trimmed_net = copy.deepcopy(self.__net)
+                trimmed_net = self.remove_edges(trimmed_net, omega + [y])
+                deletion: Deletion = Deletion(
+                    y,
+                    omega,
+                    minuend_emd,
+                    subtrahend_emd,
+                    minuend_emd - subtrahend_emd,
+                    net.is_disconnected(trimmed_net),
+                    subdist,
+                )
+                ic(str(deletion))
 
-            if len(mip_iter) > 0:
-                min_mip_iter = min(mip_iter, key=lambda x: x.get_emd())
-                ic(str(min_mip_iter))
-                return min_mip_iter
+                if deletion.is_disconn():
+                    iter_part.append(deletion)
 
+            yiter_dels.append(deletion)
+
+            if len(iter_part) > 0:
+                min_iter = min(
+                    iter_part, key=lambda x: x.get_emd() - x.get_subtrahend_emd()
+                )  # End condition
+                print(str(min_iter))
+                return min_iter
+
+            min_lose = min(xiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
             print(str(min_lose))
 
-            alpha.remove(min_lose.get_edge())
-            omega.append(min_lose.get_edge())
+            # ? omega.append(min_lose.get_edge()) arriba en betha!
+            # añadirle a omega ANTES todas las que estaban en 0
+            # alpha es igual a aristas - omega
+            # alpha.remove(min_lose.get_edge())
 
         # print(omega, alpha)
+
+    def submodule(self, omega, x, minuend, subtrahend) -> float:
+        # Si la arista no genera pérdida individual o conjuntamente, se eliminará
+        if len(omega) > 0:
+            return (
+                minuend + subtrahend
+                if x[V_IDX] != (omega[LAST_IDX][V_IDX] if omega else EMPTY_STR)
+                else max(minuend, subtrahend)
+            )
+        return subtrahend
 
     def calcule_emd(
         self,
         omega: list[tuple[int, int]],
         concept: tuple[int, int],
-    ) -> tuple[float, float, NDArray[np.float64]]:
+        structure: Structure,
+    ) -> tuple[float, float, NDArray[np.float64], Structure]:
         actual, effect = concept
-        struct = copy.deepcopy(self._structure)
-        # y_struct = copy.deepcopy(self._structure)
-
         # Modificar las matrices por referencia altera la estructura
-        mat = struct.get_matrix(effect)
+        mat_y = structure.get_matrix(effect)
 
         # Marginalizamos sólo el tiempo (t)
         actual_states = self._actual[:]
         actual_states.remove(actual)
 
-        mat.margin(actual_states)
-        mat.expand(self._actual)
+        mat_y.margin(actual_states)
+        mat_y.expand(self._actual)
 
         # Se define las particiones primales y duales, en este escenario no se ha particionado por mover un estado futuro a su complemento, sino que toda la distribución está en una sección, tal que no requiere complementación
         effect_dist = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
         actual_dist = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
 
-        iter_distrib = struct.create_distrib(effect_dist, actual_dist, data=True)[
+        iter_distrib = structure.create_distrib(effect_dist, actual_dist, data=True)[
             StructProps.DIST_ARRAY
         ]
         subtrahend_emd = emd_pyphi(*iter_distrib, *self._target_dist)
 
         # for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
         for w_actual, w_effect in omega:
-            mat = struct.get_matrix(w_effect)
+            mat_y = structure.get_matrix(w_effect)
 
             w_actual_states = self._actual[:]
             w_actual_states.remove(w_actual)
 
-            mat.margin(w_actual_states)
-            mat.expand(self._actual)
+            mat_y.margin(w_actual_states)
+            mat_y.expand(self._actual)
 
-        w_iter_distrib: NDArray[np.float64] = struct.create_distrib(
+        w_iter_distrib: NDArray[np.float64] = structure.create_distrib(
             effect_dist, actual_dist, data=True
         )[StructProps.DIST_ARRAY]
         minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
 
-        return minuend_emd, subtrahend_emd, w_iter_distrib
-
+        return minuend_emd, subtrahend_emd, w_iter_distrib, structure
 
     def remove_edges(
         self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]

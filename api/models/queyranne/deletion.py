@@ -50,4 +50,4 @@ class Deletion:
         return self.__subdist
 
     def __str__(self) -> str:
-        return f'Deletion: {self.__omega} ∪ [{self.__edge}] | {self.__minuend_emd:.4f} - {self.__subtrahend_emd:.4f} = {self.__emd:.4f}{' - BIPARTITE' if self.__disconnected else ''}'
+        return f'Deletion: {self.__omega} ∪ [{self.__edge}] | {self.__minuend_emd:.2f} - {self.__subtrahend_emd:.2f} = {self.__emd:.2f}{' - B' if self.__disconnected else ''}'

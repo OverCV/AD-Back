@@ -83,9 +83,6 @@ def emd_pyphi(u: NDArray[np.float64], v: NDArray[np.float64]) -> float:
     Calculate the Earth Mover's Distance (EMD) between two probability distributions u and v.
     The Hamming distance was used as the ground metric.
     """
-    # print(u)
-    # print(v)
-    # Validate (u, v) are NDArrays of type np.float64
     if not all(isinstance(arr, np.ndarray) for arr in [u, v]):
         raise TypeError('u and v must be numpy arrays.')
 
