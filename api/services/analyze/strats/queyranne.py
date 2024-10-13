@@ -110,18 +110,18 @@ class Queyranne(Sia):
 
         # for _ in edges_idx:
         while len(alpha) > 0:
-            xiter_dels: list[Deletion] = []
-            yiter_dels: list[Deletion] = []
+            # ziter_dels: list[Deletion] = []
+            uiter_dels: list[Deletion] = []
             iter_part: list[Deletion] = []
             betha: list[tuple[int, int]] = []
-            for x in alpha:
+            for z in alpha:
+                print(z)
                 minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
-                    omega, x, copy.deepcopy(struct)
+                    omega, z, copy.deepcopy(struct)
                 )
-                trimmed_net = copy.deepcopy(self.__net)
-                trimmed_net = self.remove_edges(trimmed_net, omega + [x])
+                trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [z])
                 deletion: Deletion = Deletion(
-                    x,
+                    z,
                     omega,
                     minuend_emd,
                     subtrahend_emd,
@@ -131,51 +131,33 @@ class Queyranne(Sia):
                 )
                 ic(str(deletion))
 
-                if self.submodule(omega, x, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
-                    struct.set_matrix(x[V_IDX], substruct.get_matrix(x[V_IDX]))
-                    self.__net = self.remove_edges(self.__net, [x])
-                    print('Deleted:', x)
-                    omega.append(x)
+                if self.submodule(omega, z, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
+                    struct.set_matrix(z[V_IDX], substruct.get_matrix(z[V_IDX]))
 
                     if net.is_disconnected(trimmed_net):
                         iter_part.append(deletion)
+
+                    self.__net = self.remove_edges(self.__net, [z])
+
+                    print('Deleted:', z)
+                    omega.append(z)
+
                 else:
                     # Añadimos las aristas con peso para revisarlas
-                    betha.append(x)
+                    betha.append(z)
 
-                xiter_dels.append(deletion)
-                # # self.__net = self.remove_edges(self.__net, [x])
+                # ziter_dels.append(deletion) #? Iteración para eliminar aristas con peso 0
 
-                # if net.is_disconnected(trimmed_net):
-                #     # Disconexo => reestablecemos la arista, guardamos la MIP.
-                #     # self.__net.add_weighted_edges_from([(*x, subtrahend_emd)])
-                #     iter_part.append(deletion)
-
-                # elif minuend_emd > FLOAT_ZERO and subtrahend_emd > FLOAT_ZERO:
-                #     # Conexo & hay pérdida => restablecemos la arsita.
-                #     # ? self.remove_edges(self.__net, [x])
-                #     # self.__net.add_weighted_edges_from([(*x, subtrahend_emd)])
-                #     ...
-
-                # else:
-                #     # Conexo & no hay pérdida => guardamos la arista. A su vez guardamos estas aristas en 0 para la reconstrucción.
-                #     iter_dels.append(deletion)
-                #     struct.set_matrix(x[V_IDX], substruct.get_matrix(x[V_IDX]))
-
-                # self.plot_net(self.__net)
-
-                # self.plot_net(trimmed_net)
-
-            for y in betha:
+            for u in betha:
                 # Proceso de remuestreo sin aristas peso 0
-                ic(y)
+                ic(u)
                 minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
-                    omega, y, copy.deepcopy(struct)
+                    omega, u, copy.deepcopy(struct)
                 )
-                trimmed_net = copy.deepcopy(self.__net)
-                trimmed_net = self.remove_edges(trimmed_net, omega + [y])
+                trimmed_net = copy.deepcopy(self.__net)  #! Improve!
+                trimmed_net = self.remove_edges(trimmed_net, omega + [u])
                 deletion: Deletion = Deletion(
-                    y,
+                    u,
                     omega,
                     minuend_emd,
                     subtrahend_emd,
@@ -188,7 +170,7 @@ class Queyranne(Sia):
                 if deletion.is_disconn():
                     iter_part.append(deletion)
 
-            yiter_dels.append(deletion)
+            uiter_dels.append(deletion)
 
             if len(iter_part) > 0:
                 min_iter = min(
@@ -197,13 +179,22 @@ class Queyranne(Sia):
                 print(str(min_iter))
                 return min_iter
 
-            min_lose = min(xiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
+            min_lose = min(uiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
             print(str(min_lose))
 
             # ? omega.append(min_lose.get_edge()) arriba en betha!
             # añadirle a omega ANTES todas las que estaban en 0
             # alpha es igual a aristas - omega
             # alpha.remove(min_lose.get_edge())
+
+            omega.append(min_lose.get_edge())
+            ic(omega)
+            alpha = [edge for edge in alpha if edge not in omega]
+            # alpha = [
+            #     self.__net.edges()[i]
+            #     for i in range(len(self.__net.edges()))
+            #     if self.__net.edges()[i] not in omega
+            # ]
 
         # print(omega, alpha)
 
@@ -288,6 +279,28 @@ class Queyranne(Sia):
 
     def effect_edge_by_index(self, index):
         return self.__effect_labels[self._effect.index(index)]
+
+    # # self.__net = self.remove_edges(self.__net, [x])
+
+    # if net.is_disconnected(trimmed_net):
+    #     # Disconexo => reestablecemos la arista, guardamos la MIP.
+    #     # self.__net.add_weighted_edges_from([(*x, subtrahend_emd)])
+    #     iter_part.append(deletion)
+
+    # elif minuend_emd > FLOAT_ZERO and subtrahend_emd > FLOAT_ZERO:
+    #     # Conexo & hay pérdida => restablecemos la arsita.
+    #     # ? self.remove_edges(self.__net, [x])
+    #     # self.__net.add_weighted_edges_from([(*x, subtrahend_emd)])
+    #     ...
+
+    # else:
+    #     # Conexo & no hay pérdida => guardamos la arista. A su vez guardamos estas aristas en 0 para la reconstrucción.
+    #     iter_dels.append(deletion)
+    #     struct.set_matrix(x[V_IDX], substruct.get_matrix(x[V_IDX]))
+
+    # self.plot_net(self.__net)
+
+    # self.plot_net(trimmed_net)
 
     def plot_net(self, net: nx.Graph) -> None:
         """This function is used to plot the network."""
