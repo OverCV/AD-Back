@@ -107,20 +107,22 @@ class Queyranne(Sia):
 
         omega = []
         alpha = edges_idx[:]
-
+        k_iter = 0
         # for _ in edges_idx:
         while len(alpha) > 0:
+            print(k_iter)
             # ziter_dels: list[Deletion] = []
             uiter_dels: list[Deletion] = []
             iter_part: list[Deletion] = []
             betha: list[tuple[int, int]] = []
             for z in alpha:
-                print(z)
                 minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
                     omega, z, copy.deepcopy(struct)
                 )
+                # Peso 0 -> __net Delete & add omega -> iter_2: remove omega -> crash!
                 trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [z])
-                deletion: Deletion = Deletion(
+
+                zdeletion: Deletion = Deletion(
                     z,
                     omega,
                     minuend_emd,
@@ -129,15 +131,14 @@ class Queyranne(Sia):
                     net.is_disconnected(trimmed_net),
                     subdist,
                 )
-                ic(str(deletion))
-
+                ic(str(zdeletion))
                 if self.submodule(omega, z, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
                     struct.set_matrix(z[V_IDX], substruct.get_matrix(z[V_IDX]))
 
                     if net.is_disconnected(trimmed_net):
-                        iter_part.append(deletion)
+                        iter_part.append(zdeletion)
 
-                    self.__net = self.remove_edges(self.__net, [z])
+                    # self.__net = self.remove_edges(self.__net, [z])
 
                     print('Deleted:', z)
                     omega.append(z)
@@ -150,13 +151,12 @@ class Queyranne(Sia):
 
             for u in betha:
                 # Proceso de remuestreo sin aristas peso 0
-                ic(u)
+                # ic(u)
                 minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
                     omega, u, copy.deepcopy(struct)
                 )
-                trimmed_net = copy.deepcopy(self.__net)  #! Improve!
-                trimmed_net = self.remove_edges(trimmed_net, omega + [u])
-                deletion: Deletion = Deletion(
+                trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [u])
+                xdeletion: Deletion = Deletion(
                     u,
                     omega,
                     minuend_emd,
@@ -165,17 +165,17 @@ class Queyranne(Sia):
                     net.is_disconnected(trimmed_net),
                     subdist,
                 )
-                ic(str(deletion))
+                ic(str(xdeletion))
 
-                if deletion.is_disconn():
-                    iter_part.append(deletion)
+                if xdeletion.is_disconn():
+                    iter_part.append(xdeletion)
+                else:
+                    uiter_dels.append(xdeletion)
 
-            uiter_dels.append(deletion)
+            print('PARTS:', [str(part) for part in iter_part])
 
             if len(iter_part) > 0:
-                min_iter = min(
-                    iter_part, key=lambda x: x.get_emd() - x.get_subtrahend_emd()
-                )  # End condition
+                min_iter = min(iter_part, key=lambda x: x.get_subtrahend_emd())  # End condition
                 print(str(min_iter))
                 return min_iter
 
@@ -195,6 +195,7 @@ class Queyranne(Sia):
             #     for i in range(len(self.__net.edges()))
             #     if self.__net.edges()[i] not in omega
             # ]
+            k_iter += 1
 
         # print(omega, alpha)
 
