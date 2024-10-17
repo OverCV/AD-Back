@@ -23,7 +23,7 @@ from pyphi.labels import NodeLabels
 
 import copy
 from api.services.analyze.strats.frank_mech import FMAlgorithm
-from api.services.analyze.strats.queyranne import Queyranne
+from api.services.analyze.strats.QREdges import QREdges
 from constants.structure import BOOL_RANGE, DIST, VOID
 from utils.consts import (
     COLS_IDX,
@@ -237,7 +237,7 @@ class Compute:
         return sia_branch.get_reperoire()
 
     def use_queyranne(self) -> bool:
-        sia_queyranne: Queyranne = Queyranne(
+        sia_queyranne: QREdges = QREdges(
             self.__struct,
             self.__effect[not self.__dual],
             self.__actual[not self.__dual],

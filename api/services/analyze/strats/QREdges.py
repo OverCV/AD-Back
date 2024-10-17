@@ -1,4 +1,3 @@
-from cycler import V
 from api.models.props.structure import StructProps
 from api.services.analyze.sia import Sia
 from api.models.matrix import Matrix
@@ -40,7 +39,7 @@ from icecream import ic
 from server import conf
 
 
-class Queyranne(Sia):
+class QREdges(Sia):
     """Class queyranne is used to solve the mip problem using the edges strategy."""
 
     def __init__(
@@ -67,26 +66,13 @@ class Queyranne(Sia):
         ic(self.__effect_labels, self.__causes_labels)
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
-        # self.__net = self.strategy()
         partition: Deletion = self.strategy()
 
-        # edges = self.__net.edges(data=True)
-        # self.integrated_info = min([edge[DATA_IDX][WT_LBL] for edge in edges])
-        # self.integrated_info = partition.get_minuend_emd()
-
-        # raise NotImplementedError
-        # part: None = None
-        # mip = self.label_mip(part)
-        # ic(
-        #     self.integrated_info,
-        #     self.min_info_part,
-        #     self.sub_distrib,
-        #     self.network_id,
-        # )
-
+        self.integrated_info = partition.get_minuend_emd()
         self.network_id = DUMMY_NET_INT_ID
         self.sub_distrib = partition.get_subdist()
-        # self.min_info_part = partition.get_omega() + [partition.get_edge()]
+        self.min_info_part = partition.get_omega() + [partition.get_edge()]
+
         not_std_sln = any(
             [
                 # ! Store the network, generate the id and return it as callback in front ! #
@@ -138,11 +124,8 @@ class Queyranne(Sia):
                     if net.is_disconnected(trimmed_net):
                         iter_part.append(zdeletion)
 
-                    # self.__net = self.remove_edges(self.__net, [z])
-
-                    print('Deleted:', z)
+                    print('Delete:', z)
                     omega.append(z)
-
                 else:
                     # Añadimos las aristas con peso para revisarlas
                     betha.append(z)
@@ -172,29 +155,21 @@ class Queyranne(Sia):
                 else:
                     uiter_dels.append(xdeletion)
 
-            print('PARTS:', [str(part) for part in iter_part])
-
             if len(iter_part) > 0:
-                min_iter = min(iter_part, key=lambda x: x.get_subtrahend_emd())  # End condition
+                min_iter = min(
+                    iter_part,
+                    key=lambda x: x.get_minuend_emd(),
+                )  # End condition
                 print(str(min_iter))
                 return min_iter
 
             min_lose = min(uiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
             print(str(min_lose))
 
-            # ? omega.append(min_lose.get_edge()) arriba en betha!
-            # añadirle a omega ANTES todas las que estaban en 0
-            # alpha es igual a aristas - omega
-            # alpha.remove(min_lose.get_edge())
-
             omega.append(min_lose.get_edge())
             ic(omega)
             alpha = [edge for edge in alpha if edge not in omega]
-            # alpha = [
-            #     self.__net.edges()[i]
-            #     for i in range(len(self.__net.edges()))
-            #     if self.__net.edges()[i] not in omega
-            # ]
+
             k_iter += 1
 
         # print(omega, alpha)
@@ -251,6 +226,59 @@ class Queyranne(Sia):
         minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
 
         return minuend_emd, subtrahend_emd, w_iter_distrib, structure
+
+        # actual, effect = concept
+        # # Modificar las matrices por referencia altera la estructura
+        # mat_y = copy.deepcopy(structure).get_matrix(effect)
+
+        # # Marginalizamos sólo el tiempo (t)
+        # actual_states = self._actual[:]
+        # actual_states.remove(actual)
+
+        # mat_y.margin(actual_states)
+        # mat_y.expand(self._actual)
+
+        # # Se define las particiones primales y duales, en este escenario no se ha particionado por mover un estado futuro a su complemento, sino que toda la distribución está en una sección, tal que no requiere complementación
+        # effect_dist = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
+        # actual_dist = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
+
+        # iter_distrib = structure.create_distrib(effect_dist, actual_dist, data=True)[
+        #     StructProps.DIST_ARRAY
+        # ]
+        # subtrahend_emd = emd_pyphi(*iter_distrib, *self._target_dist)
+        # print(concept, iter_distrib)
+        # # ? for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
+
+        # self.margin_wu(omega, structure)
+
+        # effect_dist = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
+        # actual_dist = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
+
+        # w_iter_distrib: NDArray[np.float64] = structure.create_distrib(
+        #     effect_dist, actual_dist, data=True
+        # )[StructProps.DIST_ARRAY]
+        # minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
+
+        # print(concept, w_iter_distrib)
+
+        # return minuend_emd, subtrahend_emd, iter_distrib, structure
+
+    def margin_wu(self, omega, structure):
+        # concept_keys: dict[str, list[int]] = {k: [t for t, _ in omega] for _, k in omega}
+        # for w_effect, w_actual_states in concept_keys.items():
+        #     mat_x = structure.get_matrix(w_effect)
+
+        #     mat_x.margin(w_actual_states)
+        #     mat_x.expand(self._actual)
+
+        for w_actual, w_effect in omega:
+            mat_x = structure.get_matrix(w_effect)
+
+            w_actual_states = self._actual[:]
+            w_actual_states.remove(w_actual)
+
+            mat_x.margin(w_actual_states)
+            mat_x.expand(self._actual)
 
     def remove_edges(
         self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
