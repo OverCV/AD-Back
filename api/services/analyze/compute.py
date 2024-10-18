@@ -236,16 +236,16 @@ class Compute:
         sia_branch.analyze()
         return sia_branch.get_reperoire()
 
-    def use_queyranne(self) -> bool:
-        sia_queyranne: QREdges = QREdges(
+    def use_qredges(self) -> bool:
+        sia_qredges: QREdges = QREdges(
             self.__struct,
             self.__effect[not self.__dual],
             self.__actual[not self.__dual],
             self.__distribution,
             self.__dual,
         )
-        sia_queyranne.analyze()
-        return sia_queyranne.get_reperoire()
+        sia_qredges.analyze()
+        return sia_qredges.get_reperoire()
 
     def use_genetic_algorithm(self, ctrl_params: list[dict[str, int | float]]) -> bool:
         # ! Made for S2P

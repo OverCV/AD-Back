@@ -29,6 +29,7 @@ class Sia(ABC):
         # ! Eliminar la id de red [#12] ! #
         self.network_id: nx.Graph | nx.DiGraph = None
 
+    @abstractmethod
     def analyze(self) -> None:
         # Analyze method returns a boolean that indicates if there's NOT a standard parameter solution
         # Obliga a que se deben de asignar los resultados dentro del método analyze, caso contrario se activa la excepción puesto se detecta hay un parámetro sin calcular (faltante).
@@ -50,9 +51,8 @@ class Sia(ABC):
         }
         return concept
 
-    @abstractmethod
-    def analyze(self) -> SiaType:
-        pass
+    # def analyze(self) -> SiaType:
+    #     pass
 
     # def label_mip(self, partition: tuple[str, str]) -> tuple[tuple[tuple[str], tuple[str]]]:
     #     """

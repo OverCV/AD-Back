@@ -21,6 +21,7 @@ from api.routes.analyze import (
     force_strategy,
     genetic_strategy,
     pyphi_strategy,
+    qredges_strategy,
 )
 from api.schemas.sample import SampleCollection, SampleRequest
 from api.schemas.structure import StructureResponse
@@ -100,6 +101,9 @@ async def all_strats(
 
     LOSS_ROW_GENETIC = f'{SMALL_PHI} Genético'
     TIME_ROW_GENETIC = '(ms) Genético'
+
+    LOSS_ROW_QREDGES = f'{SMALL_PHI} QREdges'
+    TIME_ROW_QREDGES = '(ms) QREdges'
 
     loss_rows = [LOSS_ROW_PYPHI, LOSS_ROW_BFORCE]
     time_rows = [TIME_ROW_PYPHI, TIME_ROW_BFORCE]
@@ -181,38 +185,16 @@ async def all_strats(
         return JSONResponse(content={DATA: jsonable_encoder({f'error {e}'})})
 
     try:
-        force_response = await force_strategy(**common_params)
-        force_results = force_response.body.decode(UTF8_FORMAT)
-        force_data = json.loads(force_results)[DATA]
+        qredges_response = await qredges_strategy(
+            **common_params,
+        )
+        qredges_results = qredges_response.body.decode(UTF8_FORMAT)
+        qredges_data = json.loads(qredges_results)[DATA]
 
-        loss_report_df.at[LOSS_ROW_BFORCE, col_str] = force_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_BFORCE, col_str] = conf.execution_times[
-            'force_strategy'  #! Obtenible del diccionario #!
-        ]
+        loss_report_df.at[LOSS_ROW_QREDGES, col_str] = qredges_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_QREDGES, col_str] = conf.execution_times['qredges_strategy']
     except Exception as e:
-        print('\nForce failed', e, '\n')
-
-    try:
-        branch_response = await branch_strategy(**common_params)
-        branch_results = branch_response.body.decode(UTF8_FORMAT)
-        branch_data = json.loads(branch_results)[DATA]
-
-        # ic(branch_data)
-        loss_report_df.at[LOSS_ROW_BRANCH, col_str] = branch_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times['branch_strategy']
-    except Exception as e:
-        print('\nBranch failed', e, '\n')
-
-    try:
-        frankm_response = await fm_strategy(**common_params)
-        frankm_results = frankm_response.body.decode(UTF8_FORMAT)
-        frankm_data = json.loads(frankm_results)[DATA]
-
-        # ic(frankm_data)
-        loss_report_df.at[LOSS_ROW_FRANKM, col_str] = frankm_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_FRANKM, col_str] = conf.execution_times['fm_strategy']
-    except Exception as e:
-        print('\nFrank-Mech failed', e, '\n')
+        print('\nQREdges failed', e, '\n')
 
     try:
         # ! Mejorar la forma de pasar parámetros, luego volver función ! #
@@ -228,6 +210,40 @@ async def all_strats(
         time_report_df.at[TIME_ROW_GENETIC, col_str] = conf.execution_times['genetic_strategy']
     except Exception as e:
         print('\nGenetic failed', e, '\n')
+
+    try:
+        frankm_response = await fm_strategy(**common_params)
+        frankm_results = frankm_response.body.decode(UTF8_FORMAT)
+        frankm_data = json.loads(frankm_results)[DATA]
+
+        # ic(frankm_data)
+        loss_report_df.at[LOSS_ROW_FRANKM, col_str] = frankm_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_FRANKM, col_str] = conf.execution_times['fm_strategy']
+    except Exception as e:
+        print('\nFrank-Mech failed', e, '\n')
+
+    try:
+        branch_response = await branch_strategy(**common_params)
+        branch_results = branch_response.body.decode(UTF8_FORMAT)
+        branch_data = json.loads(branch_results)[DATA]
+
+        # ic(branch_data)
+        loss_report_df.at[LOSS_ROW_BRANCH, col_str] = branch_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times['branch_strategy']
+    except Exception as e:
+        print('\nBranch failed', e, '\n')
+
+    try:
+        force_response = await force_strategy(**common_params)
+        force_results = force_response.body.decode(UTF8_FORMAT)
+        force_data = json.loads(force_results)[DATA]
+
+        loss_report_df.at[LOSS_ROW_BFORCE, col_str] = force_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_BFORCE, col_str] = conf.execution_times[
+            'force_strategy'  #! Obtenible del diccionario #!
+        ]
+    except Exception as e:
+        print('\nForce failed', e, '\n')
 
     separator = pd.DataFrame(
         [{col: '═━━━━═' for col in loss_report_df.columns}],

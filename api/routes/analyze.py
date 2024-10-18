@@ -180,12 +180,12 @@ async def branch_strategy(
 
 @temporizer
 @router.get(
-    '/sia-queyranne/',
+    '/sia-qredges/',
     response_description='Hallar la partición con menor pérdida de información, acercamiento mediante la función de submodularidad de Queyranne.',
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
-async def queyranne_strategy(
+async def qredges_strategy(
     id: Optional[int] = None,
     title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
     istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
@@ -207,7 +207,7 @@ async def queyranne_strategy(
             status_code=500,
             detail='One or more of the SIA properties are not calculated',
         )
-    results = computing.use_queyranne()
+    results = computing.use_qredges()
     # reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
