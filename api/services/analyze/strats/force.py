@@ -1,21 +1,23 @@
 import copy
 import itertools
 
+from fastapi import HTTPException
+
+from api.models.props.structure import StructProps
 from api.models.structure import Structure
 from api.services.analyze.sia import Sia
 
 import numpy as np
 from numpy.typing import NDArray
 
-from constants.structure import BOOL_RANGE, VOID
+from constants.structure import BOOL_RANGE
 from utils.consts import (
-    INT_ZERO,
-    CAUSES,
+    ACTUAL,
     EFFECT,
-    INFTY,
+    INFTY_POS,
     STR_ONE,
 )
-from utils.funcs import dec2bin, emd, get_labels
+from utils.funcs import dec2bin, emd_pyphi, label_mip
 import concurrent.futures
 
 from server import conf
@@ -30,92 +32,97 @@ class BruteForce(Sia):
         self,
         structure: Structure,
         effect: list[int],
-        causes: list[int],
+        actual: list[int],
         distribution: NDArray[np.float64],
         dual: bool,
     ) -> None:
-        super().__init__(structure, effect, causes, distribution, dual)
+        super().__init__(structure, effect, actual, distribution, dual)
 
     def analyze(self) -> bool:
-        # Declare
-        # ic(self._target_dist)
-        ic(self._effect, self._causes, self._dual)
-
-        # raise HTTPException(status_code=500, detail='Not implemented')
-
-        bipartitions = self.bipartitionate(len(self._effect), len(self._causes))
-        # No usamos la distribución original, es un caso absurdo.
-        origin: tuple[str, str] = bipartitions.pop(0)
-
-        # ic(bipartitions)
-        # Begin
+        # Creamos todas las biparticiones posibles
+        bipartitions = self.bipartitionate(len(self._effect), len(self._actual))
+        # No usamos la primera distribución, es un caso absurdo.
+        _: tuple[str, str] = bipartitions.pop(0)
         part = (
             self.calculate_dists_threaded(bipartitions)
             if conf.threaded
             else self.calculate_dists(bipartitions)
         )
-        mip = self.label_mip(part)
+        # ic(self._target_dist)
+        print(f'{part=}')
+        concept = (self._effect, self._actual)  
+        mip = label_mip(part, concept)
 
         self.network_id = -1
         self.min_info_part = mip
 
         not_std_sln = any(
             [
-                self.integrated_info == INFTY,
+                # ! Store the network, generate the id and return it as callback in front ! #
+                self.integrated_info == INFTY_POS,
                 self.min_info_part is None,
                 self.sub_distrib is None,
                 self.network_id is None,
             ]
         )
         return not_std_sln
-        # return {
-        #     # ! Store the network, get the id and return it to invoque in front ! #
-        #     NET_ID: -1,
-        #     SMALL_PHI: self.integrated_info,
-        #     MIP: mip,
-        #     SUB_DISTRIBUTION: self.sub_distrib.tolist(),
-        # }
 
-    def label_mip(self, partition: tuple[str, str]) -> tuple[tuple[tuple[str], tuple[str]]]:
-        # Incrementamos uno puesto son índices de arreglo
-        max_len = max(*self._effect, *self._causes) + 1
-        labels = get_labels(max_len)
-        concepts = [self._effect, self._causes]
-        mip = [[[], []], [[], []]]
+    # Non-Threaded version:
+    def calculate_dists(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
+        self.integrated_info = INFTY_POS
+        mip: tuple[str, str] = None
+        for partition in bipartitions:
+            # ! Podría paralelizarse [#17] ! #
+            # En esta primera parte descubrimos si
+            # ic(partition)
+            sub_struct: Structure = copy.deepcopy(self._structure)
+            str_effect: str = partition[EFFECT]
+            str_causes: str = partition[ACTUAL]
 
-        for k, (part, con) in enumerate(zip(partition, concepts)):
-            ic(k, part, con)
-            for b, lbl_idx in zip(part, con):
-                mip[int(b)][k].append(labels[lbl_idx])
-
-        for con in mip[EFFECT]:
-            if len(con) == INT_ZERO:
-                con.append(VOID)
-        for con in mip[CAUSES]:
-            if len(con) == INT_ZERO:
-                con.append(VOID)
-
-        return tuple(mip)
+            effect = {bin: [] for bin in BOOL_RANGE}
+            for j, e in zip(self._effect, str_effect):
+                effect[e == STR_ONE].append(j)
+            actual = {bin: [] for bin in BOOL_RANGE}
+            for i, c in zip(self._actual, str_causes):
+                actual[c == STR_ONE].append(i)
+            indexed_distrib = sub_struct.create_distrib(effect, actual, data=True)
+            iter_distrib = indexed_distrib[StructProps.DIST_ARRAY]
+            # Comparar con la distribución original (objetivo)
+            # ic(iter_distrib, self._target_dist)
+            emd_dist = emd_pyphi(*iter_distrib, *self._target_dist)
+            if emd_dist < self.integrated_info:
+                self.integrated_info = emd_dist
+                self.sub_distrib = iter_distrib
+                mip = partition
+        return mip
 
     def calculate_dists_threaded(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
-        self.integrated_info = INFTY
+        self.integrated_info = INFTY_POS
         mip = None
 
         def process_partition(partition):
             sub_struct = copy.deepcopy(self._structure)
             str_effect = partition[EFFECT]
-            str_causes = partition[CAUSES]
-
+            str_causes = partition[ACTUAL]
             effect = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self._effect, str_effect):
                 effect[e == STR_ONE].append(j)
-            causes = {bin: [] for bin in BOOL_RANGE}
-            for i, c in zip(self._causes, str_causes):
-                causes[c == STR_ONE].append(i)
+            actual = {bin: [] for bin in BOOL_RANGE}
+            for i, c in zip(self._actual, str_causes):
+                actual[c == STR_ONE].append(i)
 
-            iter_distrib = sub_struct.create_concept(effect, causes, data=True)
-            emd_dist = emd(*iter_distrib, *self._target_dist)
-            return emd_dist, iter_distrib, (str_effect, str_causes)
+            # Importante tener en cuenta realizar un producto de distribuciones implica manejar los índices por lo que las compmaraciones entre arreglos requieren seleccionar la serie.
+            indexed_distrib: tuple[tuple[int, ...], NDArray[np.float64]] = (
+                sub_struct.create_distrib(effect, actual, data=True)
+            )
+            iter_dist = indexed_distrib[StructProps.DIST_ARRAY]
+            # ic(*iter_dist, self._target_dist)
+
+            # ic(iter_dist, self._target_dist)
+            # print(iter_dist)
+
+            emd_dist = emd_pyphi(*iter_dist, *self._target_dist)
+            return emd_dist, iter_dist, (str_effect, str_causes)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
@@ -131,31 +138,6 @@ class BruteForce(Sia):
                     self.integrated_info = emd_dist
                     self.sub_distrib = iter_distrib
                     mip = current_mip
-        return mip
-
-    # Non-Threaded version:
-    def calculate_dists(self, bipartitions: tuple[tuple[str, str]]) -> tuple[str, str]:
-        self.integrated_info = INFTY
-        mip: tuple[str, str] = None
-
-        for partition in bipartitions:
-            sub_struct: Structure = copy.deepcopy(self._structure)
-            str_effect: str = partition[EFFECT]
-            str_causes: str = partition[CAUSES]
-
-            effect = {bin: [] for bin in BOOL_RANGE}
-            for j, e in zip(self._effect, str_effect):
-                effect[e == STR_ONE].append(j)
-            causes = {bin: [] for bin in BOOL_RANGE}
-            for i, c in zip(self._causes, str_causes):
-                causes[c == STR_ONE].append(i)
-            iter_distrib = sub_struct.create_concept(effect, causes, data=True)
-            # Comparar con la distribución original (objetivo)
-            emd_dist = emd(*iter_distrib, *self._target_dist)
-            if emd_dist < self.integrated_info:
-                self.integrated_info = emd_dist
-                self.sub_distrib = iter_distrib
-                mip = partition
         return mip
 
     def bipartitionate(self, m: int, n: int) -> list[tuple[str, str]]:

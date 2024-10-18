@@ -1,34 +1,61 @@
-from typing import Callable, OrderedDict
+from typing import OrderedDict
 import numpy as np
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from numpy.typing import NDArray
+import pyphi.labels
+import pyphi.partition
+import pyphi.tpm
+
 from api.models.props.sia import SiaType
-from api.models.props.structure import StructProps
+
 from api.models.structure import Structure
 from api.schemas.structure import StructureResponse
 
-from numpy.typing import NDArray
 
+from api.services.analyze.strats.branch import Branch
 from api.services.analyze.strats.genetic import Genetic
 from api.services.analyze.strats.force import BruteForce
-from constants.structure import BOOL_RANGE
-from utils.consts import COLS_IDX, ROWS_IDX, STR_ONE, STR_ZERO
 
+import pyphi
+import pyphi.compute
+from pyphi.models.cuts import Bipartition, Part
+from pyphi.labels import NodeLabels
+
+
+import copy
+from api.services.analyze.strats.frank_mech import FMAlgorithm
+from api.services.analyze.strats.QREdges import QREdges
+from constants.structure import BOOL_RANGE, DIST, VOID
+from utils.consts import (
+    COLS_IDX,
+    MIP,
+    NET_ID,
+    SMALL_PHI,
+    STR_ONE,
+    SUB_DIST,
+)
 
 from icecream import ic
-from copy import copy
-from server import conf
+
+from utils.funcs import get_labels, lil_endian_int
+
+
+# pyphi.config.load_file('pyphi_config_3.0.yml')
+pyphi.config.PARALLEL_CONCEPT_EVALUATION = False
+pyphi.config.PARALLEL_CUT_EVALUATION = False
+pyphi.config.PARALLEL_COMPLEX_EVALUATION = False
+
+
+"""Class Compute is used to compute all different System Irreducibility analysis."""
 
 
 class Compute:
-    """Class Compute is used to compute all different System Irreducibility analysis."""
-
     def __init__(
         self,
         struct: StructureResponse,
         istate: str,
-        effect: str,
-        causes: str,
+        str_effect: str,
+        str_actual: str,
+        str_bgcond: str,
         subtensor: NDArray[np.float64],
         dual: bool = False,
     ) -> None:
@@ -38,78 +65,199 @@ class Compute:
             istate=istate,
             tensor=subtensor,
         )
-        self.__effect: str = effect
-        self.__causes: str = causes
+        self.__str_effect: str = str_effect
+        self.__str_actual: str = str_actual
+        self.__str_bgcond: str = str_bgcond
         self.__dual: bool = dual
 
-    # def use_pyphi(self) -> bool:
-    #     pass
+        self.__struct: Structure = None
+        self.__effect: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
+        self.__actual: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
+        self.__bgcond: dict[bool, list[int]] = {bin: [] for bin in BOOL_RANGE}
+        self.__distribution: NDArray[np.float64] = None
+
+    def init_concept(self) -> bool:
+        """
+        Desde este nivel se deifinen las condiciones de bg, las cuales permiten conocer los elementos/ínidces usables para los diferentes subsistemas a generar.
+        """
+
+        bgcond_elems = [
+            idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
+        ]
+        for i, e in enumerate(self.__str_effect):
+            if i in bgcond_elems:
+                self.__effect[e == STR_ONE].append(i)
+        for j, c in enumerate(self.__str_actual):
+            if j in bgcond_elems:
+                self.__actual[c == STR_ONE].append(j)
+        for i, bg in enumerate(self.__str_bgcond):
+            self.__bgcond[bg == STR_ONE].append(i)
+
+        # Preservamos la superestructura para trabajar con una nueva
+        self.__struct: Structure = copy.deepcopy(self.__sup_struct)
+        self.__struct.set_bg_cond(self.__bgcond)
+        self.__struct.create_distrib(self.__effect, self.__actual)
+        self.__distribution = self.__struct.get_distrib(self.__dual)
+
+        return self.__distribution is not None
+
+    def use_pyphi(self) -> SiaType:
+        # Selección de nodos mediante pyphi
+        bg_set = set(
+            idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
+        )
+
+        tensor: OrderedDict = self.__sup_struct.get_tensor()
+        tpms = np.array([mat.get_arr()[:, COLS_IDX] for mat in tensor.values()])
+        tpm_state_node: NDArray[np.float64] = np.column_stack(tpms)
+
+        num_nodes: int = self.__sup_struct.get_tensor_len()
+        istate = tuple(int(i) for i in self.__sup_struct.get_istate())
+
+        str_labels = get_labels(num_nodes)
+        idx_labels = tuple(range(num_nodes))
+        labels = NodeLabels(str_labels, idx_labels)
+
+        network = pyphi.Network(tpm=tpm_state_node, node_labels=labels)
+
+        # Aplicar las condiciones de background
+        # bg_istate = tuple(
+        #     istate[i]
+        #     for i, bg in enumerate(self.__str_bgcond)
+        #     if (bg == STR_ONE) == (not self.__dual)
+        # )
+
+        bg_labels: tuple[str] = tuple(
+            labels[i]
+            for i, bg in enumerate(self.__str_bgcond)
+            if (bg == STR_ONE) == (not self.__dual)
+        )
+
+        # ic(bg_istate, bg_labels)
+
+        sub_system = pyphi.Subsystem(
+            network=network,
+            state=istate,
+            nodes=bg_labels,
+        )
+
+        mech_idx = tuple(
+            i
+            for i, x in enumerate(self.__str_actual)
+            if all([(x == STR_ONE) == (not self.__dual), i in bg_set])
+        )
+
+        purv_idx = tuple(
+            i
+            for i, x in enumerate(self.__str_effect)
+            if all([(x == STR_ONE) == (not self.__dual), i in bg_set])
+        )
+
+        ic(mech_idx, purv_idx)
+
+        er = sub_system.effect_mip(mech_idx, purv_idx)
+        ic(er)
+
+        # ? Reconstrucción de resultados
+
+        integrated_info: float = er.phi
+
+        repertoire = er.repertoire
+        repertoire = repertoire.squeeze()
+
+        part_reper = er.partitioned_repertoire
+        part_reper = part_reper.squeeze()
+
+        sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
+
+        distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
+        part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
+
+        min_info_part: Bipartition = er.partition
+
+        dual: Part = min_info_part.parts[not self.__dual]
+        prim: Part = min_info_part.parts[self.__dual]
+        dual_mech, dual_purv = dual.mechanism, dual.purview
+        prim_mech, prim_purv = prim.mechanism, prim.purview
+
+        # ic(bg_labels)
+        # ic(dual_purv, dual_mech, prim_purv, prim_mech)
+
+        min_info_part = [
+            [
+                [labels[i] for i in prim_mech] if prim_mech else [VOID],
+                [labels[i] for i in prim_purv] if prim_purv else [VOID],
+            ],
+            [
+                [labels[i] for i in dual_mech] if dual_mech else [VOID],
+                [labels[i] for i in dual_purv] if dual_purv else [VOID],
+            ],
+        ]
+
+        return {
+            SMALL_PHI: integrated_info,
+            MIP: min_info_part,
+            DIST: distribution,
+            SUB_DIST: part_distrib,
+            # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
+            # NET_ID: network_id if conf.store_network else net_id,
+        }
 
     def use_brute_force(self) -> SiaType:
-        effect = {False: [], True: []}
-        causes = {False: [], True: []}
-        for i, e in enumerate(self.__effect):
-            effect[e == STR_ONE].append(i)
-        for j, c in enumerate(self.__causes):
-            causes[c == STR_ONE].append(j)
-        # Preservamos la superestructura para trabajar con una nueva
-        struct: Structure = copy(self.__sup_struct)
-        struct.create_concept(effect, causes)
-        distrib = struct.get_distribution(self.__dual)
-        # ic(distrib)
-
-        # raise HTTPException(status_code=400, detail='TESTING STOP.')
-
         sia_force: BruteForce = BruteForce(
-            struct,
-            effect[not self.__dual],
-            causes[not self.__dual],
-            distrib,
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
             self.__dual,
         )
-        sia_force.calculate_concept()
+        sia_force.analyze()
         return sia_force.get_reperoire()
 
-    def use_genetic_algorithm(self, db: Session) -> bool:
+    def use_min_frank_mech(self) -> bool:
+        sia_mst: FMAlgorithm = FMAlgorithm(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_mst.analyze()
+        return sia_mst.get_reperoire()
+
+    def use_branch_and_bound(self) -> bool:
+        sia_branch: Branch = Branch(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_branch.analyze()
+        return sia_branch.get_reperoire()
+
+    def use_queyranne(self) -> bool:
+        sia_queyranne: QREdges = QREdges(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_queyranne.analyze()
+        return sia_queyranne.get_reperoire()
+
+    def use_genetic_algorithm(self, ctrl_params: list[dict[str, int | float]]) -> bool:
         # ! Made for S2P
-        # Definimos los concepto causa y efecto
-        effect = {False: [], True: []}
-        causes = {False: [], True: []}
-        for i, e in enumerate(self.__effect):
-            effect[e == STR_ONE].append(i)
-        for j, c in enumerate(self.__causes):
-            causes[c == STR_ONE].append(j)
-        # ic(effect, causes)
-        # New strcuture with original tensor
-        struct: Structure = copy(self.__sup_struct)
-        # raise HTTPException(status_code=400, detail='TESTING STOP.')
-        struct.create_concept(effect, causes)
-        distrib = struct.get_distribution(self.__dual)
-        # From this superior level we have control of the EC structure.
-        # Obtenemos la distribución que indique el usuario
-        ic(effect, causes)
-        sub_tensor: OrderedDict = OrderedDict(
-            # Si estamos con le primal o dual, tomamos dichos futuros como, dichas matrices del tensor original
-            (k, struct.get_tensor()[k])
-            for k in effect[not self.__dual]
-        )
-        # ic(sub_tensor)
-        # La subestructura no tiene efecto ni causa, esto puesto aún no está particionada
-        sub_struct: Structure = Structure(
-            db_struct={
-                StructProps.TITLE: f'Sub-Struct {struct.get_title()}',
-                # StructProps.SIZE: sum(len(effect[b]) for b in BOOL_RANGE),
-            },
-            istate=struct.get_istate(),
-            tensor=sub_tensor,
-        )
         sia_genetic: Genetic = Genetic(
-            sub_struct, effect[not self.__dual], causes[not self.__dual], distrib, self.__dual
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
+            self.__dual,
+            ctrl_params,
         )
-
-        # [ic(k, m.as_dataframe()) for k, m in struct.get_tensor().items()]
-
-        sia_genetic.calculate_concept()
+        sia_genetic.analyze()
         return sia_genetic.get_reperoire()
         # ! Dada una cadena de binarios y una lista de elementos, las combinaciones binarias de elementos determinan si el elemento se va al True o al False de los canales del efecto o causa que se maneje
 
@@ -119,9 +267,6 @@ class Compute:
         #         detail=f'Invalid initial state: State {
         #             system.istate} needs to be size {len(subtensor)}.'
         #     )
-
-    def use_branch_and_bound(self) -> bool:
-        pass
 
     def use_dynamic_programming(self) -> bool:
         pass

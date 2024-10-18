@@ -12,7 +12,7 @@ from api.models.props import spectrum
 from api.schemas.network.vertex import Vertex
 from constants.structure import VOID
 from utils.color import get_rnd_colors
-from utils.consts import BASE_2, CAUSES, COLS_IDX, EFFECT, FLOAT_ONE, FLOAT_ZERO, INT_ONE, ROWS_IDX
+from utils.consts import BASE_2, ACTUAL, COLS_IDX, EFFECT, FLOAT_ONE, FLOAT_ZERO, INT_ONE, ROWS_IDX
 
 from matplotlib import pyplot as plt
 from icecream import ic
@@ -60,16 +60,16 @@ def reconstruct_network(
         [] if mip[ROWS_IDX][EFFECT] == [VOID] else [x + 'f' for x in mip[ROWS_IDX][EFFECT]]
     )
     prim_causes = (
-        [] if mip[ROWS_IDX][CAUSES] == [VOID] else [x + 'c' for x in mip[ROWS_IDX][CAUSES]]
+        [] if mip[ROWS_IDX][ACTUAL] == [VOID] else [x + 'c' for x in mip[ROWS_IDX][ACTUAL]]
     )
     dual_effect = (
         [] if mip[COLS_IDX][EFFECT] == [VOID] else [x + 'f' for x in mip[COLS_IDX][EFFECT]]
     )
     dual_causes = (
-        [] if mip[COLS_IDX][CAUSES] == [VOID] else [x + 'c' for x in mip[COLS_IDX][CAUSES]]
+        [] if mip[COLS_IDX][ACTUAL] == [VOID] else [x + 'c' for x in mip[COLS_IDX][ACTUAL]]
     )
 
-    ic(mip)
+    # ic(mip)
     # ic| mip: ([['A', 'B', 'D'], ['∅']], [['∅'], ['B', 'D', 'E']])
 
     # Creación de los nodos
@@ -77,8 +77,9 @@ def reconstruct_network(
         [prim_effect, prim_causes], [dual_effect, dual_causes]
     )
 
-    ic(vertices)
+    # ic(vertices)
 
+    return
     raise HTTPException(status_code=500, detail='STOP NOW')
 
     # arcs: list[Arc] = reconstruct_edges(mip)
@@ -208,8 +209,8 @@ def reconstruct_nodes(
     dual_y_pos: float = FLOAT_ZERO
 
     # Iteradores para las posiciones
-    iter_prim = enumerate(prim[EFFECT] + prim[CAUSES])
-    iter_dual = enumerate(dual[EFFECT] + dual[CAUSES])
+    iter_prim = enumerate(prim[EFFECT] + prim[ACTUAL])
+    iter_dual = enumerate(dual[EFFECT] + dual[ACTUAL])
 
     nodes = []
 
@@ -374,14 +375,14 @@ def reconstruct_nodes(
     #     # Flatten the list
     #     nodes = [node for sublist in nodes for node in sublist]
 
-    vertices = []
-    for de, dc in zip(*dual):
-        ic(de, dc)
-    for pe, pc in zip(*prim):
-        ic(pe, pc)
+    # vertices = []
+    # for de, dc in zip(*dual):
+    #     ic(de, dc)
+    # for pe, pc in zip(*prim):
+    #     ic(pe, pc)
 
-        # nodes.append(Vertex(id=effect, data={nk.VertexDataProps.LBL: effect}))
-        # nodes.append(Vertex(id=cause, data={nk.VertexDataProps.LBL: cause}))
+    # nodes.append(Vertex(id=effect, data={nk.VertexDataProps.LBL: effect}))
+    # nodes.append(Vertex(id=cause, data={nk.VertexDataProps.LBL: cause}))
     # return nodes
 
 

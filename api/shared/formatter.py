@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 from typing import Callable
 from numpy.typing import NDArray
 import numpy as np
@@ -48,8 +49,17 @@ class Format:
             arr = np.array(lst, dtype=np.float64)
         elif self.__array_file.filename.endswith(FileExt.CSV.value):
             csv = io.BytesIO(bytes_chunk)
-            df = pd.read_csv(csv)
-            arr = df.to_numpy(dtype=np.float64)
+            df = pd.read_csv(csv, header=None)
+
+            # Procesar cada fila para convertir las cadenas en listas de flotantes
+            processed_list = []
+            for row in df[0]:
+                float_strings = re.findall(r'[-+]?\d*\.\d+|\d+', row)
+                float_values = list(map(float, float_strings))
+                processed_list.append(float_values)
+
+            # Lista procesada en un array de NumPy
+            arr = np.array(processed_list, dtype=np.float64)
         elif any(
             self.__array_file.filename.endswith(FileExt.TXT.value),
             self.__array_file.filename.endswith(FileExt.JSON.value),
@@ -121,23 +131,3 @@ class Format:
         with np.load(buffer) as data:
             tensor = data[StructProps.TENSOR]
         return tensor
-
-    # def serialize_tensor(self):
-    #     """ Serializa y codifica en base64 un tensor NumPy. """
-    #     subtensor = np.array(self.__matrices)
-    #     if not isinstance(subtensor, NDArray[np.float64]):
-    #         raise HTTPException(
-    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #             detail='Tensor is not defined.'
-    #         )
-    #     serialized = np.savez_compressed(
-    #         base64.b64encode(subtensor)
-    #     )
-    # return base64.b64encode(serialized)
-
-    # def deserialize_tensor(self, encoded_tensor):
-    #     """ Deserializa un tensor codificado en base64 a un arreglo NumPy. """
-    #     decoded = base64.b64decode(encoded_tensor)
-    #     buffer = io.BytesIO(decoded)
-    #     tensor = np.load(buffer, allow_pickle=True)
-    #     return tensor

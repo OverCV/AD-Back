@@ -3,9 +3,12 @@ class Server:
 
     def __init__(self) -> None:
         self.little_endian: bool = True
-        self.threaded: bool = True
+        self.metric_distance: str = 'hamming'
+        self.threaded: bool = False
+        self.directed: bool = True
         self.locale_nosql: bool = False
         self.store_nets: bool = False
+        self.execution_times: dict[str, float] = dict()
 
     def use_le(self) -> None:
         self.little_endian = True

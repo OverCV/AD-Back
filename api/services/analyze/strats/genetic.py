@@ -1,16 +1,18 @@
-from fastapi import HTTPException
-import networkx as nx
+from fastapi import params
 import numpy as np
-from api.models.props.sia import SiaType
-from api.models.structure import Structure
-from api.services.analyze.sia import Sia
-from constants.structure import BOOL_RANGE
-from utils.funcs import emd
-
 from numpy.typing import NDArray
 
-from utils.consts import SUB_DIST, NET_ID, MIP, SMALL_PHI, STR_ONE
+
+from api.models.genetic.environ import Environ
+from api.models.props.structure import StructProps
+from api.models.structure import Structure
+from api.schemas.genetic.control import ControlSchema
+from api.services.analyze.sia import Sia
+
 from icecream import ic
+from constants.dummy import DUMMY_MIN_INFO_PARTITION, DUMMY_NET_INT_ID, DUMMY_SUBDIST
+from utils.consts import INFTY_POS, ROWS_IDX, STR_ONE, STR_ZERO
+from utils.funcs import label_mip
 
 
 class Genetic(Sia):
@@ -20,58 +22,77 @@ class Genetic(Sia):
         self,
         structure: Structure,
         effect: list[int],
-        causes: list[int],
-        distribution: NDArray[np.float64],
+        actual: list[int],
+        distrib: NDArray[np.float64],
         dual: bool,
+        ctrl_params: list[list[dict[str, int | float]]],
     ) -> None:
-        super().__init__(structure, effect, causes, distribution, dual)
+        super().__init__(structure, effect, actual, distrib, dual)
         # There's an environment for each control parameter
-        self.control_params: list[dict] = []
-        self.environments: list = []
+        self.__control_params: list[ControlSchema] = ctrl_params
+        #! Use all envs required by ctrl params
+        self.__environments: list = []
 
-    def analyze(self) -> dict:
-        # ! cout('Do some logic to obtain the parameters')
+    def analyze(self) -> bool:
+        # Definimos los parámetros de control para cada entorno del algoritmo genético, tal vez pueda paralelizarse #
+        ic(self.__control_params)
 
-        net_id = lambda x: x + 1
+        # ! Start time measurement ! #
+        # ! Finish time measurement ! #
 
-        str_effect = '101'
-        str_causes = '111'
 
-        effect = {b: [] for b in BOOL_RANGE}
-        for i, e in zip(self._effect, str_effect):
-            effect[e == STR_ONE].append(i)
+        # best_of_all
+        for param in self.__control_params:
+            #! rep.report('Creating environment')
+            env: Environ = Environ(
+                param,
+                self._structure,
+                self._target_dist,
+                (self._effect, self._actual),
+                self._dual,
+            )
+            best = env.evolve()
 
-        causes = {b: [] for b in BOOL_RANGE}
-        for j, c in zip(self._causes, str_causes):
-            causes[c == STR_ONE].append(j)
+        # part=('010', '000')
+        # best: Individual: [ True False  True  True  True  True], 0.25
+        m: int = len(self._effect)
+        # ind_effect = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][:m]])
+        # ind_actual = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][m+1:]])
+        print()
+        ind_effect = [STR_ONE if x else STR_ZERO for x in best.get_chr()[:m]]
+        ind_actual = [STR_ONE if x else STR_ZERO for x in best.get_chr()[m:]]
+        concept = (self._effect, self._actual)
+        mip = label_mip((''.join(ind_effect), ''.join(ind_actual)), concept)
+        ic(best)
 
-        ic(effect, causes)
+        # self.__environments.append(
+        #     # Environment
+        # )
+        #! rep.report(f'Environment {i} created')
 
-        # Calculate distribution... by algorithm!
-        iter_distrib = self._structure.create_concept(effect, causes, data=True)  #! TESTING !#
-        # best_dist = self._structure.get_distribution(self._dual).tolist()
+        # ! Obtain the best solution from the registers ! #
 
-        mip = ((('?',), ('¿',)), (('¿',), ('?',)))
+        # Post obtain solution
 
-        ic(iter_distrib.flatten(), self._target_dist.flatten())
+        #! mip = self.label_mip()
+
+        # ic(iter_distrib.flatten(), self._target_dist.flatten())
         # 000 100 010 110 001 101 011 111
-        emd_dist = emd(*iter_distrib, *self._target_dist)
+        # emd_dist = emd(*iter_distrib, *self._target_dist)
 
-        ic(emd_dist)
+        self.integrated_info = best.get_fitness()
+        self.min_info_part = mip
+        self.sub_distrib = best.get_dist()[StructProps.DIST_ARRAY]
+        self.network_id = DUMMY_NET_INT_ID
 
-        return {
-            # ! Store the network, get the id and return it to invoque in front ! #
-            NET_ID: net_id(1),
-            SMALL_PHI: emd_dist,
-            MIP: mip,
-            SUB_DIST: iter_distrib.tolist(),
-        }
-
-    def get_reperoire(self) -> SiaType:
-        concept: SiaType = {
-            NET_ID: self.network_id,
-            SMALL_PHI: self.integrated_info,
-            MIP: self.min_info_part,
-            SUB_DIST: self.sub_distrib,
-        }
-        return concept
+        # ic(emd_dist)
+        not_std_sln = any(
+            [
+                # ! Store the network, get the id and return it to invoque in front ! #
+                self.integrated_info == INFTY_POS,
+                self.min_info_part is None,
+                self.sub_distrib is None,
+                self.network_id is None,
+            ]
+        )
+        return not_std_sln

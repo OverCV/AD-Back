@@ -4,7 +4,8 @@ TO_SECONDS: float = 1000
 
 """ General """
 
-INFTY: float = float('inf')
+INFTY_POS: float = float('inf')
+INFTY_NEG: float = float('-inf')
 FLOAT_ZERO: float = float(0)
 FLOAT_ONE: float = float(1)
 
@@ -19,14 +20,15 @@ STR_ONE: str = str(INT_ONE)
 BASE_2: int = 2
 
 ROWS_IDX = EFFECT = INT_ZERO
-COLS_IDX = CAUSES = INT_ONE
+COLS_IDX = ACTUAL = INT_ONE
 
 EMPTY_STR: str = ''
 
 
 """ Schemas """
 
-EXAMPLE: str = 'example'
+EX_STR: str = 'example'
+SAMPLES_STR: str = 'samples'
 
 """ Analyze """
 
@@ -37,46 +39,30 @@ SUB_DIST: str = 'sub_distribution'
 DIST: str = 'distribution'
 
 """ Network """
+FIRST: int = INT_ZERO
+LAST_IDX: int = -INT_ONE
+U_IDX: int = 0
+V_IDX: int = 1
+DATA_IDX: int = 2
+WT_LBL: str = 'weight'
 
-W_LBL: str = 'weight'
-
-NODE_DATA_OPTIONS: list[str] = ['color', 'label', 'value']
-EDGE_DATA_OPTIONS: list[str] = [W_LBL, 'color']
-COLORS_NAMES_LIST: list[str] = [
-    'red',
-    'green',
-    'blue',
-    'yellow',
-    'purple',
-    'cyan',
-    'magenta',
-    'orange',
-    'lime',
-    'pink',
-    'teal',
-    'indigo',
-    'brown',
-    'grey',
-    'black',
-    'white',
-]
-
-""" Analyze - Genetic """
-
-INIT_POP_SIZE: str = 'r'
-CROSS_RATE: str = 'xi'
-MUTATE_RATE: str = 'mu'
-MAX_GENS_STR: str = 'G'
-BAD_STREAKS: str = 'unimprovement'
-
-PARENTS_NUM: int = 2
-CROSSED_IND: int = 2
-MAX_STREAK: int = 3
-
-DEFAULT_PARAMS: dict[str, float | int] = {
-    INIT_POP_SIZE: 60,
-    CROSS_RATE: 0.6,
-    MUTATE_RATE: 0.1,
-    MAX_GENS_STR: 100,
-    BAD_STREAKS: 10,
-}
+# NODE_DATA_OPTIONS: list[str] = ['color', 'label', 'value']
+# EDGE_DATA_OPTIONS: list[str] = [W_LBL, 'color']
+# COLORS_NAMES_LIST: list[str] = [
+#     'red',
+#     'green',
+#     'blue',
+#     'yellow',
+#     'purple',
+#     'cyan',
+#     'magenta',
+#     'orange',
+#     'lime',
+#     'pink',
+#     'teal',
+#     'indigo',
+#     'brown',
+#     'grey',
+#     'black',
+#     'white',
+# ]

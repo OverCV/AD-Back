@@ -24,9 +24,9 @@ from api.services.structure.base import (
 )
 from api.shared.formatter import Format
 
-from constants.format import DEFFAULT_SHEET
+from constants.format import DEFFAULT_SHEET, S2C
 from data.tables import StructureTable
-from constants.structure import R3A, R4A, STRUCTURES
+from constants.structure import N1, N3, SA, SAMPLES
 from utils.consts import DATA
 
 
@@ -40,8 +40,9 @@ router: APIRouter = APIRouter()
     response_model=StructureResponse,
 )
 async def create_structure(
-    title: str = Form(default=STRUCTURES[R3A][StructProps.TITLE]),
-    format: str = Form(default=STRUCTURES[R3A][StructProps.FORMAT]),
+    # title: str = Form(default=STRUCTURES[R3A][StructProps.TITLE]),
+    title: str = Form(default=SAMPLES[N3][SA][N1][StructProps.TITLE]),
+    format: str = S2C,
     tensor: UploadFile = File(...),
     sheet: str = Form(default=DEFFAULT_SHEET),
     db: Session = Depends(get_sqlite),
@@ -86,5 +87,5 @@ async def delete_structure_by_id(id: int, db: Session = Depends(get_sqlite)):
         return JSONResponse(status_code=status.HTTP_200_OK, content={'data': True})
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=f'Structure with id {id} not found.',
+        detail=f'Structure with id {id} not found to delete.',
     )
