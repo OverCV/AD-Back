@@ -171,7 +171,7 @@ class Branch(Sia):
 
             # print()
 
-        self.plot_net(self.__net)
+        # self.plot_net(self.__net)
 
         if len(mips) > INT_ZERO:
             min_key = min(mips.keys(), key=lambda x: x[DATA_IDX])  # x=(u,v,w)

@@ -39,7 +39,7 @@ from icecream import ic
 from server import conf
 
 
-class QREdges(Sia):
+class QRNodes(Sia):
     """Class queyranne is used to solve the mip problem using the edges strategy."""
 
     def __init__(

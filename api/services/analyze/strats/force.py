@@ -50,7 +50,7 @@ class BruteForce(Sia):
         )
         # ic(self._target_dist)
         print(f'{part=}')
-        concept = (self._effect, self._actual)  
+        concept = (self._effect, self._actual)
         mip = label_mip(part, concept)
 
         self.network_id = -1

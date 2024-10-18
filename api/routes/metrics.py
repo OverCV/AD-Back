@@ -90,23 +90,23 @@ async def all_strats(
     LOSS_ROW_PYPHI = f'{SMALL_PHI} PyPhi'
     TIME_ROW_PYPHI = '(ms) PyPhi'
 
-    LOSS_ROW_BFORCE = f'{SMALL_PHI} Fuerza Brutal'
-    TIME_ROW_BFORCE = '(ms) Fuerza Brutal'
-
-    LOSS_ROW_BRANCH = f'{SMALL_PHI} Ramificación'
-    TIME_ROW_BRANCH = '(ms) Ramificación'
-
-    LOSS_ROW_FRANKM = f'{SMALL_PHI} Stoer-Wagner'
-    TIME_ROW_FRANKM = '(ms) Stoer-Wagner'
+    LOSS_ROW_QREDGES = f'{SMALL_PHI} QREdges'
+    TIME_ROW_QREDGES = '(ms) QREdges'
 
     LOSS_ROW_GENETIC = f'{SMALL_PHI} Genético'
     TIME_ROW_GENETIC = '(ms) Genético'
 
-    LOSS_ROW_QREDGES = f'{SMALL_PHI} QREdges'
-    TIME_ROW_QREDGES = '(ms) QREdges'
+    LOSS_ROW_FRANKM = f'{SMALL_PHI} Stoer-Wagner'
+    TIME_ROW_FRANKM = '(ms) Stoer-Wagner'
 
-    loss_rows = [LOSS_ROW_PYPHI, LOSS_ROW_BFORCE]
-    time_rows = [TIME_ROW_PYPHI, TIME_ROW_BFORCE]
+    LOSS_ROW_BRANCH = f'{SMALL_PHI} Ramificación'
+    TIME_ROW_BRANCH = '(ms) Ramificación'
+
+    LOSS_ROW_BFORCE = f'{SMALL_PHI} Fuerza Brutal'
+    TIME_ROW_BFORCE = '(ms) Fuerza Brutal'
+
+    loss_rows = []  # LOSS_ROW_PYPHI, LOSS_ROW_BFORCE
+    time_rows = []  # TIME_ROW_PYPHI, TIME_ROW_BFORCE
 
     # ! Formatear mejor ! #
 
@@ -178,7 +178,7 @@ async def all_strats(
         # ic(pyphi_data)
 
         loss_report_df.at[LOSS_ROW_PYPHI, col_str] = pyphi_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_PYPHI, col_str] = conf.execution_times['pyphi_strategy']
+        time_report_df.at[TIME_ROW_PYPHI, col_str] = conf.execution_times[pyphi_strategy.__name__]
     except Exception as e:
         print('\nPyPhi failed', e, '\n')
         # ! Improve the error handling ! #
@@ -192,7 +192,9 @@ async def all_strats(
         qredges_data = json.loads(qredges_results)[DATA]
 
         loss_report_df.at[LOSS_ROW_QREDGES, col_str] = qredges_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_QREDGES, col_str] = conf.execution_times['qredges_strategy']
+        time_report_df.at[TIME_ROW_QREDGES, col_str] = conf.execution_times[
+            qredges_strategy.__name__
+        ]
     except Exception as e:
         print('\nQREdges failed', e, '\n')
 
@@ -207,7 +209,9 @@ async def all_strats(
         genetic_data = json.loads(genetic_results)[DATA]
 
         loss_report_df.at[LOSS_ROW_GENETIC, col_str] = genetic_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_GENETIC, col_str] = conf.execution_times['genetic_strategy']
+        time_report_df.at[TIME_ROW_GENETIC, col_str] = conf.execution_times[
+            genetic_strategy.__name__
+        ]
     except Exception as e:
         print('\nGenetic failed', e, '\n')
 
@@ -218,7 +222,7 @@ async def all_strats(
 
         # ic(frankm_data)
         loss_report_df.at[LOSS_ROW_FRANKM, col_str] = frankm_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_FRANKM, col_str] = conf.execution_times['fm_strategy']
+        time_report_df.at[TIME_ROW_FRANKM, col_str] = conf.execution_times[fm_strategy.__name__]
     except Exception as e:
         print('\nFrank-Mech failed', e, '\n')
 
@@ -229,7 +233,7 @@ async def all_strats(
 
         # ic(branch_data)
         loss_report_df.at[LOSS_ROW_BRANCH, col_str] = branch_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times['branch_strategy']
+        time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times[branch_strategy.__name__]
     except Exception as e:
         print('\nBranch failed', e, '\n')
 
@@ -240,7 +244,8 @@ async def all_strats(
 
         loss_report_df.at[LOSS_ROW_BFORCE, col_str] = force_data[SMALL_PHI]
         time_report_df.at[TIME_ROW_BFORCE, col_str] = conf.execution_times[
-            'force_strategy'  #! Obtenible del diccionario #!
+            #! Obtenible del diccionario #!
+            force_strategy.__name__
         ]
     except Exception as e:
         print('\nForce failed', e, '\n')
@@ -262,15 +267,14 @@ async def all_strats(
     )
 
     ic(combined_df)
-    combined_df.to_excel(STORAGE_URL, sheet_name=sheet)
+    combined_df.to_excel(STORAGE_URL, sheet_name=f'{istate}={sheet}')
     executed_df.append(combined_df)
 
     combined_dict = combined_df.to_json(orient='split')
     return JSONResponse(content={DATA: jsonable_encoder(combined_dict)})
-    # return combined_df
 
 
-# ! Asociar como servicio
+# ! Asociar como servicio ! #
 
 
 @router.post(

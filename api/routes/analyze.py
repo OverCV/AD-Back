@@ -65,13 +65,12 @@ async def pyphi_strategy(
 
 @temporizer
 @router.get(
-    '/sia-force/',
-    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
+    '/sia-qrnodes/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante la función de submodularidad de Queyranne con algoritmo basado en nodos.',
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
-async def force_strategy(
-    # ! Add the optional parameter to select struct by id
+async def qrnodes_strategy(
     id: Optional[int] = None,
     title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
     istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
@@ -88,17 +87,82 @@ async def force_strategy(
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
-    # ! Change to init bg conditions
-    # if not computing.init_concept():
     if not computing.init_concept():
         raise HTTPException(
             status_code=500,
             detail='One or more of the SIA properties are not calculated',
         )
-    results = computing.use_brute_force()
+    results = computing.use_qrnodes()
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
+
+@temporizer
+@router.get(
+    '/sia-qredges/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante la función de submodularidad de Queyranne con algoritmo basado en aristas.',
+    status_code=status.HTTP_200_OK,
+    response_model_by_alias=False,
+)
+async def qredges_strategy(
+    id: Optional[int] = None,
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
+    dual: bool = False,
+    db_sql: Session = Depends(get_sqlite),
+    db_nosql: Session = Depends(get_mongo),
+):
+    struct_response: StructureResponse = (
+        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
+    )
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
+    if not computing.init_concept():
+        raise HTTPException(
+            status_code=500,
+            detail='One or more of the SIA properties are not calculated',
+        )
+    results = computing.use_qredges()
     # reconstruct_network(results[MIP], db_nosql)
-    # ic(results)
+    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
+
+
+@temporizer
+@router.post(
+    '/sia-genetic/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante un Algoritmo Genético.',
+    status_code=status.HTTP_200_OK,
+    response_model_by_alias=False,
+)
+async def genetic_strategy(
+    ctrl_params: ControlSchema,
+    id: Optional[int] = None,
+    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
+    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
+    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
+    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
+    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
+    dual: bool = False,
+    db_sql: Session = Depends(get_sqlite),
+    db_nosql: Session = Depends(get_mongo),
+):
+    ic(ctrl_params, id, title)
+    struct_response: StructureResponse = (
+        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
+    )
+    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
+    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
+    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
+    if not computing.init_concept():
+        raise HTTPException(
+            status_code=500,
+            detail='One or more of the SIA properties are not calculated',
+        )
+    results = computing.use_genetic_algorithm([ctrl_params.model_dump()])
+    reconstruct_network(results[MIP], db_nosql)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
@@ -180,12 +244,13 @@ async def branch_strategy(
 
 @temporizer
 @router.get(
-    '/sia-qredges/',
-    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante la función de submodularidad de Queyranne.',
+    '/sia-force/',
+    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante fuerza bruta.',
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )
-async def qredges_strategy(
+async def force_strategy(
+    # ! Add the optional parameter to select struct by id
     id: Optional[int] = None,
     title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
     istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
@@ -202,55 +267,23 @@ async def qredges_strategy(
     subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
     av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
     computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
+    # ! Change to init bg conditions
+    # if not computing.init_concept():
     if not computing.init_concept():
         raise HTTPException(
             status_code=500,
             detail='One or more of the SIA properties are not calculated',
         )
-    results = computing.use_qredges()
+    results = computing.use_brute_force()
+
     # reconstruct_network(results[MIP], db_nosql)
-    return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
-
-
-@temporizer
-@router.post(
-    '/sia-genetic/',
-    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante un Algoritmo Genético.',
-    status_code=status.HTTP_200_OK,
-    response_model_by_alias=False,
-)
-async def genetic_strategy(
-    ctrl_params: ControlSchema,
-    id: Optional[int] = None,
-    title: str = SAMPLES[N6][SA][N7][StructProps.TITLE],
-    istate: str = SAMPLES[N6][SA][N7][StructProps.ISTATE],
-    subsys: str = SAMPLES[N6][SA][N7][StructProps.SUBSYS],
-    effect: str = SAMPLES[N6][SA][N7][StructProps.EFFECT],
-    actual: str = SAMPLES[N6][SA][N7][StructProps.ACTUAL],
-    dual: bool = False,
-    db_sql: Session = Depends(get_sqlite),
-    db_nosql: Session = Depends(get_mongo),
-):
-    ic(ctrl_params, id, title)
-    struct_response: StructureResponse = (
-        get_structure_by_title(title, db_sql) if id is None else get_structure(id, db_sql)
-    )
-    subtensor: NDArray[np.float64] = fmt.deserialize_tensor(struct_response.tensor)
-    av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
-    computing: Compute = Compute(struct_response, istate, effect, actual, subsys, subtensor, dual)
-    if not computing.init_concept():
-        raise HTTPException(
-            status_code=500,
-            detail='One or more of the SIA properties are not calculated',
-        )
-    results = computing.use_genetic_algorithm([ctrl_params.model_dump()])
-    reconstruct_network(results[MIP], db_nosql)
+    # ic(results)
     return JSONResponse(content={DATA: jsonable_encoder(results)}, status_code=status.HTTP_200_OK)
 
 
 @router.get(
     '/sia-testing/',
-    response_description='Hallar la partición con menor pérdida de información, acercamiento mediante un Algoritmo Genético.',
+    response_description='Comparar un archivo con formato estándar de distribuciones con su resultado real.',
     status_code=status.HTTP_200_OK,
     response_model_by_alias=False,
 )

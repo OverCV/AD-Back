@@ -23,7 +23,8 @@ from pyphi.labels import NodeLabels
 
 import copy
 from api.services.analyze.strats.frank_mech import FMAlgorithm
-from api.services.analyze.strats.QREdges import QREdges
+from api.services.analyze.strats.qredges import QREdges
+from api.services.analyze.strats.qrnodes import QRNodes
 from constants.structure import BOOL_RANGE, DIST, VOID
 from utils.consts import (
     COLS_IDX,
@@ -235,6 +236,17 @@ class Compute:
         )
         sia_branch.analyze()
         return sia_branch.get_reperoire()
+
+    def use_qrnodes(self) -> bool:
+        sia_qrnodes: QRNodes = QRNodes(
+            self.__struct,
+            self.__effect[not self.__dual],
+            self.__actual[not self.__dual],
+            self.__distribution,
+            self.__dual,
+        )
+        sia_qrnodes.analyze()
+        return sia_qrnodes.get_reperoire()
 
     def use_qredges(self) -> bool:
         sia_qredges: QREdges = QREdges(
