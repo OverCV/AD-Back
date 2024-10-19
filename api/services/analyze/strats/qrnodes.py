@@ -15,13 +15,19 @@ from matplotlib import pyplot as plt
 
 from api.models.queyranne.deletion import Deletion
 
-from constants.dummy import DUMMY_NET_INT_ID, DUMMY_SUBDIST, DUMMY_MIN_INFO_PARTITION
+from constants.dummy import (
+    DUMMY_DELETION,
+    DUMMY_NET_INT_ID,
+    DUMMY_SUBDIST,
+    DUMMY_MIN_INFO_PARTITION,
+)
 from constants.structure import BOOL_RANGE, T0_SYM, T1_SYM
 from utils.consts import (
     EMPTY_STR,
     FIRST,
     FLOAT_ZERO,
     INFTY_POS,
+    INT_ONE,
     INT_ZERO,
     LAST_IDX,
     U_IDX,
@@ -86,93 +92,135 @@ class QRNodes(Sia):
         return not_std_sln
 
     def strategy(self) -> Deletion:
-        edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
-        struct = copy.deepcopy(self._structure)
+        struct: Structure = copy.deepcopy(self._structure)
+        actual = [(INT_ZERO, i) for i in self._actual]
+        effect = [(INT_ONE, j) for j in self._effect]
+        ic(actual, effect)
 
-        self.set_network_data(edges_idx)
+        miu: set[tuple[int, int]] = set(actual + effect)
+        omega: set[int] = set()
 
-        omega = []
-        alpha = edges_idx[:]
-        k_iter = 0
-        # for _ in edges_idx:
-        while len(alpha) > 0:
-            print(k_iter)
-            # ziter_dels: list[Deletion] = []
-            uiter_dels: list[Deletion] = []
-            iter_part: list[Deletion] = []
-            betha: list[tuple[int, int]] = []
-            for z in alpha:
-                minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
-                    omega, z, copy.deepcopy(struct)
-                )
-                # Peso 0 -> __net Delete & add omega -> iter_2: remove omega -> crash!
-                trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [z])
+        # size: int = len(actual) + len(effect)
+        idx, elem = INT_ZERO, INT_ONE
 
-                zdeletion: Deletion = Deletion(
-                    z,
-                    omega,
-                    minuend_emd,
-                    subtrahend_emd,
-                    minuend_emd - subtrahend_emd,
-                    net.is_disconnected(trimmed_net),
-                    subdist,
-                )
-                ic(str(zdeletion))
-                if self.submodule(omega, z, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
-                    struct.set_matrix(z[V_IDX], substruct.get_matrix(z[V_IDX]))
+        for t in miu:
+            nu = miu - {t}
 
-                    if net.is_disconnected(trimmed_net):
-                        iter_part.append(zdeletion)
+            omega = {t}
 
-                    print('Delete:', z)
-                    omega.append(z)
-                else:
-                    # Añadimos las aristas con peso para revisarlas
-                    betha.append(z)
+            for _ in nu:
+                ...
+                # for u in nu:
+                #     ic(t, u)
+                # select better and reduce nu
 
-                # ziter_dels.append(deletion) #? Iteración para eliminar aristas con peso 0
+            for u in nu:
+                u_com = nu - {u}
+                ic(t, u, u_com)
 
-            for u in betha:
-                # Proceso de remuestreo sin aristas peso 0
-                # ic(u)
-                minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
-                    omega, u, copy.deepcopy(struct)
-                )
-                trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [u])
-                xdeletion: Deletion = Deletion(
-                    u,
-                    omega,
-                    minuend_emd,
-                    subtrahend_emd,
-                    minuend_emd - subtrahend_emd,
-                    net.is_disconnected(trimmed_net),
-                    subdist,
-                )
-                ic(str(xdeletion))
+            break  #! Remove this break !#
 
-                if xdeletion.is_disconn():
-                    iter_part.append(xdeletion)
-                else:
-                    uiter_dels.append(xdeletion)
+        # # abc ABC
+        # # k = i if i < len(self._actual) else i - len(self._actual)
+        # if i < len(self._actual):
+        #     omega = {actual.pop(0)}
+        #     ic(0, omega)
 
-            if len(iter_part) > 0:
-                min_iter = min(
-                    iter_part,
-                    key=lambda x: x.get_minuend_emd(),
-                )  # End condition
-                print(str(min_iter))
-                return min_iter
+        # elif i >= len(self._actual):
+        #     break  #! Remove this break !#
+        # else:
+        #     # j: int = i - len(self._actual)
+        #     # omega: set[int] = {effect[j]}
+        #     # ic(1, omega)
+        #     ...
 
-            min_lose = min(uiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
-            print(str(min_lose))
+        return DUMMY_DELETION
+        # edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
 
-            omega.append(min_lose.get_edge())
-            ic(omega)
-            alpha = [edge for edge in alpha if edge not in omega]
+        # self.set_network_data(edges_idx)
 
-            k_iter += 1
+        # omega = []
+        # alpha = edges_idx[:]
+        # k_iter = 0
+        # # for _ in edges_idx:
+        # while len(alpha) > 0:
+        #     print(k_iter)
+        #     # ziter_dels: list[Deletion] = []
+        #     uiter_dels: list[Deletion] = []
+        #     iter_part: list[Deletion] = []
+        #     betha: list[tuple[int, int]] = []
+        #     for z in alpha:
+        #         minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
+        #             omega, z, copy.deepcopy(struct)
+        #         )
+        #         # Peso 0 -> __net Delete & add omega -> iter_2: remove omega -> crash!
+        #         trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [z])
 
-        # print(omega, alpha)
+        #         zdeletion: Deletion = Deletion(
+        #             z,
+        #             omega,
+        #             minuend_emd,
+        #             subtrahend_emd,
+        #             minuend_emd - subtrahend_emd,
+        #             net.is_disconnected(trimmed_net),
+        #             subdist,
+        #         )
+        #         ic(str(zdeletion))
+        #         if self.submodule(omega, z, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
+        #             struct.set_matrix(z[V_IDX], substruct.get_matrix(z[V_IDX]))
+
+        #             if net.is_disconnected(trimmed_net):
+        #                 iter_part.append(zdeletion)
+
+        #             print('Delete:', z)
+        #             omega.append(z)
+        #         else:
+        #             # Añadimos las aristas con peso para revisarlas
+        #             betha.append(z)
+
+        #         # ziter_dels.append(deletion) #? Iteración para eliminar aristas con peso 0
+
+        #     for u in betha:
+        #         # Proceso de remuestreo sin aristas peso 0
+        #         # ic(u)
+        #         minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
+        #             omega, u, copy.deepcopy(struct)
+        #         )
+        #         trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [u])
+        #         xdeletion: Deletion = Deletion(
+        #             u,
+        #             omega,
+        #             minuend_emd,
+        #             subtrahend_emd,
+        #             minuend_emd - subtrahend_emd,
+        #             net.is_disconnected(trimmed_net),
+        #             subdist,
+        #         )
+        #         ic(str(xdeletion))
+
+        #         if xdeletion.is_disconn():
+        #             iter_part.append(xdeletion)
+        #         else:
+        #             uiter_dels.append(xdeletion)
+
+        #     if len(iter_part) > 0:
+        #         min_iter = min(
+        #             iter_part,
+        #             key=lambda x: x.get_minuend_emd(),
+        #         )  # End condition
+        #         print(str(min_iter))
+        #         return min_iter
+
+        #     min_lose = min(uiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
+        #     print(str(min_lose))
+
+        #     omega.append(min_lose.get_edge())
+        #     ic(omega)
+        #     alpha = [edge for edge in alpha if edge not in omega]
+
+        #     k_iter += 1
+
+        # # print(omega, alpha)
 
     def submodule(self, omega, x, minuend, subtrahend) -> float:
         # Si la arista no genera pérdida individual o conjuntamente, se eliminará
@@ -184,75 +232,75 @@ class QRNodes(Sia):
             )
         return subtrahend
 
-    def calcule_emd(
-        self,
-        omega: list[tuple[int, int]],
-        concept: tuple[int, int],
-        structure: Structure,
-    ) -> tuple[float, float, NDArray[np.float64], Structure]:
-        actual, effect = concept
-        effect_dist = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
-        actual_dist = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
-        # Modificar las matrices por referencia altera la estructura
-        mat_y = structure.get_matrix(effect)
+    # def calcule_emd(
+    #     self,
+    #     omega: list[tuple[int, int]],
+    #     concept: tuple[int, int],
+    #     structure: Structure,
+    # ) -> tuple[float, float, NDArray[np.float64], Structure]:
+    #     actual, effect = concept
+    #     effect_dist = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
+    #     actual_dist = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
+    #     # Modificar las matrices por referencia altera la estructura
+    #     mat_y = structure.get_matrix(effect)
 
-        # Marginalizamos sólo el tiempo (t)
-        actual_states = self._actual[:]
-        actual_states.remove(actual)
+    #     # Marginalizamos sólo el tiempo (t)
+    #     actual_states = self._actual[:]
+    #     actual_states.remove(actual)
 
-        mat_y.margin(actual_states)
-        mat_y.expand(self._actual)
+    #     mat_y.margin(actual_states)
+    #     mat_y.expand(self._actual)
 
-        # Se define las particiones primales y duales, en este escenario no se ha particionado por mover un estado futuro a su complemento, sino que toda la distribución está en una sección, tal que no requiere complementación
+    #     # Se define las particiones primales y duales, en este escenario no se ha particionado por mover un estado futuro a su complemento, sino que toda la distribución está en una sección, tal que no requiere complementación
 
-        iter_distrib = structure.create_distrib(effect_dist, actual_dist, data=True)[
-            StructProps.DIST_ARRAY
-        ]
-        subtrahend_emd = emd_pyphi(*iter_distrib, *self._target_dist)
+    #     iter_distrib = structure.create_distrib(effect_dist, actual_dist, data=True)[
+    #         StructProps.DIST_ARRAY
+    #     ]
+    #     subtrahend_emd = emd_pyphi(*iter_distrib, *self._target_dist)
 
-        # for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
-        for w_actual, w_effect in omega:
-            mat_y = structure.get_matrix(w_effect)
+    #     # for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
+    #     for w_actual, w_effect in omega:
+    #         mat_y = structure.get_matrix(w_effect)
 
-            w_actual_states = self._actual[:]
-            w_actual_states.remove(w_actual)
+    #         w_actual_states = self._actual[:]
+    #         w_actual_states.remove(w_actual)
 
-            mat_y.margin(w_actual_states)
-            mat_y.expand(self._actual)
+    #         mat_y.margin(w_actual_states)
+    #         mat_y.expand(self._actual)
 
-        w_iter_distrib: NDArray[np.float64] = structure.create_distrib(
-            effect_dist, actual_dist, data=True
-        )[StructProps.DIST_ARRAY]
-        minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
+    #     w_iter_distrib: NDArray[np.float64] = structure.create_distrib(
+    #         effect_dist, actual_dist, data=True
+    #     )[StructProps.DIST_ARRAY]
+    #     minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
 
-        return minuend_emd, subtrahend_emd, w_iter_distrib, structure
+    #     return minuend_emd, subtrahend_emd, w_iter_distrib, structure
 
-    def margin_wu(self, omega, structure):
-        # concept_keys: dict[str, list[int]] = {k: [t for t, _ in omega] for _, k in omega}
-        # for w_effect, w_actual_states in concept_keys.items():
-        #     mat_x = structure.get_matrix(w_effect)
+    # def margin_wu(self, omega, structure):
+    #     # concept_keys: dict[str, list[int]] = {k: [t for t, _ in omega] for _, k in omega}
+    #     # for w_effect, w_actual_states in concept_keys.items():
+    #     #     mat_x = structure.get_matrix(w_effect)
 
-        #     mat_x.margin(w_actual_states)
-        #     mat_x.expand(self._actual)
+    #     #     mat_x.margin(w_actual_states)
+    #     #     mat_x.expand(self._actual)
 
-        for w_actual, w_effect in omega:
-            mat_x = structure.get_matrix(w_effect)
+    #     for w_actual, w_effect in omega:
+    #         mat_x = structure.get_matrix(w_effect)
 
-            w_actual_states = self._actual[:]
-            w_actual_states.remove(w_actual)
+    #         w_actual_states = self._actual[:]
+    #         w_actual_states.remove(w_actual)
 
-            mat_x.margin(w_actual_states)
-            mat_x.expand(self._actual)
+    #         mat_x.margin(w_actual_states)
+    #         mat_x.expand(self._actual)
 
-    def remove_edges(
-        self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
-    ) -> nx.Graph | nx.DiGraph:
-        for u, v in edges:
-            net.remove_edge(
-                self.actual_edge_by_index(u),
-                self.effect_edge_by_index(v),
-            )
-        return net
+    # def remove_edges(
+    #     self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
+    # ) -> nx.Graph | nx.DiGraph:
+    #     for u, v in edges:
+    #         net.remove_edge(
+    #             self.actual_edge_by_index(u),
+    #             self.effect_edge_by_index(v),
+    #         )
+    #     return net
 
     def set_network_data(self, concepts: list[tuple[int, int]]) -> None:
         self.__net.add_nodes_from(self.__effect_labels)

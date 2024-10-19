@@ -82,9 +82,11 @@ class BruteForce(Sia):
             effect = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self._effect, str_effect):
                 effect[e == STR_ONE].append(j)
+
             actual = {bin: [] for bin in BOOL_RANGE}
             for i, c in zip(self._actual, str_causes):
                 actual[c == STR_ONE].append(i)
+
             indexed_distrib = sub_struct.create_distrib(effect, actual, data=True)
             iter_distrib = indexed_distrib[StructProps.DIST_ARRAY]
             # Comparar con la distribución original (objetivo)
