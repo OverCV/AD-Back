@@ -92,6 +92,28 @@ class QRNodes(Sia):
         return not_std_sln
 
     def strategy(self) -> Deletion:
+        """
+
+        OR1 = {(0, 1)=t, (1, 2)=u} COM OR1 = {(1, 0), (0, 2), (1, 1), (0, 0)}
+        OR2 = {(1, 2)}             COM OR2 = {(0, 1)=t, (0, 0), (0, 2), (1, 1), (1, 0)}
+
+        OR1 = {bC}.                COM OR1 = {AcBa}
+        o_concept = act{False: [b], True: [ca]}, eff{False: [C], True: [AB]}
+        o_actual  = {False: [1], True: [2,0]}
+        o_effect  = {False: [2], True: [0,1]}
+
+        # Sólo tomamos el nuevo U .
+
+        UR2 = {C}                  COM UR2 = {abcBA}
+
+        u_concept = act{False: [],   True: [abc]}, eff{False: [BA], True: [C]}
+        u_actual  = {False: [0,1,2], True: []}
+        u_effect  = {False: [1,0],   True: [2]}
+
+        Mirar conjunto, uno lo pondrá en el true y el otro en el false.
+
+        """
+
         struct: Structure = copy.deepcopy(self._structure)
         actual = [(INT_ZERO, i) for i in self._actual]
         effect = [(INT_ONE, j) for j in self._effect]
@@ -114,6 +136,7 @@ class QRNodes(Sia):
             ic(t, t_com)
 
             while len(t_com) > INT_ZERO:
+                all_mips: list[Deletion] = []
                 for u in t_com:
                     omega_dist: Structure = copy.deepcopy(self._structure)
                     u_dist: Structure = copy.deepcopy(self._structure)
@@ -135,9 +158,11 @@ class QRNodes(Sia):
 
                     for p, q in [u]:
                         u_concept[1 - p][rep_one].append(q)
+                        # print(p, u_concept[p], 1 - p, u_concept[1 - p])
 
                     for i, j in u_com:
                         u_concept[1 - i][rep_two].append(j)
+                        # print(p, u_concept[p], 1 - p, u_concept[1 - p])
 
                     u_effect, u_actual = u_concept
                     ic(u_effect)
@@ -147,6 +172,7 @@ class QRNodes(Sia):
                     u_hist = u_dist.create_distrib(u_effect, u_actual, data=True)
                     u_dist = u_hist[StructProps.DIST_ARRAY]
                     u_emd = emd_pyphi(*u_dist, *self._target_dist)
+                    ic(u_emd)
 
                     print()
 
@@ -172,36 +198,18 @@ class QRNodes(Sia):
                     # Creación de distribuciones omega
                     omega_hist = omega_dist.create_distrib(o_effect, o_actual, data=True)
                     omega_dist = omega_hist[StructProps.DIST_ARRAY]
-
                     o_emd = emd_pyphi(*omega_dist, *self._target_dist)
+                    ic(o_emd)
 
-                    ic(o_emd, u_emd, o_emd - u_emd)
+                    print(f'{o_emd - u_emd:.2f}')
+
+                    all_mips.append(Deletion(u, omega, o_emd, u_emd, o_emd - u_emd))
+
+                best_mip = min(all_mips, key=lambda x: x.get_emd())
+                omega.add(best_mip.get_edge())
 
                 # El mejor se añade en omega
 
-                """
-
-                OR1 = {(0, 1)=t, (1, 2)=u} COM OR1 = {(1, 0), (0, 2), (1, 1), (0, 0)}
-                OR2 = {(1, 2)}             COM OR2 = {(0, 1)=t, (0, 0), (0, 2), (1, 1), (1, 0)}
-
-                OR1 = {bC}.                COM OR1 = {AcBa}
-                o_concept = act{False: [b], True: [ca]}, eff{False: [C], True: [AB]}
-                o_actual  = {False: [1], True: [2,0]}
-                o_effect  = {False: [2], True: [0,1]}
-
-                # Sólo tomamos el nuevo U .
-
-                UR2 = {C}                  COM UR2 = {abcBA}
-
-                u_concept = act{False: [],   True: [abc]}, eff{False: [BA], True: [C]}
-                u_actual  = {False: [0,1,2], True: []}
-                u_effect  = {False: [1,0],   True: [2]}
-
-                Mirar conjunto, uno lo pondrá en el true y el otro en el false.
-
-                """
-
-                break  #! Remove this break !#
             break  #! Remove this break !#
         return DUMMY_DELETION
 
@@ -212,110 +220,9 @@ class QRNodes(Sia):
     ic| t: (0, 1), u: (0, 2), u_com: {(1, 0), (1, 1), (1, 2), (0, 0)}
     ic| t: (0, 1), u: (1, 0), u_com: {(0, 2), (1, 1), (1, 2), (0, 0)}
 
-    W = b, u = C, V = AcBa 
+    W = b, u = C, V = AcBa
 
     """
-
-    # # abc ABC
-    # # k = i if i < len(self._actual) else i - len(self._actual)
-    # if i < len(self._actual):
-    #     omega = {actual.pop(0)}
-    #     ic(0, omega)
-
-    # elif i >= len(self._actual):
-    #     break  #! Remove this break !#
-    # else:
-    #     # j: int = i - len(self._actual)
-    #     # omega: set[int] = {effect[j]}
-    #     # ic(1, omega)
-    #     ...
-
-    # edges_idx: list[tuple[int, int]] = list(it.product(self._actual, self._effect))
-
-    # self.set_network_data(edges_idx)
-
-    # omega = []
-    # alpha = edges_idx[:]
-    # k_iter = 0
-    # # for _ in edges_idx:
-    # while len(alpha) > 0:
-    #     print(k_iter)
-    #     # ziter_dels: list[Deletion] = []
-    #     uiter_dels: list[Deletion] = []
-    #     iter_part: list[Deletion] = []
-    #     betha: list[tuple[int, int]] = []
-    #     for z in alpha:
-    #         minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
-    #             omega, z, copy.deepcopy(struct)
-    #         )
-    #         # Peso 0 -> __net Delete & add omega -> iter_2: remove omega -> crash!
-    #         trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [z])
-
-    #         zdeletion: Deletion = Deletion(
-    #             z,
-    #             omega,
-    #             minuend_emd,
-    #             subtrahend_emd,
-    #             minuend_emd - subtrahend_emd,
-    #             net.is_disconnected(trimmed_net),
-    #             subdist,
-    #         )
-    #         ic(str(zdeletion))
-    #         if self.submodule(omega, z, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
-    #             struct.set_matrix(z[V_IDX], substruct.get_matrix(z[V_IDX]))
-
-    #             if net.is_disconnected(trimmed_net):
-    #                 iter_part.append(zdeletion)
-
-    #             print('Delete:', z)
-    #             omega.append(z)
-    #         else:
-    #             # Añadimos las aristas con peso para revisarlas
-    #             betha.append(z)
-
-    #         # ziter_dels.append(deletion) #? Iteración para eliminar aristas con peso 0
-
-    #     for u in betha:
-    #         # Proceso de remuestreo sin aristas peso 0
-    #         # ic(u)
-    #         minuend_emd, subtrahend_emd, subdist, substruct = self.calcule_emd(
-    #             omega, u, copy.deepcopy(struct)
-    #         )
-    #         trimmed_net = self.remove_edges(copy.deepcopy(self.__net), omega + [u])
-    #         xdeletion: Deletion = Deletion(
-    #             u,
-    #             omega,
-    #             minuend_emd,
-    #             subtrahend_emd,
-    #             minuend_emd - subtrahend_emd,
-    #             net.is_disconnected(trimmed_net),
-    #             subdist,
-    #         )
-    #         ic(str(xdeletion))
-
-    #         if xdeletion.is_disconn():
-    #             iter_part.append(xdeletion)
-    #         else:
-    #             uiter_dels.append(xdeletion)
-
-    #     if len(iter_part) > 0:
-    #         min_iter = min(
-    #             iter_part,
-    #             key=lambda x: x.get_minuend_emd(),
-    #         )  # End condition
-    #         print(str(min_iter))
-    #         return min_iter
-
-    #     min_lose = min(uiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
-    #     print(str(min_lose))
-
-    #     omega.append(min_lose.get_edge())
-    #     ic(omega)
-    #     alpha = [edge for edge in alpha if edge not in omega]
-
-    #     k_iter += 1
-
-    # # print(omega, alpha)
 
     def submodule(self, omega, x, minuend, subtrahend) -> float:
         # Si la arista no genera pérdida individual o conjuntamente, se eliminará
