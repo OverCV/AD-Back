@@ -92,29 +92,6 @@ class QRNodes(Sia):
         return not_std_sln
 
     def strategy(self) -> Deletion:
-        """
-
-        OR1 = {(0, 1)=t, (1, 2)=u} COM OR1 = {(1, 0), (0, 2), (1, 1), (0, 0)}
-        OR2 = {(1, 2)}             COM OR2 = {(0, 1)=t, (0, 0), (0, 2), (1, 1), (1, 0)}
-
-        OR1 = {bC}.                COM OR1 = {AcBa}
-        o_concept = act{False: [b], True: [ca]}, eff{False: [C], True: [AB]}
-        o_actual  = {False: [1], True: [2,0]}
-        o_effect  = {False: [2], True: [0,1]}
-
-        # Sólo tomamos el nuevo U .
-
-        UR2 = {C}                  COM UR2 = {abcBA}
-
-        u_concept = act{False: [],   True: [abc]}, eff{False: [BA], True: [C]}
-        u_actual  = {False: [0,1,2], True: []}
-        u_effect  = {False: [1,0],   True: [2]}
-
-        Mirar conjunto, uno lo pondrá en el true y el otro en el false.
-
-        """
-
-        struct: Structure = copy.deepcopy(self._structure)
         actual = [(INT_ZERO, i) for i in self._actual]
         effect = [(INT_ONE, j) for j in self._effect]
         ic(actual, effect)
@@ -122,110 +99,238 @@ class QRNodes(Sia):
         rep_one, rep_two = BOOL_RANGE
 
         alpha: set[tuple[int, int]] = set(actual + effect)
-        omega: set[int] = set()
+        best_deletion: Deletion | None = None
 
-        # size: int = len(actual) + len(effect)
-        idx, elem = INT_ZERO, INT_ONE
-
+        # Iteramos sobre cada posible punto de inicio
         for t in alpha:
-            # all base elements
+            # Elementos restantes sin t
             t_com = alpha - {t}
+            # Iniciamos omega con t
+            omega: set[tuple[int, int]] = {t}
+            # ic(t, t_com)
 
-            omega = set((t,))
-
-            ic(t, t_com)
+            print('-' * 40)
 
             while len(omega) < len(alpha):
+                print('~' * 40)
                 all_mips: list[Deletion] = []
-                
+                remaining = t_com - omega
 
-
-                for u in t_com:
-                    omega_dist: Structure = copy.deepcopy(self._structure)
-                    u_dist: Structure = copy.deepcopy(self._structure)
-
-                    betha = omega.copy()
-                    betha.add(u)
-
-                    # Ciclos asociados u
-
-                    u_com = alpha - {u}
-
+                for u in remaining:
+                    # Evaluación individual de u
                     idx_u_actual = {bin: [] for bin in BOOL_RANGE}
                     idx_u_effect = {bin: [] for bin in BOOL_RANGE}
                     u_concept = (idx_u_actual, idx_u_effect)
-                    print('-' * 20)
 
-                    ic(u)
-                    ic(u_com)
+                    # Procesamos el elemento u
+                    p, q = u
+                    u_concept[1 - p][rep_one].append(q)
 
-                    for p, q in [u]:
-                        u_concept[1 - p][rep_one].append(q)
-                        # print(p, u_concept[p], 1 - p, u_concept[1 - p])
-
+                    # Procesamos los elementos restantes
+                    u_com = alpha - {u}
                     for i, j in u_com:
                         u_concept[1 - i][rep_two].append(j)
-                        # print(p, u_concept[p], 1 - p, u_concept[1 - p])
+
+                    ic(u, u_com)
 
                     u_effect, u_actual = u_concept
                     ic(u_effect)
                     ic(u_actual)
 
-                    # Creación de distribuciones en u
+                    # Calculamos EMD individual
+                    u_dist = copy.deepcopy(self._structure)
                     u_hist = u_dist.create_distrib(u_effect, u_actual, data=True)
                     u_dist = u_hist[StructProps.DIST_ARRAY]
+                    print(u_dist.shape[1], u_dist)
                     u_emd = emd_pyphi(*u_dist, *self._target_dist)
-                    ic(u_emd)
 
-                    print()
+                    print('-' * 40)
 
-                    # Ciclos asociados a omega
+                    # Evaluación de u con omega
                     idx_o_actual = {bin: [] for bin in BOOL_RANGE}
                     idx_o_effect = {bin: [] for bin in BOOL_RANGE}
                     o_concept = (idx_o_actual, idx_o_effect)
 
-                    o_com = t_com - betha
-                    ic(betha)
-                    ic(o_com)
+                    # Conjunto temporal omega + u
+                    betha = omega | {u}
 
+                    # Procesamos los elementos en betha
                     for p, q in betha:
                         o_concept[1 - p][rep_one].append(q)
 
+                    # Procesamos elementos restantes
+                    o_com = remaining - {u}
                     for i, j in o_com:
                         o_concept[1 - i][rep_two].append(j)
+
+                    ic(betha, o_com)
 
                     o_effect, o_actual = o_concept
                     ic(o_effect)
                     ic(o_actual)
 
-                    # Creación de distribuciones omega
-                    omega_hist = omega_dist.create_distrib(o_effect, o_actual, data=True)
+                    # Calculamos EMD del conjunto
+                    o_dist = copy.deepcopy(self._structure)
+                    omega_hist = o_dist.create_distrib(o_effect, o_actual, data=True)
                     omega_dist = omega_hist[StructProps.DIST_ARRAY]
+                    print(omega_dist.shape[1], omega_dist)
                     o_emd = emd_pyphi(*omega_dist, *self._target_dist)
-                    ic(o_emd)
 
-                    print(f'{o_emd - u_emd:.2f}')
+                    # Creamos el objeto Deletion con la información
+                    current_mip = Deletion(
+                        edge=u,
+                        omega=list(betha),  # Convertimos el set a lista
+                        minuend_emd=o_emd,
+                        subtrahend_emd=u_emd,
+                        emd=o_emd - u_emd,
+                        subdist=omega_dist,  # Tomando la del conjunto
+                    )
+                    all_mips.append(current_mip)
 
-                    all_mips.append(Deletion(u, omega, o_emd, u_emd, o_emd - u_emd))
+                    print('-' * 40)
 
+                # Seleccionamos el mejor MIP de esta iteración
                 best_mip = min(all_mips, key=lambda x: x.get_emd())
                 omega.add(best_mip.get_edge())
 
-                # El mejor se añade en omega
+                # Actualizamos el mejor global si es necesario
+                if best_deletion is None or best_mip.get_emd() < best_deletion.get_emd():
+                    best_deletion = best_mip
 
-            break  #! Remove this break !#
-        return DUMMY_DELETION
+        # Siempre retornamos el mejor encontrado
+        return best_deletion
 
-    """
-    ic| t: (0, 1), u: (1, 2), u_com: {(1, 0), (0, 2), (1, 1), (0, 0)}
-    ic| t: (0, 1), u: (0, 0), u_com: {(1, 0), (1, 1), (1, 2), (0, 2)}
-    ic| t: (0, 1), u: (1, 1), u_com: {(1, 0), (0, 2), (1, 2), (0, 0)}
-    ic| t: (0, 1), u: (0, 2), u_com: {(1, 0), (1, 1), (1, 2), (0, 0)}
-    ic| t: (0, 1), u: (1, 0), u_com: {(0, 2), (1, 1), (1, 2), (0, 0)}
+    # def strategy(self) -> Deletion:
+    #     """
 
-    W = b, u = C, V = AcBa
+    #     OR1 = {(0, 1)=t, (1, 2)=u} COM OR1 = {(1, 0), (0, 2), (1, 1), (0, 0)}
+    #     OR2 = {(1, 2)}             COM OR2 = {(0, 1)=t, (0, 0), (0, 2), (1, 1), (1, 0)}
 
-    """
+    #     OR1 = {bC}.                COM OR1 = {AcBa}
+    #     o_concept = act{False: [b], True: [ca]}, eff{False: [C], True: [AB]}
+    #     o_actual  = {False: [1], True: [2,0]}
+    #     o_effect  = {False: [2], True: [0,1]}
+
+    #     # Sólo tomamos el nuevo U .
+
+    #     UR2 = {C}                  COM UR2 = {abcBA}
+
+    #     u_concept = act{False: [],   True: [abc]}, eff{False: [BA], True: [C]}
+    #     u_actual  = {False: [0,1,2], True: []}
+    #     u_effect  = {False: [1,0],   True: [2]}
+
+    #     Mirar conjunto, uno lo pondrá en el true y el otro en el false.
+    #     """
+
+    #     # struct: Structure = copy.deepcopy(self._structure)
+    #     actual = [(INT_ZERO, i) for i in self._actual]
+    #     effect = [(INT_ONE, j) for j in self._effect]
+    #     ic(actual, effect)
+
+    #     rep_one, rep_two = BOOL_RANGE
+
+    #     alpha: set[tuple[int, int]] = set(actual + effect)
+    #     omega: set[int] = set()
+
+    #     for t in alpha:
+    #         # all base elements
+    #         t_com = alpha - {t}
+
+    #         omega = set((t,))
+
+    #         ic(t, t_com)
+
+    #         while len(omega) < len(alpha):
+    #             all_mips: list[Deletion] = []
+
+    #             for u in t_com:
+    #                 omega_dist: Structure = copy.deepcopy(self._structure)
+    #                 u_dist: Structure = copy.deepcopy(self._structure)
+
+    #                 betha = omega.copy()
+    #                 betha.add(u)
+
+    #                 # Ciclos asociados u
+
+    #                 u_com = alpha - {u}
+
+    #                 idx_u_actual = {bin: [] for bin in BOOL_RANGE}
+    #                 idx_u_effect = {bin: [] for bin in BOOL_RANGE}
+    #                 u_concept = (idx_u_actual, idx_u_effect)
+    #                 print('-' * 20)
+
+    #                 ic(u)
+    #                 ic(u_com)
+
+    #                 for p, q in [u]:
+    #                     u_concept[1 - p][rep_one].append(q)
+    #                     # print(p, u_concept[p], 1 - p, u_concept[1 - p])
+
+    #                 for i, j in u_com:
+    #                     u_concept[1 - i][rep_two].append(j)
+    #                     # print(p, u_concept[p], 1 - p, u_concept[1 - p])
+
+    #                 u_effect, u_actual = u_concept
+    #                 ic(u_effect)
+    #                 ic(u_actual)
+
+    #                 # Creación de distribuciones en u
+    #                 u_hist = u_dist.create_distrib(u_effect, u_actual, data=True)
+    #                 u_dist = u_hist[StructProps.DIST_ARRAY]
+    #                 u_emd = emd_pyphi(*u_dist, *self._target_dist)
+    #                 ic(u_emd)
+
+    #                 print()
+
+    #                 # Ciclos asociados a omega
+    #                 idx_o_actual = {bin: [] for bin in BOOL_RANGE}
+    #                 idx_o_effect = {bin: [] for bin in BOOL_RANGE}
+    #                 o_concept = (idx_o_actual, idx_o_effect)
+
+    #                 o_com = t_com - betha
+    #                 ic(betha)
+    #                 ic(o_com)
+
+    #                 for p, q in betha:
+    #                     o_concept[1 - p][rep_one].append(q)
+
+    #                 for i, j in o_com:
+    #                     o_concept[1 - i][rep_two].append(j)
+
+    #                 o_effect, o_actual = o_concept
+    #                 ic(o_effect)
+    #                 ic(o_actual)
+
+    #                 # Creación de distribuciones omega
+    #                 omega_hist = omega_dist.create_distrib(o_effect, o_actual, data=True)
+    #                 omega_dist = omega_hist[StructProps.DIST_ARRAY]
+    #                 o_emd = emd_pyphi(*omega_dist, *self._target_dist)
+    #                 ic(o_emd)
+
+    #                 print(f'{o_emd - u_emd:.2f}')
+
+    #                 all_mips.append(Deletion(u, betha, o_emd, u_emd, o_emd - u_emd))
+
+    #             best_mip = min(all_mips, key=lambda x: x.get_emd())
+    #             omega.add(best_mip.get_edge())
+    #             ic(omega)
+    #             print('*' * 20)
+
+    #             # El mejor se añade en omega
+
+    #         break  #! Remove this break !#
+    #     return DUMMY_DELETION
+
+    # """
+    # ic| t: (0, 1), u: (1, 2), u_com: {(1, 0), (0, 2), (1, 1), (0, 0)}
+    # ic| t: (0, 1), u: (0, 0), u_com: {(1, 0), (1, 1), (1, 2), (0, 2)}
+    # ic| t: (0, 1), u: (1, 1), u_com: {(1, 0), (0, 2), (1, 2), (0, 0)}
+    # ic| t: (0, 1), u: (0, 2), u_com: {(1, 0), (1, 1), (1, 2), (0, 0)}
+    # ic| t: (0, 1), u: (1, 0), u_com: {(0, 2), (1, 1), (1, 2), (0, 0)}
+
+    # W = b, u = C, V = AcBa
+
+    # """
 
     def submodule(self, omega, x, minuend, subtrahend) -> float:
         # Si la arista no genera pérdida individual o conjuntamente, se eliminará
