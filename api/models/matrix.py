@@ -76,8 +76,11 @@ class Matrix:
                 # for col in dataframe.columns:
                 # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
                 # element is the key, value is the position or index
+
+                # ic(states, self.__causes)
+
                 selected_row = ''.join(
-                    [row[self.__causes.index(k)] for k in states],
+                    [row[self.__causes.index(k)] for k in sorted(states)],
                 )
                 """
                     STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]
