@@ -135,8 +135,11 @@ class QRNodes(Sia):
 
             ic(t, t_com)
 
-            while len(t_com) > INT_ZERO:
+            while len(omega) < len(alpha):
                 all_mips: list[Deletion] = []
+                
+
+
                 for u in t_com:
                     omega_dist: Structure = copy.deepcopy(self._structure)
                     u_dist: Structure = copy.deepcopy(self._structure)
@@ -233,76 +236,6 @@ class QRNodes(Sia):
                 else max(minuend, subtrahend)
             )
         return subtrahend
-
-    # def calcule_emd(
-    #     self,
-    #     omega: list[tuple[int, int]],
-    #     concept: tuple[int, int],
-    #     structure: Structure,
-    # ) -> tuple[float, float, NDArray[np.float64], Structure]:
-    #     actual, effect = concept
-    #     effect_dist = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
-    #     actual_dist = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
-    #     # Modificar las matrices por referencia altera la estructura
-    #     mat_y = structure.get_matrix(effect)
-
-    #     # Marginalizamos sólo el tiempo (t)
-    #     actual_states = self._actual[:]
-    #     actual_states.remove(actual)
-
-    #     mat_y.margin(actual_states)
-    #     mat_y.expand(self._actual)
-
-    #     # Se define las particiones primales y duales, en este escenario no se ha particionado por mover un estado futuro a su complemento, sino que toda la distribución está en una sección, tal que no requiere complementación
-
-    #     iter_distrib = structure.create_distrib(effect_dist, actual_dist, data=True)[
-    #         StructProps.DIST_ARRAY
-    #     ]
-    #     subtrahend_emd = emd_pyphi(*iter_distrib, *self._target_dist)
-
-    #     # for loop [o_mat = struct.matrix(effect) -> margin] to remove omegas in struct_x, as they're different of x
-    #     for w_actual, w_effect in omega:
-    #         mat_y = structure.get_matrix(w_effect)
-
-    #         w_actual_states = self._actual[:]
-    #         w_actual_states.remove(w_actual)
-
-    #         mat_y.margin(w_actual_states)
-    #         mat_y.expand(self._actual)
-
-    #     w_iter_distrib: NDArray[np.float64] = structure.create_distrib(
-    #         effect_dist, actual_dist, data=True
-    #     )[StructProps.DIST_ARRAY]
-    #     minuend_emd = emd_pyphi(*w_iter_distrib, *self._target_dist)
-
-    #     return minuend_emd, subtrahend_emd, w_iter_distrib, structure
-
-    # def margin_wu(self, omega, structure):
-    #     # concept_keys: dict[str, list[int]] = {k: [t for t, _ in omega] for _, k in omega}
-    #     # for w_effect, w_actual_states in concept_keys.items():
-    #     #     mat_x = structure.get_matrix(w_effect)
-
-    #     #     mat_x.margin(w_actual_states)
-    #     #     mat_x.expand(self._actual)
-
-    #     for w_actual, w_effect in omega:
-    #         mat_x = structure.get_matrix(w_effect)
-
-    #         w_actual_states = self._actual[:]
-    #         w_actual_states.remove(w_actual)
-
-    #         mat_x.margin(w_actual_states)
-    #         mat_x.expand(self._actual)
-
-    # def remove_edges(
-    #     self, net: nx.Graph | nx.DiGraph, edges: list[tuple[int, int]]
-    # ) -> nx.Graph | nx.DiGraph:
-    #     for u, v in edges:
-    #         net.remove_edge(
-    #             self.actual_edge_by_index(u),
-    #             self.effect_edge_by_index(v),
-    #         )
-    #     return net
 
     def set_network_data(self, concepts: list[tuple[int, int]]) -> None:
         self.__net.add_nodes_from(self.__effect_labels)
