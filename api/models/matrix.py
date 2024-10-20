@@ -80,7 +80,7 @@ class Matrix:
                 # ic(states, self.__causes)
 
                 selected_row = ''.join(
-                    [row[self.__causes.index(k)] for k in sorted(states)],
+                    [row[self.__causes.index(k)] for k in states],
                 )
                 """
                     STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]

@@ -98,6 +98,12 @@ class QRNodes(Sia):
 
         rep_one, rep_two = BOOL_RANGE
 
+        MAX_ITER = 4
+        iteration = 0
+        SEP1 = '\\' * 20 + '/' * 20
+        SEP2 = '*' * 40
+        SEP3 = '-' * 40
+
         alpha: set[tuple[int, int]] = set(actual + effect)
         best_deletion: Deletion | None = None
 
@@ -109,43 +115,14 @@ class QRNodes(Sia):
             omega: set[tuple[int, int]] = {t}
             # ic(t, t_com)
 
-            print('-' * 40)
+            print(SEP1)
 
             while len(omega) < len(alpha):
-                print('~' * 40)
+                print(SEP2)
                 all_mips: list[Deletion] = []
                 remaining = t_com - omega
 
                 for u in remaining:
-                    # Evaluación individual de u
-                    idx_u_actual = {bin: [] for bin in BOOL_RANGE}
-                    idx_u_effect = {bin: [] for bin in BOOL_RANGE}
-                    u_concept = (idx_u_actual, idx_u_effect)
-
-                    # Procesamos el elemento u
-                    p, q = u
-                    u_concept[1 - p][rep_one].append(q)
-
-                    # Procesamos los elementos restantes
-                    u_com = alpha - {u}
-                    for i, j in u_com:
-                        u_concept[1 - i][rep_two].append(j)
-
-                    ic(u, u_com)
-
-                    u_effect, u_actual = u_concept
-                    ic(u_effect)
-                    ic(u_actual)
-
-                    # Calculamos EMD individual
-                    u_dist = copy.deepcopy(self._structure)
-                    u_hist = u_dist.create_distrib(u_effect, u_actual, data=True)
-                    u_dist = u_hist[StructProps.DIST_ARRAY]
-                    print(u_dist.shape[1], u_dist)
-                    u_emd = emd_pyphi(*u_dist, *self._target_dist)
-
-                    print('-' * 40)
-
                     # Evaluación de u con omega
                     idx_o_actual = {bin: [] for bin in BOOL_RANGE}
                     idx_o_effect = {bin: [] for bin in BOOL_RANGE}
@@ -166,6 +143,8 @@ class QRNodes(Sia):
                     ic(betha, o_com)
 
                     o_effect, o_actual = o_concept
+                    o_effect = {k: sorted(v) for k, v in o_effect.items()}
+                    o_actual = {k: sorted(v) for k, v in o_actual.items()}
                     ic(o_effect)
                     ic(o_actual)
 
@@ -173,8 +152,39 @@ class QRNodes(Sia):
                     o_dist = copy.deepcopy(self._structure)
                     omega_hist = o_dist.create_distrib(o_effect, o_actual, data=True)
                     omega_dist = omega_hist[StructProps.DIST_ARRAY]
-                    print(omega_dist.shape[1], omega_dist)
                     o_emd = emd_pyphi(*omega_dist, *self._target_dist)
+                    print(f'{o_emd=:.2f}', omega_dist)
+
+                    print(SEP3)
+
+                    # Evaluación individual de u
+                    idx_u_actual = {bin: [] for bin in BOOL_RANGE}
+                    idx_u_effect = {bin: [] for bin in BOOL_RANGE}
+                    u_concept = (idx_u_actual, idx_u_effect)
+
+                    # Procesamos el elemento u
+                    p, q = u
+                    u_concept[1 - p][rep_one].append(q)
+
+                    # Procesamos los elementos restantes
+                    u_com = alpha - {u}
+                    for i, j in u_com:
+                        u_concept[1 - i][rep_two].append(j)
+
+                    ic(u, u_com)
+
+                    u_effect, u_actual = u_concept
+                    u_effect = {k: sorted(v) for k, v in u_effect.items()}
+                    u_actual = {k: sorted(v) for k, v in u_actual.items()}
+                    ic(u_effect)
+                    ic(u_actual)
+
+                    # Calculamos EMD individual
+                    u_dist = copy.deepcopy(self._structure)
+                    u_hist = u_dist.create_distrib(u_effect, u_actual, data=True)
+                    u_dist = u_hist[StructProps.DIST_ARRAY]
+                    u_emd = emd_pyphi(*u_dist, *self._target_dist)
+                    print(f'{u_emd=:.2f}', u_dist)
 
                     # Creamos el objeto Deletion con la información
                     current_mip = Deletion(
@@ -187,7 +197,8 @@ class QRNodes(Sia):
                     )
                     all_mips.append(current_mip)
 
-                    print('-' * 40)
+                    print(f'{o_emd:.2f} - {u_emd:.2f} = {o_emd - u_emd:.2f}')
+                    print(SEP3)
 
                 # Seleccionamos el mejor MIP de esta iteración
                 best_mip = min(all_mips, key=lambda x: x.get_emd())
@@ -196,6 +207,10 @@ class QRNodes(Sia):
                 # Actualizamos el mejor global si es necesario
                 if best_deletion is None or best_mip.get_emd() < best_deletion.get_emd():
                     best_deletion = best_mip
+
+            iteration += 1
+            if iteration == MAX_ITER:
+                break
 
         # Siempre retornamos el mejor encontrado
         return best_deletion

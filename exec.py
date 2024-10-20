@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     filename=ExecConfig.LOGGER_DIR.value,
     encoding=ExecConfig.LOGGER_ENCODING.value,
-    level=logging.WARNING,
+    level=logging.INFO,
 )
 
 if __name__ == ExecConfig.__MAIN__:
