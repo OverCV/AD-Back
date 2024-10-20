@@ -189,7 +189,7 @@ class QRNodes(Sia):
                     # Creamos el objeto Deletion con la información
                     current_mip = Deletion(
                         edge=u,
-                        omega=list(betha),  # Convertimos el set a lista
+                        omega=list(o_com.copy()),  # Convertimos el set a lista
                         minuend_emd=o_emd,
                         subtrahend_emd=u_emd,
                         emd=o_emd - u_emd,
@@ -208,9 +208,11 @@ class QRNodes(Sia):
                 if best_deletion is None or best_mip.get_emd() < best_deletion.get_emd():
                     best_deletion = best_mip
 
-            iteration += 1
-            if iteration == MAX_ITER:
-                break
+                ic(str(best_deletion))
+
+            # iteration += 1
+            # if iteration == MAX_ITER:
+            #     break
 
         # Siempre retornamos el mejor encontrado
         return best_deletion

@@ -22,6 +22,7 @@ from api.routes.analyze import (
     genetic_strategy,
     pyphi_strategy,
     qredges_strategy,
+    qrnodes_strategy,
 )
 from api.schemas.sample import SampleCollection, SampleRequest
 from api.schemas.structure import StructureResponse
@@ -89,6 +90,9 @@ async def all_strats(
 
     LOSS_ROW_PYPHI = f'{SMALL_PHI} PyPhi'
     TIME_ROW_PYPHI = '(ms) PyPhi'
+
+    LOSS_ROW_QRNODES = f'{SMALL_PHI} QRNodes'
+    TIME_ROW_QRNODES = '(ms) QRNodes'
 
     LOSS_ROW_QREDGES = f'{SMALL_PHI} QREdges'
     TIME_ROW_QREDGES = '(ms) QREdges'
@@ -183,6 +187,20 @@ async def all_strats(
         print('\nPyPhi failed', e, '\n')
         # ! Improve the error handling ! #
         return JSONResponse(content={DATA: jsonable_encoder({f'error {e}'})})
+
+    try:
+        qrnodes_response = await qrnodes_strategy(
+            **common_params,
+        )
+        qrnodes_results = qrnodes_response.body.decode(UTF8_FORMAT)
+        qrnodes_data = json.loads(qrnodes_results)[DATA]
+
+        loss_report_df.at[LOSS_ROW_QRNODES, col_str] = qrnodes_data[SMALL_PHI]
+        time_report_df.at[TIME_ROW_QRNODES, col_str] = conf.execution_times[
+            qrnodes_strategy.__name__
+        ]
+    except Exception as e:
+        print('\nQRNodes failed', e, '\n')
 
     try:
         qredges_response = await qredges_strategy(
