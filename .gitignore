@@ -169,3 +169,7 @@ cython_debug/
 # VSC
 */.vscode
 *.vscode
+/data/profiles
+*/data/profiles
+/data/profiles/*
+*/data/profiles/*
