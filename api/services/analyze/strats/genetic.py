@@ -35,11 +35,10 @@ class Genetic(Sia):
 
     def analyze(self) -> bool:
         # Definimos los parámetros de control para cada entorno del algoritmo genético, tal vez pueda paralelizarse #
-        ic(self.__control_params)
+        # ic(self.__control_params)
 
         # ! Start time measurement ! #
         # ! Finish time measurement ! #
-
 
         # best_of_all
         for param in self.__control_params:
@@ -58,12 +57,12 @@ class Genetic(Sia):
         m: int = len(self._effect)
         # ind_effect = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][:m]])
         # ind_actual = ''.join([str(int(i)) for i in best.get_chr()[StructProps.DIST_ARRAY][m+1:]])
-        print()
+        # print()
         ind_effect = [STR_ONE if x else STR_ZERO for x in best.get_chr()[:m]]
         ind_actual = [STR_ONE if x else STR_ZERO for x in best.get_chr()[m:]]
         concept = (self._effect, self._actual)
         mip = label_mip((''.join(ind_effect), ''.join(ind_actual)), concept)
-        ic(best)
+        # ic(best)
 
         # self.__environments.append(
         #     # Environment

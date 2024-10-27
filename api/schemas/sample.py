@@ -67,18 +67,32 @@ class SampleCollection(BaseModel):
                 SAMPLES_STR: [
                     {
                         CONTROL_PARAMETERS: example_ctrl_schema,
-                        SHEET_NAME: SAMPLES[N15][SA][N_i][SHEET_NAME],
-                        StructProps.ID: SAMPLES[N15][SA][N_i][StructProps.ID],
-                        StructProps.TITLE: SAMPLES[N15][SA][N_i][StructProps.TITLE],
-                        StructProps.ISTATE: SAMPLES[N15][SA][N_i][StructProps.ISTATE],
-                        StructProps.SUBSYS: SAMPLES[N15][SA][N_i][StructProps.SUBSYS],
-                        StructProps.EFFECT: SAMPLES[N15][SA][N_i][StructProps.EFFECT],
-                        StructProps.ACTUAL: SAMPLES[N15][SA][N_i][StructProps.ACTUAL],
-                        IS_DUAL: SAMPLES[N15][SA][N_i][IS_DUAL],
+                        SHEET_NAME: SAMPLES[N_i][SA][N1][SHEET_NAME],
+                        StructProps.ID: SAMPLES[N_i][SA][N1][StructProps.ID],
+                        StructProps.TITLE: SAMPLES[N_i][SA][N1][StructProps.TITLE],
+                        StructProps.ISTATE: SAMPLES[N_i][SA][N1][StructProps.ISTATE],
+                        StructProps.SUBSYS: SAMPLES[N_i][SA][N1][StructProps.SUBSYS],
+                        StructProps.EFFECT: SAMPLES[N_i][SA][N1][StructProps.EFFECT],
+                        StructProps.ACTUAL: SAMPLES[N_i][SA][N1][StructProps.ACTUAL],
+                        IS_DUAL: SAMPLES[N_i][SA][N1][IS_DUAL],
                     }
-                    for N_i in SAMPLES[N15][SA].keys()
+                    for N_i in SAMPLES.keys()
                 ],
             }
+            # SAMPLES_STR: [
+            #     {
+            #         CONTROL_PARAMETERS: example_ctrl_schema,
+            #         SHEET_NAME: SAMPLES[N15][SA][N_i][SHEET_NAME],
+            #         StructProps.ID: SAMPLES[N15][SA][N_i][StructProps.ID],
+            #         StructProps.TITLE: SAMPLES[N15][SA][N_i][StructProps.TITLE],
+            #         StructProps.ISTATE: SAMPLES[N15][SA][N_i][StructProps.ISTATE],
+            #         StructProps.SUBSYS: SAMPLES[N15][SA][N_i][StructProps.SUBSYS],
+            #         StructProps.EFFECT: SAMPLES[N15][SA][N_i][StructProps.EFFECT],
+            #         StructProps.ACTUAL: SAMPLES[N15][SA][N_i][StructProps.ACTUAL],
+            #         IS_DUAL: SAMPLES[N15][SA][N_i][IS_DUAL],
+            #     }
+            #     for N_i in SAMPLES[N15][SA].keys()
+            # ],
         },
     )
 

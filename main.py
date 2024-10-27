@@ -4,14 +4,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.middlewares.exception import ExceptionMiddleware
+from api.middlewares.profiling import ProfilingMiddleware
+
 from api.models.enums.frontend import NextJSPort
+from api.models.enums.backend import ExecConfig
 
 from data.motors import Base, engine
 
 from api.routes import analyze, server, network, structure, metrics
-from icecream import install
+from utils.consts import STR_ONE, STR_ZERO
+# from icecream import install
 
-install()
+# install()
 
 
 """ Relational Database """
@@ -30,6 +34,8 @@ app: FastAPI = FastAPI(
 
 NEXT_LOCALE_URL: str = os.environ.get(NextJSPort.NEXT_LOCALE_URL.value)
 
+WITH_PROFILING: str = os.environ.get(ExecConfig.ENABLE_PROFILING.value, STR_ZERO)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[NEXT_LOCALE_URL],
@@ -38,9 +44,9 @@ app.add_middleware(
     allow_headers=['*'],
 )
 app.add_middleware(ExceptionMiddleware)
+app.add_middleware(ProfilingMiddleware)
 
 """ Routes """
-
 
 app.include_router(server.router, tags=['Server'], prefix='/server')
 app.include_router(network.router, tags=['Networks'], prefix='/network')

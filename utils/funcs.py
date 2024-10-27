@@ -153,14 +153,14 @@ def bin_prod(
     return combined_idx, df_result.values
 
 
-def be_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
-    """Returns the tensor product of a list of arrays."""
-    return reduce(lambda x, y: np.kron(x, y), arrays)
+# def be_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
+#     """Returns the tensor product of a list of arrays."""
+#     return reduce(lambda x, y: np.kron(x, y), arrays)
+    
 
-
-def le_prod(arrays: list[NDArray[np.float64]]) -> NDArray:
-    """Returns the tensor product of a list of arrays."""
-    return reduce(lambda x, y: np.kron(y, x), arrays)
+# def le_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
+#     """Returns the tensor product of a list of arrays."""
+#     return reduce(lambda x, y: np.kron(y, x), arrays)
 
 
 @cache

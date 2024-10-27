@@ -216,57 +216,57 @@ async def all_strats(
     except Exception as e:
         print('\nQREdges failed', e, '\n')
 
-    try:
-        # ! Mejorar la forma de pasar parámetros, luego volver función ! #
+    # try:
+    #     # ! Mejorar la forma de pasar parámetros, luego volver función ! #
 
-        genetic_response = await genetic_strategy(
-            ctrl_params=ctrl_parameters,
-            **common_params,
-        )
-        genetic_results = genetic_response.body.decode(UTF8_FORMAT)
-        genetic_data = json.loads(genetic_results)[DATA]
+    #     genetic_response = await genetic_strategy(
+    #         ctrl_params=ctrl_parameters,
+    #         **common_params,
+    #     )
+    #     genetic_results = genetic_response.body.decode(UTF8_FORMAT)
+    #     genetic_data = json.loads(genetic_results)[DATA]
 
-        loss_report_df.at[LOSS_ROW_GENETIC, col_str] = genetic_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_GENETIC, col_str] = conf.execution_times[
-            genetic_strategy.__name__
-        ]
-    except Exception as e:
-        print('\nGenetic failed', e, '\n')
+    #     loss_report_df.at[LOSS_ROW_GENETIC, col_str] = genetic_data[SMALL_PHI]
+    #     time_report_df.at[TIME_ROW_GENETIC, col_str] = conf.execution_times[
+    #         genetic_strategy.__name__
+    #     ]
+    # except Exception as e:
+    #     print('\nGenetic failed', e, '\n')
 
-    try:
-        frankm_response = await fm_strategy(**common_params)
-        frankm_results = frankm_response.body.decode(UTF8_FORMAT)
-        frankm_data = json.loads(frankm_results)[DATA]
+    # try:
+    #     frankm_response = await fm_strategy(**common_params)
+    #     frankm_results = frankm_response.body.decode(UTF8_FORMAT)
+    #     frankm_data = json.loads(frankm_results)[DATA]
 
-        # ic(frankm_data)
-        loss_report_df.at[LOSS_ROW_FRANKM, col_str] = frankm_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_FRANKM, col_str] = conf.execution_times[fm_strategy.__name__]
-    except Exception as e:
-        print('\nFrank-Mech failed', e, '\n')
+    #     # ic(frankm_data)
+    #     loss_report_df.at[LOSS_ROW_FRANKM, col_str] = frankm_data[SMALL_PHI]
+    #     time_report_df.at[TIME_ROW_FRANKM, col_str] = conf.execution_times[fm_strategy.__name__]
+    # except Exception as e:
+    #     print('\nFrank-Mech failed', e, '\n')
 
-    try:
-        branch_response = await branch_strategy(**common_params)
-        branch_results = branch_response.body.decode(UTF8_FORMAT)
-        branch_data = json.loads(branch_results)[DATA]
+    # try:
+    #     branch_response = await branch_strategy(**common_params)
+    #     branch_results = branch_response.body.decode(UTF8_FORMAT)
+    #     branch_data = json.loads(branch_results)[DATA]
 
-        # ic(branch_data)
-        loss_report_df.at[LOSS_ROW_BRANCH, col_str] = branch_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times[branch_strategy.__name__]
-    except Exception as e:
-        print('\nBranch failed', e, '\n')
+    #     # ic(branch_data)
+    #     loss_report_df.at[LOSS_ROW_BRANCH, col_str] = branch_data[SMALL_PHI]
+    #     time_report_df.at[TIME_ROW_BRANCH, col_str] = conf.execution_times[branch_strategy.__name__]
+    # except Exception as e:
+    #     print('\nBranch failed', e, '\n')
 
-    try:
-        force_response = await force_strategy(**common_params)
-        force_results = force_response.body.decode(UTF8_FORMAT)
-        force_data = json.loads(force_results)[DATA]
+    # try:
+    #     force_response = await force_strategy(**common_params)
+    #     force_results = force_response.body.decode(UTF8_FORMAT)
+    #     force_data = json.loads(force_results)[DATA]
 
-        loss_report_df.at[LOSS_ROW_BFORCE, col_str] = force_data[SMALL_PHI]
-        time_report_df.at[TIME_ROW_BFORCE, col_str] = conf.execution_times[
-            #! Obtenible del diccionario #!
-            force_strategy.__name__
-        ]
-    except Exception as e:
-        print('\nForce failed', e, '\n')
+    #     loss_report_df.at[LOSS_ROW_BFORCE, col_str] = force_data[SMALL_PHI]
+    #     time_report_df.at[TIME_ROW_BFORCE, col_str] = conf.execution_times[
+    #         #! Obtenible del diccionario #!
+    #         force_strategy.__name__
+    #     ]
+    # except Exception as e:
+    #     print('\nForce failed', e, '\n')
 
     separator = pd.DataFrame(
         [{col: '═━━━━═' for col in loss_report_df.columns}],
@@ -467,6 +467,22 @@ async def combine_pyphi(
     # av.has_valid_inputs(istate, effect, actual, subsys, len(subtensor))
     calculate: Metric = Metric(istate, struct_response, tensor, subsys, dual)
     calculate.combine_system()
+
+
+# Endpoint para obtener estadísticas
+@router.get('/profiling/stats')
+async def get_profiling_stats():
+    stats = profiler.get_stats()
+    return {
+        name: {
+            'total_time': stat.total_time,
+            'calls': stat.calls,
+            'avg_time': stat.avg_time,
+            'min_time': stat.min_time,
+            'max_time': stat.max_time,
+        }
+        for name, stat in stats.items()
+    }
 
 
 # cond: bool = False

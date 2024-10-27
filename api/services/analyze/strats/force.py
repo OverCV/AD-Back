@@ -49,7 +49,7 @@ class BruteForce(Sia):
             else self.calculate_dists(bipartitions)
         )
         # ic(self._target_dist)
-        print(f'{part=}')
+        # print(f'{part=}')
         concept = (self._effect, self._actual)
         mip = label_mip(part, concept)
 

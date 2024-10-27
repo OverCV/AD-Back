@@ -58,7 +58,6 @@ def get_structure(id: int, db: Session) -> StructureResponse:
         )
     return StructureResponse(**db_struct.__dict__)
 
-
 def get_structure_by_title(title: str, db_sql: Session) -> StructureResponse:
     if not sv.exist_structure_title(title, db_sql):
         raise HTTPException(

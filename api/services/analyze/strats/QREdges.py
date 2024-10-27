@@ -63,7 +63,7 @@ class QREdges(Sia):
         self.__effect_labels = [f'{labels[i]}{T1_SYM}' for i in self._effect]
         self.__causes_labels = [f'{labels[j]}{T0_SYM}' for j in self._actual]
 
-        ic(self.__effect_labels, self.__causes_labels)
+        # ic(self.__effect_labels, self.__causes_labels)
 
         # ! Establecer mejor qué retorna la función (Grafo + ?) [#17] ! #
         partition: Deletion = self.strategy()
@@ -96,7 +96,7 @@ class QREdges(Sia):
         k_iter = 0
         # for _ in edges_idx:
         while len(alpha) > 0:
-            print(k_iter)
+          # print(k_iter)
             # ziter_dels: list[Deletion] = []
             uiter_dels: list[Deletion] = []
             iter_part: list[Deletion] = []
@@ -117,14 +117,14 @@ class QREdges(Sia):
                     net.is_disconnected(trimmed_net),
                     subdist,
                 )
-                ic(str(zdeletion))
+                # ic(str(zdeletion))
                 if self.submodule(omega, z, minuend_emd, subtrahend_emd) == FLOAT_ZERO:
                     struct.set_matrix(z[V_IDX], substruct.get_matrix(z[V_IDX]))
 
                     if net.is_disconnected(trimmed_net):
                         iter_part.append(zdeletion)
 
-                    print('Delete:', z)
+                  # print('Delete:', z)
                     omega.append(z)
                 else:
                     # Añadimos las aristas con peso para revisarlas
@@ -148,7 +148,7 @@ class QREdges(Sia):
                     net.is_disconnected(trimmed_net),
                     subdist,
                 )
-                ic(str(xdeletion))
+                # ic(str(xdeletion))
 
                 if xdeletion.is_disconn():
                     iter_part.append(xdeletion)
@@ -160,14 +160,14 @@ class QREdges(Sia):
                     iter_part,
                     key=lambda x: x.get_minuend_emd(),
                 )  # End condition
-                print(str(min_iter))
+              # print(str(min_iter))
                 return min_iter
 
             min_lose = min(uiter_dels, key=lambda x: x.get_emd())  # Reduce alpha
-            print(str(min_lose))
+          # print(str(min_lose))
 
             omega.append(min_lose.get_edge())
-            ic(omega)
+            # ic(omega)
             alpha = [edge for edge in alpha if edge not in omega]
 
             k_iter += 1

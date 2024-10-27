@@ -131,7 +131,7 @@ class Branch(Sia):
             effect = {bin: ([] if self._dual == bin else self._effect) for bin in BOOL_RANGE}
             actual = {bin: ([] if self._dual == bin else self._actual) for bin in BOOL_RANGE}
 
-            ic(effect, actual)
+          #  ic(effect, actual)
 
             iter_distrib = sub_struct.create_distrib(effect, actual, data=True)[
                 StructProps.DIST_ARRAY
@@ -175,7 +175,7 @@ class Branch(Sia):
 
         if len(mips) > INT_ZERO:
             min_key = min(mips.keys(), key=lambda x: x[DATA_IDX])  # x=(u,v,w)
-            ic(min_key)
+          #  ic(min_key)
             return self.__net
         else:
             self.branch_and_bound()
@@ -218,8 +218,8 @@ class Branch(Sia):
         limit: int = 2 ** (m + n - 1)
         all_nodes = set()
 
-        ic(self.__net.edges(data=True))
-        ic(limit)
+        # ic(self.__net.edges(data=True))
+        # ic(limit)
 
         # self.plot_net(self.__net)
 
@@ -305,7 +305,7 @@ class Branch(Sia):
         # ic(str(minimal_loss))
         # ic()
         edges_deleted = minimal_loss.get_deletions()
-        ic(edges_deleted)
+      #  ic(edges_deleted)
         # self.plot_net(minimal_loss.get_net())
         self.integrated_info = minimal_loss.get_ub()
         return minimal_loss.get_net()
@@ -467,16 +467,16 @@ class Branch(Sia):
     #             for j, i in concept_comb
     #         )
     #     )
-    #     ic(self.__net.edges(data=True))
+    #   #  ic(self.__net.edges(data=True))
 
     #     self.__net.remove_edge('A(0)', 'B(1)')
     #     # self.plot_net(self.__net)
-    #     ic(net.is_disconnected(self.__net))
+    #   #  ic(net.is_disconnected(self.__net))
 
     #     self.__net.remove_edge('B(0)', 'B(1)')
     #     # self.plot_net(self.__net)
-    #     ic(net.is_disconnected(self.__net))
+    #   #  ic(net.is_disconnected(self.__net))
 
     #     self.__net.remove_edge('C(0)', 'B(1)')
     #     # self.plot_net(self.__net)
-    #     ic(net.is_disconnected(self.__net))
+    #   #  ic(net.is_disconnected(self.__net))

@@ -149,26 +149,26 @@ class FMAlgorithm(Sia):
             # net.precalculate_adjacencies(self.__net)
             if net.is_disconnected(self.__net):
                 # Si es disconexo no reestablecemos la arista, la guardamos como logro independiente de si tuvo peso o no.
-                print('Disconnected')
+              # print('Disconnected')
                 mips[(origin, destiny, emd_as_weight)] = deleted
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
                 # ! Maybe return here if emd is 0 # !
 
             elif emd_as_weight > FLOAT_ZERO:
                 # Si es conexo Y hay pérdida entonces restablecemos la arsita.
-                print('Connected and loss')
-                ic((origin, destiny, emd_as_weight))
+              # print('Connected and loss')
+              # ic((origin, destiny, emd_as_weight))
                 self.__net.add_weighted_edges_from([(origin, destiny, emd_as_weight)])
 
             else:
-                print('Connected no loss')
+              # print('Connected no loss')
                 # Si es conexo y no hay pérdida entonces guardamos la arista. A sy vez guardamos estas aristas en 0 para la reconstrucción.
                 # ic((origin, destiny, emd_as_weight))
                 deleted.append((origin, destiny, emd_as_weight))
                 alt_struct.set_matrix(idx_effect, sub_mat)
                 # ic(deleted)
 
-        print()
+      # print()
         # self.plot_net(self.__net)
 
         if len(mips) > INT_ZERO:
@@ -177,7 +177,7 @@ class FMAlgorithm(Sia):
                 mips.keys(),
                 key=lambda x: x[DATA_IDX],
             )
-            ic(min_key)
+          # ic(min_key)
             self.__net.remove_edge(min_key[U_IDX], min_key[V_IDX])
             # self.plot_net(self.__net)
             partition = list(
@@ -186,7 +186,7 @@ class FMAlgorithm(Sia):
                 else nx.weakly_connected_components(self.__net)
             )
             wt_index: int = 2
-            ic(partition)
+          # ic(partition)
             return min_key[wt_index], partition
         else:
             # edges = [
@@ -357,13 +357,13 @@ class FMAlgorithm(Sia):
         # Recover the optimal partitioning from the contractions.
         G = nx.Graph(it.islice(contractions, best_phase))
         v = contractions[best_phase][V_IDX]
-        ic(contractions, v)
+      # ic(contractions, v)
         G.add_node(v)
-        ic(G._adj)
+      # ic(G._adj)
         # reachable = set(nx.single_source_shortest_path_length(G, v))
 
         reachable = set(self.single_shortest_path_length(G._adj, [v]))
-        ic(reachable)
+      # ic(reachable)
         partition = (list(reachable), list(nodes - reachable))
 
         return cut_value, partition

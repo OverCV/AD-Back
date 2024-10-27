@@ -154,10 +154,10 @@ class Compute:
             if all([(x == STR_ONE) == (not self.__dual), i in bg_set])
         )
 
-        ic(mech_idx, purv_idx)
+        # ic(mech_idx, purv_idx)
 
         er = sub_system.effect_mip(mech_idx, purv_idx)
-        ic(er)
+        # ic(er)
 
         # ? Reconstrucción de resultados
 

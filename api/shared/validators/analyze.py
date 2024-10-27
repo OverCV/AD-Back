@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from icecream import ic
 
 
+
 def has_valid_inputs(istate: str, effect: str, actual: str, bgconds: str, tensor_len: int) -> bool:
     # Check with a reg exp if is a binary string
     # ic(istate, effect, actual, tensor_len)
