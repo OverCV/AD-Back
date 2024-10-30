@@ -13,9 +13,9 @@ from data.motors import Base, engine
 
 from api.routes import analyze, server, network, structure, metrics
 from utils.consts import STR_ONE, STR_ZERO
-# from icecream import install
+from icecream import install
 
-# install()
+install()
 
 
 """ Relational Database """

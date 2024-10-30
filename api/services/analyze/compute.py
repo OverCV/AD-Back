@@ -1,3 +1,4 @@
+from re import I
 from typing import OrderedDict
 import numpy as np
 from numpy.typing import NDArray
@@ -112,6 +113,10 @@ class Compute:
         tpms = np.array([mat.get_arr()[:, COLS_IDX] for mat in tensor.values()])
         tpm_state_node: NDArray[np.float64] = np.column_stack(tpms)
 
+        ic(
+            tpm_state_node
+        )
+
         num_nodes: int = self.__sup_struct.get_tensor_len()
         istate = tuple(int(i) for i in self.__sup_struct.get_istate())
 
@@ -170,6 +175,10 @@ class Compute:
         part_reper = part_reper.squeeze()
 
         sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
+
+        ic(
+            sub_states
+        )
 
         distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
         part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]

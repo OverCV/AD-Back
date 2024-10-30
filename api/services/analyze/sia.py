@@ -8,10 +8,9 @@ from constants.structure import VOID
 from utils.consts import ACTUAL, DIST, EFFECT, INFTY_POS, INT_ZERO, SUB_DIST, NET_ID, MIP, SMALL_PHI
 from numpy.typing import NDArray
 
-from icecream import ic
-
 from utils.funcs import get_labels
 
+from icecream import ic
 
 class Sia(ABC):
     """Class Sia is used as parent class to use it's props in the used strategies."""

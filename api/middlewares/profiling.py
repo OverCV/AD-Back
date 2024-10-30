@@ -1,5 +1,5 @@
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi import Request
+from fastapi import FastAPI, Request
 from pyinstrument import Profiler
 from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.renderers.speedscope import SpeedscopeRenderer
@@ -9,7 +9,7 @@ import os
 
 
 class ProfilingMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app) -> None:
+    def __init__(self, app: FastAPI) -> None:
         super().__init__(app)
         # Crear directorio profiles si no existe
         self.output_dir = Path('data/profiles')
@@ -39,7 +39,7 @@ class ProfilingMiddleware(BaseHTTPMiddleware):
         extension = profile_type_to_ext[profile_type]
         renderer = profile_type_to_renderer[profile_type]()
 
-        output_path = self.output_dir / f'profile_{endpoint}.{extension}'
+        output_path = self.output_dir / f'{endpoint}.{extension}'
         with open(output_path, 'w') as out:
             out.write(profiler.output(renderer=renderer))
 
