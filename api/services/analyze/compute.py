@@ -103,7 +103,7 @@ class Compute:
 
         return self.__distribution is not None
 
-    def use_pyphi(self) -> SiaType:
+    def use_pyphi(self):
         # Selección de nodos mediante pyphi
         bg_set = set(
             idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
@@ -113,9 +113,9 @@ class Compute:
         tpms = np.array([mat.get_arr()[:, COLS_IDX] for mat in tensor.values()])
         tpm_state_node: NDArray[np.float64] = np.column_stack(tpms)
 
-        ic(
-            tpm_state_node
-        )
+        # ic(
+        #     tpm_state_node
+        # )
 
         num_nodes: int = self.__sup_struct.get_tensor_len()
         istate = tuple(int(i) for i in self.__sup_struct.get_istate())
@@ -176,9 +176,9 @@ class Compute:
 
         sub_states: list[tuple[int, ...]] = copy.copy(list(lil_endian_int(repertoire.ndim)))
 
-        ic(
-            sub_states
-        )
+        # ic(
+        #     sub_states
+        # )
 
         distribution: list[float] = [repertoire[sub_state] for sub_state in sub_states]
         part_distrib: list[float] = [part_reper[sub_state] for sub_state in sub_states]
@@ -195,12 +195,12 @@ class Compute:
 
         min_info_part = [
             [
-                [labels[i] for i in prim_mech] if prim_mech else [VOID],
                 [labels[i] for i in prim_purv] if prim_purv else [VOID],
+                [labels[i] for i in prim_mech] if prim_mech else [VOID],
             ],
             [
-                [labels[i] for i in dual_mech] if dual_mech else [VOID],
                 [labels[i] for i in dual_purv] if dual_purv else [VOID],
+                [labels[i] for i in dual_mech] if dual_mech else [VOID],
             ],
         ]
 

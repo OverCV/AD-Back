@@ -120,9 +120,12 @@ class QRNodes(Sia):
             while len(omega) < len(alpha):
                 # print(SEP2)
                 all_mips: list[Deletion] = []
-                remaining = t_com - omega
+                upsilon = t_com - omega
 
-                for u in remaining:
+                # cicle for all phases?
+
+                for u in upsilon:
+                    # Cicle for the iteration (best for W set)
                     # Evaluación de u con omega
                     idx_o_actual = {bin: [] for bin in BOOL_RANGE}
                     idx_o_effect = {bin: [] for bin in BOOL_RANGE}
@@ -136,11 +139,11 @@ class QRNodes(Sia):
                         o_concept[1 - p][rep_one].append(q)
 
                     # Procesamos elementos restantes
-                    o_com = remaining - {u}
+                    o_com = upsilon - {u}
                     for i, j in o_com:
                         o_concept[1 - i][rep_two].append(j)
 
-                    ic(betha, o_com)
+                    ic([self.as_char(i) for i in betha], [self.as_char(i) for i in o_com])
 
                     o_effect, o_actual = o_concept
                     o_effect = {k: sorted(v) for k, v in o_effect.items()}
@@ -210,13 +213,14 @@ class QRNodes(Sia):
 
                 ic(str(best_deletion))
 
-            # iteration += 1
-            # if iteration == MAX_ITER:
-            #     break
             break
 
         # Siempre retornamos el mejor encontrado
         return best_deletion
+
+    def as_char(self, index: tuple[int, int]) -> str:
+        labels = get_labels(max(*self._effect, *self._actual) + 1)
+        return f'{labels[index[1]]}({index[0]})'
 
     # def strategy(self) -> Deletion:
     #     """
