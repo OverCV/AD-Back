@@ -76,8 +76,8 @@ class BruteForce(Sia):
             # En esta primera parte descubrimos si
             # ic(partition)
             sub_struct: Structure = copy.deepcopy(self._structure)
-            str_effect: str = partition[EFFECT]
-            str_causes: str = partition[ACTUAL]
+            str_effect: str = partition[EFFECT] # 000   #
+            str_causes: str = partition[ACTUAL] # 10    #
 
             effect = {bin: [] for bin in BOOL_RANGE}
             for j, e in zip(self._effect, str_effect):
@@ -154,4 +154,6 @@ class BruteForce(Sia):
         """
         future_states: list[str] = [dec2bin(b, m) for b in range(2 ** (m - 1))]
         current_states: list[str] = [dec2bin(b, n) for b in range(2**n)]
+        # [000] -> 001 -> 010
+        # [000 -> 001 -> 010]
         return list(itertools.product(future_states, current_states))

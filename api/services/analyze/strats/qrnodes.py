@@ -100,17 +100,18 @@ class QRNodes(Sia):
 
         MAX_ITER = 4
         iteration = 0
-        SEP1 = '\\' * 20 + '/' * 20
-        SEP2 = '*' * 40
+        SEP1 = 'FASE INICIADA'
+        # SEP2 = '*' * 40
         SEP3 = '-' * 40
 
         alpha: set[tuple[int, int]] = set(actual + effect)
         best_deletion: Deletion | None = None
 
         # Iteramos sobre cada posible punto de inicio
-        for t in alpha:
+        for t in alpha: 
             # Elementos restantes sin t
             t_com = alpha - {t}
+            print(f'Búsqueda de mejor complemento para {self.as_char(t)}')
             # Iniciamos omega con t
             omega: set[tuple[int, int]] = {t}
             ic(t, t_com)
@@ -118,9 +119,12 @@ class QRNodes(Sia):
             print(SEP1)
 
             while len(omega) < len(alpha):
+
+
                 # print(SEP2)
                 all_mips: list[Deletion] = []
                 upsilon = t_com - omega
+
 
                 # cicle for all phases?
 
@@ -213,7 +217,7 @@ class QRNodes(Sia):
 
                 ic(str(best_deletion))
 
-            break
+            # break
 
         # Siempre retornamos el mejor encontrado
         return best_deletion

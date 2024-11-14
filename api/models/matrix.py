@@ -27,7 +27,16 @@ class Matrix:
         #     (c, j) for j, c in enumerate(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
         # )
         # self.__effect: list[int] = list(range(self.__array.shape[COLS_IDX]))
-        self.__causes: list[int] = list(range(int(math.log2(self.__array.shape[ROWS_IDX]))))
+        self.__actual: list[int] = list(
+            range(int(math.log2(self.__array.shape[ROWS_IDX])))
+        )  # [0, 3]
+
+    """
+    istate  = 1010
+          ab
+    algo: a
+
+    """
 
     @property
     def shape(self):
@@ -42,7 +51,7 @@ class Matrix:
         data: bool = False,
     ) -> None | NDArray[np.float64]:
         """
-        Marginalize the matrix over the given states. The states to marginalize are the states to drop if dual is disabled, else the given states are the states to preserve.
+        Marginalize the matrix for non-given states. The states to marginalize are the states to drop if dual is disabled, else the given states are the states to preserve.
 
         Args:
             states (list[int]): Represents the states to marginalize if dual is disabled, these states must be a subset of the actual because are the states to drop or preserve.
@@ -54,8 +63,8 @@ class Matrix:
         # We init an empty dataframe to fill it with the new values
         margin_df: pd.DataFrame = pd.DataFrame()
         dataframe = self.as_dataframe()
-        margined_rows = 2 ** (
-            len(self.__causes if axis == ROWS_IDX else self.__effect) - len(states)
+        margined_rows: int = 2 ** (
+            len(self.__actual if axis == ROWS_IDX else self.__effect) - len(states)
         )
         # If we have a collapsed matrix, we just sum all the values.
         if len(states) == INT_ZERO:
@@ -73,22 +82,16 @@ class Matrix:
                 index=rows,
             )
             for row in dataframe.index:
-                # for col in dataframe.columns:
-                # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
-                # element is the key, value is the position or index
+                # abcd sistema
+                # a cd candidato
+                # a  d subsistema -> self.__causes = [0, 3]
 
-                # ic(states, self.__causes)
-
+                # states = [3], marginalizar en presente:
+                # 00 -> 10 -> 01 -> 11
+                #  0 ->  0 ->  1  -> 1
                 selected_row = ''.join(
-                    [row[self.__causes.index(k)] for k in states],
+                    [row[self.__actual.index(k)] for k in states],
                 )
-                """
-                    STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]
-                    Necesitamos usar el tamaño actual de la matriz usada, como se manja una única matriz, independiente del tamaño del arreglo, 
-                    (b)b(bb)b
-                    [0->0, 1->1, 2->2, 3->3, 4->4]
-                    [0->0, 2->1, 3->2]
-                    """
                 # zeros_df.at[selected_row, col] += dataframe.at[row, col]
                 zeros_df.loc[selected_row] += dataframe.loc[row].values
             margin_df = zeros_df
@@ -97,7 +100,7 @@ class Matrix:
         if axis == COLS_IDX:
             self.__effect = states  #! Check case !#
         else:
-            self.__causes = states
+            self.__actual = states  # self.__actual = [0, 3] -> [3]
         self.__array = (
             margin_df.to_numpy().transpose() if axis == COLS_IDX else margin_df.to_numpy()
         )
@@ -153,7 +156,7 @@ class Matrix:
 
         for row in zeros_mat.index:
             sub_row = ''.join(
-                [row[states.index(j)] for j in self.__causes],
+                [row[states.index(j)] for j in self.__actual],
             )
             zeros_mat.loc[row] = actual_matrix.loc[sub_row].values
             # zeros_mat.loc[row] = actual_matrix.loc[sub_row]
@@ -164,9 +167,22 @@ class Matrix:
             self.__effect = states
         else:
             self.__array = zeros_mat.to_numpy()
-            self.__causes = states
+            self.__actual = states
 
         return zeros_mat.to_numpy() if data else None
+
+    # for col in dataframe.columns:
+    # States should be a ordered collection or the row[i] would be a disordered string (and that's a catastrophe).
+    # element is the key, value is the position or index
+
+    # ic(states, self.__causes)
+    """
+        STATES: abcde [0->0, 2->1, 3->2] [0:a,1:b,2:c]
+        Necesitamos usar el tamaño actual de la matriz usada, como se manja una única matriz, independiente del tamaño del arreglo, 
+        (b)b(bb)b
+        [0->0, 1->1, 2->2, 3->3, 4->4]
+        [0->0, 2->1, 3->2]
+        """
 
     def on_state(
         self, istate: str, axis: int = ROWS_IDX, le: bool = conf.little_endian
@@ -175,7 +191,7 @@ class Matrix:
         if axis == COLS_IDX:
             self.__array = self.__array.transpose()
 
-        row_istates = ''.join([istate[e] for e in self.__causes])
+        row_istates = ''.join([istate[e] for e in self.__actual])
         col_istates = ''.join([istate[i] for i in self.__effect])
         concat_digits: str = row_istates if axis == ROWS_IDX else col_istates
         tpm = self.as_dataframe()
@@ -225,7 +241,7 @@ class Matrix:
             self.__effect = in_states
         else:
             self.__array = zeros_df.to_numpy()
-            self.__causes = in_states
+            self.__actual = in_states
 
         return self.__array if data else None
 

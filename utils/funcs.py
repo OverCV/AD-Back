@@ -4,6 +4,8 @@ import math
 import time
 from typing import Callable
 
+from icecream import ic
+
 from pyemd import emd
 
 from numpy.typing import NDArray
@@ -86,17 +88,55 @@ def emd_pyphi(u: NDArray[np.float64], v: NDArray[np.float64]) -> float:
     if not all(isinstance(arr, np.ndarray) for arr in [u, v]):
         raise TypeError('u and v must be numpy arrays.')
 
+    # ic(u.shape)
+    # ic(u)
+    # ic(v.shape)
+    # ic(v)
+
     n: int = len(u)
     costs: NDArray[np.float64] = np.empty((n, n))
+
+    # ic(costs.shape)
+    # ic(costs)
 
     for i in range(n):
         # Utiliza comprensión de listas para calcular los costos
         costs[i, :i] = [hamming_distance(i, j) for j in range(i)]
         costs[:i, i] = costs[i, :i]  # Reflejar los valores
-    np.fill_diagonal(costs, 0)
+    np.fill_diagonal(costs, INT_ZERO)
 
     cost_mat: NDArray[np.float64] = np.array(costs, dtype=np.float64)
     return emd(u, v, cost_mat)
+
+
+# def calcularEMD(self, p1: list[float], p2: list[float]) -> float:
+#     """
+#     Calcula la Earth Mover's Distance (EMD) entre dos listas de valores.
+#     La matriz de costos se genera utilizando la distancia de Hamming.
+#     """
+#     # Convertir listas a arrays de NumPy
+#     p1_array: NDArray[np.float64] = np.array(p1, dtype=np.float64)
+#     p2_array: NDArray[np.float64] = np.array(p2, dtype=np.float64)
+#     # Asegurar que ambos vectores sean unidimensionales
+#     if p1_array.ndim != 1 or p2_array.ndim != 1:
+#         raise ValueError('Ambos vectores deben ser unidimensionales.')
+#     # Interpolación si las longitudes son diferentes
+#     if len(p1_array) != len(p2_array):
+#         p2_array = np.interp(
+#             np.linspace(0, 1, len(p1_array)), np.linspace(0, 1, len(p2_array)), p2_array
+#         )
+#     # Crear la matriz de costos usando la distancia de Hamming
+#     n: int = len(p1_array)
+#     cost_matrix: NDArray[np.float64] = np.empty((n, n), dtype=np.float64)
+#     for i in range(n):
+#         for j in range(n):
+#             cost_matrix[i, j] = Estrategia1.hamming_distance(i, j)
+#     # Calcular y retornar EMD
+#     return emd(p1_array, p2_array, cost_matrix)
+
+
+# def hamming_distance(a: int, b: int):
+#     return (a ^ b).bit_count()
 
 
 @cache
@@ -156,7 +196,7 @@ def bin_prod(
 # def be_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
 #     """Returns the tensor product of a list of arrays."""
 #     return reduce(lambda x, y: np.kron(x, y), arrays)
-    
+
 
 # def le_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
 #     """Returns the tensor product of a list of arrays."""

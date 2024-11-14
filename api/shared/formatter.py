@@ -23,10 +23,10 @@ class Format:
         self.__array_file: UploadFile = bytes
         self.__sheet: str = sheet
         self.__format: str = format
-        self.__array: NDArray[np.float64] | None = None
-        self.__matrices: list[NDArray[np.float64]] = []
+        self.__array: NDArray[np.float32] | None = None
+        self.__matrices: list[NDArray[np.float32]] = []
 
-    def get_matrices(self) -> list[NDArray[np.float64]]:
+    def get_matrices(self) -> list[NDArray[np.float32]]:
         return self.__matrices
 
     async def set_array(self) -> None:
@@ -35,7 +35,7 @@ class Format:
                 status_code=status.HTTP_400_BAD_REQUEST, detail='No file was provided.'
             )
         bytes_chunk = await self.__array_file.read()
-        arr: NDArray[np.float64] = None
+        arr: NDArray[np.float32] = None
         if self.__array_file.filename.endswith(FileExt.EXCEL.value):
             xlsx = io.BytesIO(bytes_chunk)
             wb = op.load_workbook(xlsx)
@@ -45,8 +45,8 @@ class Format:
             for cells in ws.iter_rows():
                 vector = [cell.value for cell in cells if cell.value is not None]
                 lst.append(vector) if vector else None
-            ic(lst)
-            arr = np.array(lst, dtype=np.float64)
+            # ic(lst)
+            arr = np.array(lst, dtype=np.float32)
         elif self.__array_file.filename.endswith(FileExt.CSV.value):
             csv = io.BytesIO(bytes_chunk)
             df = pd.read_csv(csv, header=None)
@@ -59,7 +59,7 @@ class Format:
                 processed_list.append(float_values)
 
             # Lista procesada en un array de NumPy
-            arr = np.array(processed_list, dtype=np.float64)
+            arr = np.array(processed_list, dtype=np.float32)
         elif any(
             self.__array_file.filename.endswith(FileExt.TXT.value),
             self.__array_file.filename.endswith(FileExt.JSON.value),
@@ -116,7 +116,7 @@ class Format:
             # Agregamos la nueva matriz a la lista de tensores
             self.__matrices.append(new_mat)
 
-    def serialize_tensor(self, tensor: NDArray[np.float64]) -> str:
+    def serialize_tensor(self, tensor: NDArray[np.float32]) -> str:
         """Serializa y codifica en base64 un tensor NumPy."""
         buffer = io.BytesIO()
         np.savez_compressed(buffer, tensor=tensor)
@@ -124,7 +124,7 @@ class Format:
         encoded = base64.b64encode(buffer.read()).decode('utf-8')
         return encoded
 
-    def deserialize_tensor(self, encoded_tensor: str) -> NDArray[np.float64]:
+    def deserialize_tensor(self, encoded_tensor: str) -> NDArray[np.float32]:
         """Deserializa un tensor codificado en base64 a un arreglo NumPy."""
         decoded = base64.b64decode(encoded_tensor)
         buffer = io.BytesIO(decoded)
