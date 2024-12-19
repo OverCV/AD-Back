@@ -108,7 +108,7 @@ class QRNodes(Sia):
         best_deletion: Deletion | None = None
 
         # Iteramos sobre cada posible punto de inicio
-        for t in alpha: 
+        for t in alpha:
             # Elementos restantes sin t
             t_com = alpha - {t}
             print(f'Búsqueda de mejor complemento para {self.as_char(t)}')
@@ -119,12 +119,9 @@ class QRNodes(Sia):
             print(SEP1)
 
             while len(omega) < len(alpha):
-
-
                 # print(SEP2)
                 all_mips: list[Deletion] = []
                 upsilon = t_com - omega
-
 
                 # cicle for all phases?
 

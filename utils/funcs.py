@@ -177,21 +177,22 @@ def bin_prod(
     """Returns the binary product of two arrays."""
     u_idx, u = idx_dist_u
     v_idx, v = idx_dist_v
-    u = u.flatten()
-    v = v.flatten()
+    u, v = u.flatten(), v.flatten()
     d_len = len(u_idx) + len(v_idx)
-    result = np.zeros(2**d_len, dtype=np.float64)
+    result = np.empty(2**d_len, dtype=np.float64)
     endian_keys = lil_endian(d_len) if le else big_endian(d_len)
-    df_result = pd.DataFrame([result], columns=endian_keys)
+    # df_result = pd.DataFrame([result], columns=endian_keys)
     combined_idx = tuple(sorted(set(u_idx) | set(v_idx)))
     for key in endian_keys:
         u_key = ''.join(key[combined_idx.index(i)] for i in u_idx)
         v_key = ''.join(key[combined_idx.index(i)] for i in v_idx)
         u_val = u[int(u_key[::-1], 2)]
         v_val = v[int(v_key[::-1], 2)]
-        df_result.at[ROWS_IDX, key] = u_val * v_val
-    return combined_idx, df_result.values
+        key_int = int(key[::-1], 2)
+        result[key_int] = u_val * v_val
+    return combined_idx, result
 
+        # df_result.at[ROWS_IDX, key] = u_val * v_val
 
 # def be_prod(arrays: list[NDArray[np.float64]]) -> NDArray[np.float64]:
 #     """Returns the tensor product of a list of arrays."""

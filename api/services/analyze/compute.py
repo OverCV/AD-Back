@@ -104,7 +104,9 @@ class Compute:
         return self.__distribution is not None
 
     def use_pyphi(self):
+        # Ignorar todo lo de DUAL pues es algo muy específico sin propósito real
         # Selección de nodos mediante pyphi
+        # self.__str_bgcond = 111. Es así porque en '1' son los a mantener (si dual=false, acá esa variable decisora)
         bg_set = set(
             idx for idx, bg in enumerate(self.__str_bgcond) if (bg == STR_ONE) == (not self.__dual)
         )
@@ -193,7 +195,8 @@ class Compute:
         # ic(bg_labels)
         # ic(dual_purv, dual_mech, prim_purv, prim_mech)
 
-        min_info_part = [
+        # Lista que tiene las particiones, cada partición tiene una lista con las variables en presente y en futuro
+        min_info_part: list[list[list[str], list[str]], list[list[str], list[str]]] = [
             [
                 [labels[i] for i in prim_purv] if prim_purv else [VOID],
                 [labels[i] for i in prim_mech] if prim_mech else [VOID],
@@ -204,14 +207,19 @@ class Compute:
             ],
         ]
 
+        # Retorno de:
         return {
+            # phi: 0.25
             SMALL_PHI: integrated_info,
+            # mip: [ ([A,C][AB]) ([B][C]) ]
             MIP: min_info_part,
+            # dist: [0, 0, ..., 0, 1, 0]
             DIST: distribution,
+            # dist: [0.1, 0.2, ..., 0.1, 0.4]
             SUB_DIST: part_distrib,
-            # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
-            # NET_ID: network_id if conf.store_network else net_id,
         }
+        # ! Debería la conf permitir asignar o no el índice del grafo, BAJAR NIVEL [#18] ! #
+        # NET_ID: network_id if conf.store_network else net_id,
 
     def use_brute_force(self) -> SiaType:
         sia_force: BruteForce = BruteForce(
