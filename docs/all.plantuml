@@ -1,0 +1,38 @@
+@startuml ClasesAnalysisDiagram
+title Partición de Minima Pérdida de información
+
+class main {}
+
+main ..> server
+main ..> network
+main ..> structure
+main ..> analyze
+main ..> metrics
+
+
+' Clases de aplicación
+
+class server {}
+class network {}
+class structure {}
+class analyze {
+    router
+    fmt: Format()
+    ---
+    pyphi_strat()
+    pyphi_qr_nodes()
+    pyphi_qr_edges()
+    pyphi_genetic()
+    pyphi_branch()
+    pyphi_force()
+    ...
+}
+class metrics {}
+
+
+note left of main
+    Carga variables de entorno
+    Inicializa Base de datos
+    Carga middlewares
+    Incluye rutas
+end note

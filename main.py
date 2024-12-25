@@ -46,13 +46,14 @@ app.add_middleware(
 app.add_middleware(ExceptionMiddleware)
 app.add_middleware(ProfilingMiddleware)
 
+
 """ Routes """
 
-app.include_router(server.router, tags=['Server'], prefix='/server')
-app.include_router(network.router, tags=['Networks'], prefix='/network')
-app.include_router(structure.router, tags=['Structures'], prefix='/structure')
-app.include_router(analyze.router, tags=['Analyze'], prefix='/analyze')
-app.include_router(metrics.router, tags=['Metrics'], prefix='/metrics')
+app.include_router(server.router, prefix='/server', tags=['Server'])
+app.include_router(network.router, prefix='/network', tags=['Networks'])
+app.include_router(structure.router, prefix='/structure', tags=['Structures'])
+app.include_router(analyze.router, prefix='/analyze', tags=['Analyze'])
+app.include_router(metrics.router, prefix='/metrics', tags=['Metrics'])
 
 
 """ Default routes """

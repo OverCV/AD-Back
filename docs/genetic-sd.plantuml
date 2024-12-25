@@ -1,4 +1,4 @@
-@startuml Algoritmo genético
+' @startuml Algoritmo genético
 ' !define DARKGREEN
 ' !include https://raw.githubusercontent.com/Drakemor/RedDress-PlantUML/master/style.puml
 
