@@ -57,16 +57,16 @@ def reconstruct_network(
     """Designer for bipartite graphs"""
 
     prim_effect = (
-        [] if mip[ROWS_IDX][EFFECT] == [VOID] else [x + 'f' for x in mip[ROWS_IDX][EFFECT]]
+        [] if mip[ROWS_IDX][EFFECT] == [VOID] else [x + '(1)' for x in mip[ROWS_IDX][EFFECT]]
     )
     prim_causes = (
-        [] if mip[ROWS_IDX][ACTUAL] == [VOID] else [x + 'c' for x in mip[ROWS_IDX][ACTUAL]]
+        [] if mip[ROWS_IDX][ACTUAL] == [VOID] else [x + '(0)' for x in mip[ROWS_IDX][ACTUAL]]
     )
     dual_effect = (
-        [] if mip[COLS_IDX][EFFECT] == [VOID] else [x + 'f' for x in mip[COLS_IDX][EFFECT]]
+        [] if mip[COLS_IDX][EFFECT] == [VOID] else [x + '(1)' for x in mip[COLS_IDX][EFFECT]]
     )
     dual_causes = (
-        [] if mip[COLS_IDX][ACTUAL] == [VOID] else [x + 'c' for x in mip[COLS_IDX][ACTUAL]]
+        [] if mip[COLS_IDX][ACTUAL] == [VOID] else [x + '(0)' for x in mip[COLS_IDX][ACTUAL]]
     )
 
     # ic(mip)

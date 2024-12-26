@@ -18,4 +18,3 @@ class StructProps:
 
 class ConceptType(TypedDict):
     bool: list[int]
-    # bool: list[int]
