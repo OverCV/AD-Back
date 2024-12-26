@@ -1,7 +1,6 @@
 # Árbol de directorios
-Árbol de directorios:
 
-```ps
+
 project_root/
 │
 ├── .venv/
@@ -23,7 +22,7 @@ project_root/
 │   │   │   └── frontend.py
 │   │   │
 │   │   ├── genetic/
-│   │   │   ├── individual.py
+│   │   │   ├── individual.pya
 │   │   │   ├── population.py
 │   │   │   ├── environ.py
 │   │   │   └── recorder.py
@@ -159,4 +158,3 @@ project_root/
 ├── pyphi_config.py
 ├── README.md
 └── requirements.txt
-```
