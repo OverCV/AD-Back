@@ -18,7 +18,7 @@ project_root/
 │   │   ├── enums/
 │   │   │   ├── database.py
 │   │   │   ├── backend.py
-│   │   │   ├── extensions.py       ! File extensions to use.
+│   │   │   ├── extensions.py           ! File extensions to use.
 │   │   │   └── frontend.py
 │   │   │
 │   │   ├── genetic/
@@ -33,10 +33,10 @@ project_root/
 │   │   │   ├── network.py
 │   │   │   └── node.py
 │   │   │
-│   │   ├── props/                  !! Revisar clase pues hay puntos relevantes con lógica difusa
-│   │   │   ├── analisis.py         ! (unused) Intento de objetizar el retorno con TypedDict
-│   │   │   ├── network.py          ! Para frontend
-│   │   │   ├── sia.py              ! Intento de objetizar net
+│   │   ├── props/                      ! Revisar clase pues hay puntos relevantes con lógica difusa
+│   │   │   ├── analisis.py             ! (unused) Intento de objetizar el retorno con TypedDict
+│   │   │   ├── network.py              ! Para frontend
+│   │   │   ├── sia.py                  ! Intento de objetizar net
 │   │   │   ├── spectrum.py
 │   │   │   └── structure.py
 │   │   │
@@ -70,7 +70,7 @@ project_root/
 │   │   ├── sample.py
 │   │   └── structure.py
 │   │
-│   ├── services/                   ! RELEVANT
+│   ├── services/                       ! RELEVANT
 │   │   ├── analyze/
 │   │   │   ├── strats/
 │   │   │   │   ├── branch.py
