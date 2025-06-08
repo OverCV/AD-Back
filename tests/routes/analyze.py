@@ -7,7 +7,7 @@ from main import app
 """
 NEXT_LCL_URL = "http://localhost:3000"
 
-REMOTE_MONGO_URI = "mongodb+srv://ada-user:ada-pass@cluster0.6gpnf7u.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+REMOTE_MONGO_URI = "mongodb+srv://localhost:mongo-uri"
 LOCAL_MONGO_URI = "mongodb://localhost:27017"
 
 MONGO_CLIENT = "ada"
